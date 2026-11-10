@@ -1,0 +1,19 @@
+[package]
+name = "glint-helper"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Glint's helper process: it runs the model, builds the index and answers searches"
+
+[[bin]]
+name = "glint-helper"
+path = "src/main.rs"
+
+[dependencies]
+glint-core = { path = "../core" }
+glint-embed = { path = "../embed" }
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+ureq = "2"
+sha2 = "0.10"

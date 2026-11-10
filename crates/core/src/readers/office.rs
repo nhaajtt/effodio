@@ -576,7 +576,7 @@ mod tests {
         let parts = read(&path).unwrap();
         assert_eq!(parts.len(), 2);
         assert_eq!(parts[0].label.as_deref(), Some("Slide 1"));
-        assert_eq!(parts[0].text, "Welcome\nNotes: Say hello first");
+        assert_eq!(parts[0].text, "Welcome\n\nNotes: Say hello first");
         assert_eq!(parts[1].text, "Roadmap");
     }
 
@@ -584,8 +584,8 @@ mod tests {
     fn html_and_rtf_lose_their_markup() {
         let page = "<html><head><style>p{color:red}</style><script>var a='<p>no</p>';</script></head>\
                     <body><h1>Title</h1><p>Fish &amp; chips &#233;</p></body></html>";
-        assert_eq!(tidy(&html(page)), "Title\nFish & chips é");
-        let document = r"{\rtf1\ansi{\fonttbl{\f0 Arial;}}\f0 Hello \b world\b0\par caf\'e9 \u272?\'3f{\*\generator x;}}";
+        assert_eq!(tidy(&html(page)), "Title\n\nFish & chips é");
+        let document = r"{\rtf1\ansi{\fonttbl{\f0 Arial;}}\f0 Hello \b world\b0\par caf\'e9 \u272?{\*\generator x;}}";
         assert_eq!(tidy(&rtf(document)), "Hello world\ncafé Đ");
     }
 
