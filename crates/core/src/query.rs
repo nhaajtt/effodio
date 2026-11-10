@@ -36,9 +36,8 @@ impl Query {
 
 fn kind_named(name: &str) -> Option<Vec<FileKind>> {
     Some(match fold(name).as_str() {
-        "image" | "images" | "photo" | "photos" | "picture" | "pictures" | "anh" | "hinh" => {
-            vec![FileKind::Image, FileKind::Screenshot]
-        }
+        "image" | "images" | "picture" | "pictures" | "anh" | "hinh" => vec![FileKind::Image, FileKind::Screenshot],
+        "photo" | "photos" => vec![FileKind::Image],
         "screenshot" | "screenshots" | "screen" => vec![FileKind::Screenshot],
         "pdf" | "pdfs" => vec![FileKind::Pdf],
         "doc" | "docs" | "document" | "documents" | "text" | "tailieu" | "vanban" => vec![FileKind::Doc],

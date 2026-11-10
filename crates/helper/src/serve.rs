@@ -271,6 +271,20 @@ impl Session {
                 std::fs::write(&target, images::jpeg(&picture, 85)?)?;
                 Ok(json!({"path": target, "width": picture.width, "height": picture.height}))
             }
+            "frame" => {
+                let path = request["path"].as_str().ok_or_else(|| anyhow!("frame needs a path"))?;
+                let second = request["second"].as_f64().unwrap_or(0.0).max(0.0);
+                let side = request["side"].as_u64().unwrap_or(640).clamp(120, 1920) as u32;
+                let folder = config::cache_folder().join("frames");
+                std::fs::create_dir_all(&folder)?;
+                let name = format!("{}-{}-{side}.jpg", &digest_hex(path)[..20], (second * 10.0).round() as u64);
+                let target = folder.join(name);
+                if !target.exists() {
+                    let picture = media::frame_at(Path::new(path), second, side)?;
+                    std::fs::write(&target, images::jpeg(&picture, 82)?)?;
+                }
+                Ok(json!({"path": target}))
+            }
             "config" => {
                 self.config = Config::load();
                 Ok(json!({}))
