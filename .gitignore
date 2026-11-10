@@ -1,0 +1,5 @@
+vendor/
+target/
+node_modules/
+dist/
+*.log
