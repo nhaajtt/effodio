@@ -1,0 +1,139 @@
+[
+ {
+  "q": "a dog on the beach",
+  "expect": "IMG_2214.jpg"
+ },
+ {
+  "q": "zebra",
+  "expect": "IMG_4127.jpg"
+ },
+ {
+  "q": "zebra in a video",
+  "expect": "Masai Mara - day 2.mp4",
+  "loc": 0,
+  "within": 6
+ },
+ {
+  "q": "video of a dog at the sea",
+  "expect": "Masai Mara - day 2.mp4",
+  "loc": 9,
+  "within": 6
+ },
+ {
+  "q": "the clause about pets in the lease",
+  "expect": "Lease - 14 Elm Street.pdf",
+  "loc": 3
+ },
+ {
+  "q": "who pays for heating and water",
+  "expect": "Lease - 14 Elm Street.pdf",
+  "loc": 2
+ },
+ {
+  "q": "how much notice to end the tenancy",
+  "expect": "Lease - 14 Elm Street.pdf",
+  "loc": 4
+ },
+ {
+  "q": "INV-2026-0418",
+  "expect": "Invoice 2026-0418.pdf"
+ },
+ {
+  "q": "K7Q2LM",
+  "expect": "Invoice 2026-0418.pdf"
+ },
+ {
+  "q": "bakery flour order",
+  "expect": "Invoice 2026-0418.pdf"
+ },
+ {
+  "q": "why naps help you remember",
+  "expect": "Sleep and memory - lecture notes.pdf"
+ },
+ {
+  "q": "trip to Japan plan",
+  "expect": "Tokyo itinerary.docx"
+ },
+ {
+  "q": "Great Buddha",
+  "expect": "Tokyo itinerary.docx"
+ },
+ {
+  "q": "cách nấu phở",
+  "expect": "Công thức phở bò.docx"
+ },
+ {
+  "q": "beef noodle soup recipe",
+  "expect": "Công thức phở bò.docx"
+ },
+ {
+  "q": "hoa don tien dien",
+  "expect": "Hóa đơn tiền điện tháng 10.txt"
+ },
+ {
+  "q": "electricity bill",
+  "expect": "Hóa đơn tiền điện tháng 10.txt"
+ },
+ {
+  "q": "PE0100045821",
+  "expect": "Hóa đơn tiền điện tháng 10.txt"
+ },
+ {
+  "q": "internet keeps dropping",
+  "expect": "wifi router notes.md"
+ },
+ {
+  "q": "PPPoE-691",
+  "expect": "wifi router notes.md"
+ },
+ {
+  "q": "voice memo",
+  "expect": "voice memo 12.wav"
+ },
+ {
+  "q": "IMG_3311",
+  "expect": "IMG_3311.jpg"
+ },
+ {
+  "q": "zebra kind:video",
+  "expect": "Masai Mara - day 2.mp4"
+ },
+ {
+  "q": "lease kind:pdf",
+  "expect": "Lease - 14 Elm Street.pdf"
+ },
+ {
+  "q": "PAY-7731-DX",
+  "expect": "Screenshot 2026-10-21 091533.png"
+ },
+ {
+  "q": "payment declined error",
+  "expect": "Screenshot 2026-10-21 091533.png"
+ },
+ {
+  "q": "QX7RPL",
+  "expect": "Screenshot 2026-10-25 220107.png"
+ },
+ {
+  "q": "boarding pass to Ho Chi Minh City",
+  "expect": "Screenshot 2026-10-25 220107.png"
+ },
+ {
+  "q": "YF-88213-C",
+  "expect": "scan 2026-09-12.pdf",
+  "loc": 1
+ },
+ {
+  "q": "yellow fever vaccination certificate",
+  "expect": "scan 2026-09-12.pdf",
+  "loc": 1
+ },
+ {
+  "q": "quantum chromodynamics lattice",
+  "expect": null
+ },
+ {
+  "q": "stock market crash",
+  "expect": null
+ }
+]

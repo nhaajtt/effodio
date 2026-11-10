@@ -63,11 +63,18 @@ pub struct Settings {
     pub prefix_last: bool,
     /// How much of a `-word`'s similarity is taken off.
     pub negative_weight: f32,
+    /// A match by meaning needs at least this similarity, whatever its place among the others: in a small index
+    /// something always stands out, even for words that are nowhere. (Measured on this model: what a query is
+    /// about scores 0.70 and up, what it isn't about 0.60 and down.)
+    pub floor: f64,
+    /// A segment this close to the best one's similarity matches too, without clearing the gate: with few files
+    /// the scale is rough, and the runner-up of two near-equal answers shouldn't vanish.
+    pub near: f64,
 }
 
 impl Default for Settings {
     fn default() -> Settings {
-        Settings { limit: 30, gate: 2.0, word_weight: 2.0, prefix_last: false, negative_weight: 0.6 }
+        Settings { limit: 30, gate: 2.0, word_weight: 2.0, prefix_last: false, negative_weight: 0.6, floor: 0.62, near: 0.025 }
     }
 }
 
@@ -462,8 +469,18 @@ impl Searcher {
         let (meaning_weight, words_weight) =
             if lookup { (0.5, settings.word_weight * 2.0) } else { (1.0, settings.word_weight) };
         let hinted = kind_hints(&query.text);
+        let floor = if negative.is_some() { f64::MIN } else { settings.floor };
+        // The best of those that clear the gate; with none, nothing is near it either.
+        let top_cosine = best
+            .values()
+            .filter(|&&(z, cosine, _)| z >= settings.gate && cosine >= floor)
+            .map(|&(_, cosine, _)| cosine)
+            .fold(f64::NAN, f64::max);
+        let by_meaning = |z: f64, cosine: f64| {
+            cosine >= floor && (z >= settings.gate || (z >= 1.0 && cosine >= top_cosine - settings.near))
+        };
         let mut candidates: HashSet<i64> =
-            best.iter().filter(|(_, &(z, _, _))| z >= settings.gate).map(|(&file, _)| file).collect();
+            best.iter().filter(|(_, &(z, cosine, _))| by_meaning(z, cosine)).map(|(&file, _)| file).collect();
         candidates.extend(coverage.iter().filter(|(_, &share)| share >= 0.5).map(|(&file, _)| file));
         if let Some(required) = &required {
             // An exact phrase is enough to qualify, and nothing without it does.
@@ -502,7 +519,7 @@ impl Searcher {
             let semantic = best.get(&file).copied();
             let keyword = words.get(&file);
             // Point at the best segment by meaning if it stands out; else at the segment the words matched.
-            let by_meaning = semantic.is_some_and(|(z, _, _)| z >= settings.gate || keyword.is_none());
+            let by_meaning = semantic.is_some_and(|(z, cosine, _)| by_meaning(z, cosine) || keyword.is_none());
             let segment = match (by_meaning, semantic, keyword) {
                 (true, Some((_, _, row)), _) => self.row_segment[row],
                 (_, _, Some(found)) => found.segment,
@@ -813,7 +830,7 @@ mod tests {
         let query = parse(text, 2_000_000.0);
         let vector = (!query.text.is_empty()).then(|| FakeEmbed::vector(&query.text));
         let negative = (!query.negative.is_empty()).then(|| FakeEmbed::vector(&query.negative.join(" ")));
-        searcher.search(&query, vector.as_deref(), negative.as_deref(), None, &Settings::default()).unwrap()
+        searcher.search(&query, vector.as_deref(), negative.as_deref(), None, &Settings { floor: 0.0, ..Settings::default() }).unwrap()
     }
 
     fn names(hits: &[Hit]) -> Vec<String> {
@@ -916,7 +933,7 @@ mod tests {
         // More like the lecture notes: the talk, and not the notes themselves.
         let notes = hits.iter().find(|hit| hit.path.ends_with("sleep.txt")).unwrap();
         let vector = searcher.vector_of(searcher.first_vector_segment(notes.file).unwrap()).unwrap().unwrap();
-        let similar = searcher.search(&Query::default(), Some(&vector), None, Some(notes.file), &Settings::default()).unwrap();
+        let similar = searcher.search(&Query::default(), Some(&vector), None, Some(notes.file), &Settings { floor: 0.0, ..Settings::default() }).unwrap();
         assert_eq!(names(&similar)[0], "talk.mp3");
         assert!(!names(&similar).contains(&"sleep.txt".to_string()));
     }
