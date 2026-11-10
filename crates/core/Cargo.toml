@@ -1,0 +1,31 @@
+[package]
+name = "glint-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Glint's engine: crawling, readers, the index and hybrid search"
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rusqlite = { version = "0.32", features = ["bundled"] }
+half = "2"
+rayon = "1"
+walkdir = "2"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "bmp", "webp", "tiff"] }
+kamadak-exif = "0.5"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+quick-xml = "0.36"
+unicode-normalization = "0.1"
+blake3 = "1"
+pdf-extract = "0.9"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", features = [
+  "Foundation", "Foundation_Collections", "Globalization", "Graphics_Imaging", "Media_Ocr", "Data_Pdf",
+  "Storage", "Storage_Streams", "Win32_Foundation", "Win32_System_WinRT",
+] }
+
+[dev-dependencies]
+tempfile = "3"
