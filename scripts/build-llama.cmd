@@ -16,6 +16,11 @@ git -C "%SRC%" apply --check "%ROOT%\scripts\llama-no-logits.patch" 2>nul && git
 
 set GPU=
 if "%FLAVOR%"=="vulkan" set GPU=-DGGML_VULKAN=ON
+rem Without the Vulkan SDK installed, the tools scripts\build-vulkan-deps.cmd made are used.
+set VK=%ROOT%\vendor\vulkan-sdk
+if "%FLAVOR%"=="vulkan" if not defined VULKAN_SDK if exist "%VK%\bin\glslc.exe" (
+  set GPU=-DGGML_VULKAN=ON "-DCMAKE_PREFIX_PATH=%VK%" "-DVulkan_INCLUDE_DIR=%VK%\include" "-DVulkan_LIBRARY=%VK%\lib\vulkan-1.lib" "-DVulkan_GLSLC_EXECUTABLE=%VK%\bin\glslc.exe"
+)
 if "%FLAVOR%"=="cuda" set GPU=-DGGML_CUDA=ON
 
 cmake -S "%SRC%" -B "%BUILD%" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl ^

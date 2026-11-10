@@ -167,7 +167,7 @@ export const openMain = (view?: string, query?: string) =>
 export const hidePanel = () => invoke<void>("hide_panel");
 export const pinPanel = (pinned: boolean) => invoke<void>("pin_panel", { pinned });
 export const quit = () => invoke<void>("quit");
-export const launchQuery = () => invoke<string | null>("launch_query");
+export const launchTarget = () => invoke<{ view: string | null; query: string | null } | null>("launch_target");
 export const ocrLanguages = () => invoke<string[]>("ocr_languages");
 
 const thumbs = new Map<string, Promise<string>>();

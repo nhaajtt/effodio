@@ -36,6 +36,14 @@
       "nsis": {
         "installMode": "currentUser"
       }
-    }
+    },
+    "externalBin": [
+      "binaries/glint-helper"
+    ],
+    "resources": {
+      "libraries/": "./"
+    },
+    "publisher": "Glint",
+    "copyright": "MIT License"
   }
 }

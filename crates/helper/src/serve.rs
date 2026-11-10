@@ -195,7 +195,7 @@ impl Session {
             }
             "duplicates" => {
                 self.refresh()?;
-                let threshold = request["threshold"].as_f64().unwrap_or(0.965) as f32;
+                let threshold = request["threshold"].as_f64().unwrap_or(0.94) as f32;
                 let groups = self.searcher.duplicates(threshold, 200)?;
                 let mut out = Vec::new();
                 for group in groups {
@@ -249,7 +249,7 @@ impl Session {
                 Ok(json!({"id": self.searcher.store.db.last_insert_rowid()}))
             }
             "collection_remove" => {
-                let id = request["id"].as_i64().ok_or_else(|| anyhow!("which collection?"))?;
+                let id = request["collection"].as_i64().ok_or_else(|| anyhow!("which collection?"))?;
                 self.searcher.store.db.execute("DELETE FROM collections WHERE id = ?", [id])?;
                 Ok(json!({}))
             }

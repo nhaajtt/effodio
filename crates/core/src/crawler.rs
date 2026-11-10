@@ -66,6 +66,31 @@ pub fn see(path: &Path, roots: &[Root], custom: &Custom) -> Option<Seen> {
     })
 }
 
+/// What a path the watcher saw change means for the index.
+#[derive(Debug, PartialEq)]
+pub enum Change {
+    /// A file the rules accept: read it if it's new or changed.
+    Read(Seen),
+    /// Nothing is there any more: a file that's gone, or a folder with everything that was in it.
+    Gone,
+    /// A file that's there but the rules leave out (renamed into a secret's name, grown too large…): it alone
+    /// leaves the index.
+    LeftOut,
+    /// A folder that's there: only a walk says what changed in it. Its files must never be forgotten for this.
+    Folder,
+}
+
+pub fn change(path: &Path, roots: &[Root], custom: &Custom) -> Change {
+    match std::fs::metadata(path) {
+        Err(_) => Change::Gone,
+        Ok(metadata) if metadata.is_dir() => Change::Folder,
+        Ok(_) => match see(path, roots, custom) {
+            Some(seen) => Change::Read(seen),
+            None => Change::LeftOut,
+        },
+    }
+}
+
 fn is_project_folder(folder: &Path) -> bool {
     let Ok(entries) = std::fs::read_dir(folder) else { return false };
     let names: Vec<String> =
@@ -189,5 +214,10 @@ mod tests {
         assert!(see(&base.join("project/docs/Screenshot 1.png"), &roots, &custom).is_some());
         assert!(see(&base.join("skipme/a.txt"), &roots, &custom).is_none());
         assert!(see(&base.join("node_modules/readme.md"), &roots, &custom).is_none());
+        // What a change the watcher reports means: a folder that still exists is never "gone".
+        assert_eq!(change(&base.join("trip"), &roots, &custom), Change::Folder);
+        assert!(matches!(change(&base.join("trip/beach.jpg"), &roots, &custom), Change::Read(_)));
+        assert_eq!(change(&base.join("id_rsa"), &roots, &custom), Change::LeftOut);
+        assert_eq!(change(&base.join("trip/deleted.jpg"), &roots, &custom), Change::Gone);
     }
 }

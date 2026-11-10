@@ -6,7 +6,11 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-/// `%LOCALAPPDATA%\Glint` (or `$GLINT_HOME`): the index, the model, the settings, the thumbnails.
+/// The app's identifier: its data folder is named by it, which is also where the uninstaller looks when asked to
+/// delete the application data.
+pub const IDENTIFIER: &str = "app.glint.search";
+
+/// `%LOCALAPPDATA%\app.glint.search` (or `$GLINT_HOME`): the index, the model, the settings, the thumbnails.
 pub fn home() -> PathBuf {
     if let Some(chosen) = std::env::var_os("GLINT_HOME") {
         return PathBuf::from(chosen);
@@ -15,7 +19,7 @@ pub fn home() -> PathBuf {
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/share")))
         .unwrap_or_else(|| PathBuf::from("."));
-    base.join("Glint")
+    base.join(IDENTIFIER)
 }
 
 pub fn index_file() -> PathBuf {

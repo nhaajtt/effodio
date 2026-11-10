@@ -286,6 +286,20 @@ impl Store {
         Ok(ids.len())
     }
 
+    /// One file leaves the index; nothing else, whatever else shares the start of its path.
+    pub fn forget_file(&mut self, path: &Path) -> Result<bool> {
+        let exact = path.to_string_lossy().into_owned();
+        let transaction = self.db.transaction()?;
+        let id: Option<i64> =
+            transaction.query_row("SELECT id FROM files WHERE path = ?", [&exact], |row| row.get(0)).optional()?;
+        if let Some(id) = id {
+            delete_segments(&transaction, id)?;
+            transaction.execute("DELETE FROM files WHERE id = ?", [id])?;
+        }
+        transaction.commit()?;
+        Ok(id.is_some())
+    }
+
     /// Files waiting to be read (`pending`), or long files waiting for their later pages (`partial`), smallest first
     /// within a kind so that the index fills quickly.
     pub fn waiting(&self, state: &str, limit: usize) -> Result<Vec<FileRow>> {
@@ -502,6 +516,12 @@ mod tests {
         let beside = format!("C:{sep}root{sep}sub_other.txt");
         store.reconcile(&[], &[seen(&inside, 1), seen(&beside, 1)]).unwrap();
         assert_eq!(store.forget(Path::new(&format!("C:{sep}root{sep}sub"))).unwrap(), 1);
+        assert_eq!(store.counts().unwrap().files, 1);
+        // One file by its exact path: a folder's path takes nothing with it.
+        store.reconcile(&[], &[seen(&inside, 1), seen(&beside, 1)]).unwrap();
+        assert!(!store.forget_file(Path::new(&format!("C:{sep}root{sep}sub"))).unwrap());
+        assert_eq!(store.counts().unwrap().files, 2);
+        assert!(store.forget_file(Path::new(&inside)).unwrap());
         assert_eq!(store.counts().unwrap().files, 1);
     }
 }

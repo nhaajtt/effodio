@@ -389,8 +389,10 @@ impl Searcher {
             if term.chars().count() >= 3 && !patterns[index].ends_with('*') && !self.is_indexed(&patterns[index]) {
                 // The index keeps stems ("renovation" as "renov"), so a word cut short while typing ("renovat")
                 // is the start of none: a few letters fewer may be.
+                // A code or a number is never cut: "55102" must not find "55120394".
                 let letters: Vec<char> = term.chars().collect();
-                let shorter = (0..=3usize)
+                let cuts = if term.chars().any(char::is_numeric) { 0 } else { 3usize };
+                let shorter = (0..=cuts)
                     .filter(|cut| letters.len() - cut.min(&letters.len()) >= 3)
                     .map(|cut| format!("\"{}\"*", letters[..letters.len() - cut].iter().collect::<String>()))
                     .find(|pattern| self.is_indexed(pattern));
@@ -878,6 +880,8 @@ mod tests {
         assert_eq!(names(&search(&mut searcher, "renovat"))[0], "invoice.txt");
         // By file name.
         assert_eq!(names(&search(&mut searcher, "tenancy"))[0], "tenancy.txt");
+        // A code that's in no file doesn't find the nearest other code.
+        assert!(search(&mut searcher, "20419").iter().all(|hit| hit.words == 0.0));
         // Nothing stands out for words that are nowhere.
         assert!(search(&mut searcher, "zzyzx quuxly").is_empty());
     }

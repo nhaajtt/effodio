@@ -96,7 +96,7 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
           const remove = h("span.remove.icon-button", { title: t("collections.remove"), style: { width: "24px", height: "24px" } }, icon("close", 12));
           remove.addEventListener("click", (event) => {
             event.stopPropagation();
-            api.ask({ op: "collection_remove", id: collection.id }).then(loadCollections, report);
+            api.ask({ op: "collection_remove", collection: collection.id }).then(loadCollections, report);
           });
           return h(
             "button.nav-item",
@@ -273,7 +273,11 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
   });
 
   go(view);
-  void api.launchQuery().then((query) => query && view !== "setup" && search(query));
+  void api.launchTarget().then((target) => {
+    if (!target || view === "setup") return;
+    if (target.query) search(target.query);
+    else if (target.view) go(target.view as View);
+  });
   void refresh();
   void loadCollections();
   requestAnimationFrame(() => navLens.moveTo(navItems.get(view) ?? null, false));

@@ -60,8 +60,8 @@ pub struct App {
     pause_item: Mutex<Option<MenuItem<tauri::Wry>>>,
     hotkey: Mutex<String>,
     door: Mutex<Option<door::Door>>,
-    /// A search asked for on the command line, until the window picks it up.
-    launch_query: Mutex<Option<String>>,
+    /// Where the window should open (a view or a search), until its page picks it up.
+    launch: Mutex<Option<Value>>,
 }
 
 fn state(app: &AppHandle) -> tauri::State<'_, App> {
@@ -338,7 +338,11 @@ fn show_main(app: &AppHandle, view: Option<&str>, query: Option<&str>) {
     let window = match app.get_webview_window("main") {
         Some(window) => window,
         None => match build_main(app) {
-            Ok(window) => window,
+            Ok(window) => {
+                // Its page isn't loaded yet: it asks for where to go once it is.
+                *state(app).launch.lock().unwrap() = Some(json!({"view": view, "query": query}));
+                window
+            }
             Err(_) => return,
         },
     };
@@ -649,10 +653,10 @@ fn pin_panel(app: AppHandle, pinned: bool) {
     state(&app).pinned.store(pinned, Ordering::Relaxed);
 }
 
-/// The search the app was started with, once.
+/// Where the window was asked to open, once.
 #[tauri::command(async)]
-fn launch_query(app: AppHandle) -> Option<String> {
-    state(&app).launch_query.lock().unwrap().take()
+fn launch_target(app: AppHandle) -> Option<Value> {
+    state(&app).launch.lock().unwrap().take()
 }
 
 #[tauri::command(async)]
@@ -766,12 +770,12 @@ fn main() {
             pause_item: Mutex::new(None),
             hotkey: Mutex::new(String::new()),
             door: Mutex::new(None),
-            launch_query: Mutex::new(None),
+            launch: Mutex::new(None),
         })
         .invoke_handler(tauri::generate_handler![
             ask, get_config, set_config, status, index_state, index_now, index_retry, estimate, model_download,
             speed_check, pick_folders, pick_example, suggested_folders, save_example, thumbnail, open_result, reveal,
-            copy_files, open_main, hide_panel, pin_panel, quit, ocr_languages, launch_query,
+            copy_files, open_main, hide_panel, pin_panel, quit, ocr_languages, launch_target,
         ])
         .setup(move |app| {
             let handle = app.handle().clone();
@@ -786,10 +790,7 @@ fn main() {
                 show_main(&handle, Some("setup"), None);
             } else {
                 if !hidden {
-                    build_main(&handle)?;
-                    // The page asks for this once it has loaded.
-                    *state(&handle).launch_query.lock().unwrap() = wanted.clone();
-                    show_main(&handle, None, None);
+                    show_main(&handle, None, wanted.as_deref());
                 }
                 start_index(&handle, None);
             }

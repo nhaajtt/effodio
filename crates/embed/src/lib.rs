@@ -328,7 +328,7 @@ pub fn cosine(a: &[f32], b: &[f32]) -> f32 {
     a.iter().zip(b).map(|(x, y)| x * y).sum()
 }
 
-/// Where the app keeps the model: `%LOCALAPPDATA%\Glint\Models`, or `$GLINT_MODELS`.
+/// Where the app keeps the model: `%LOCALAPPDATA%\app.glint.search\Models`, or `$GLINT_MODELS`.
 pub fn models_folder() -> PathBuf {
     if let Some(chosen) = std::env::var_os("GLINT_MODELS") {
         return PathBuf::from(chosen);
@@ -336,5 +336,8 @@ pub fn models_folder() -> PathBuf {
     let base = std::env::var_os("LOCALAPPDATA")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".local/share"));
-    base.join("Glint").join("Models")
+    match std::env::var_os("GLINT_HOME") {
+        Some(home) => PathBuf::from(home).join("Models"),
+        None => base.join("app.glint.search").join("Models"),
+    }
 }

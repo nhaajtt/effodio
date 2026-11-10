@@ -165,24 +165,38 @@ fn index(arguments: &Arguments) -> Result<()> {
 
 /// Reads single files the watcher saw change (paths on the command line), without a crawl.
 fn touch(arguments: &Arguments) -> Result<()> {
+    use glint_core::crawler::{change, Change};
     let config = arguments.config();
     let mut store = Store::open(&arguments.database())?;
     store.claim_vector_source(&vector_source())?;
-    let mut waiting = 0;
+    let stop = AtomicBool::new(false);
+    let mut walk = false;
     for path in &arguments.bare {
         let path = PathBuf::from(path);
-        match glint_core::crawler::see(&path, &config.roots, &config.rules) {
-            Some(seen) => waiting += store.touch(&seen)? as usize,
-            None => {
+        match change(&path, &config.roots, &config.rules) {
+            Change::Read(seen) => {
+                store.touch(&seen)?;
+            }
+            Change::Gone => {
                 store.forget(&path)?;
             }
+            Change::LeftOut => {
+                store.forget_file(&path)?;
+            }
+            // A folder was renamed, moved in or changed in a way only a walk can tell.
+            Change::Folder => walk = true,
         }
     }
-    if waiting == 0 {
+    if walk {
+        let found = crawl(&config.roots, &config.rules, &stop);
+        store.reconcile(&config.root_paths(), &found.files)?;
+    }
+    let counts = store.counts()?;
+    if counts.pending == 0 && counts.partial == 0 {
         emit(&json!({"event": "finished", "indexed": 0, "failed": 0, "seconds": 0.0, "stopped": false}));
         return Ok(());
     }
-    let (stop, pause) = (AtomicBool::new(false), AtomicBool::new(false));
+    let pause = AtomicBool::new(false);
     let mut model = Model(open_model(false, device(&config))?);
     let options = Options { ocr: config.ocr, ..Options::default() };
     let mut indexer = Indexer { store: &mut store, embed: &mut model, options, stop: &stop, pause: &pause };
