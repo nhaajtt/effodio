@@ -29,6 +29,20 @@ try {
     }
   }
 
+  # The Visual C++ runtime the libraries were built against goes beside them, so a computer that never had it
+  # installed runs the app too.
+  $redist = Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022\*\VC\Redist\MSVC\*\x64" -Directory -ErrorAction SilentlyContinue |
+    Sort-Object FullName | Select-Object -Last 1
+  if ($redist) {
+    foreach ($name in "Microsoft.VC143.CRT\msvcp140.dll", "Microsoft.VC143.CRT\vcruntime140.dll",
+                      "Microsoft.VC143.CRT\vcruntime140_1.dll", "Microsoft.VC143.OPENMP\vcomp140.dll") {
+      $file = Join-Path $redist.FullName $name
+      if (Test-Path $file) { Copy-Item $file $libraries -Force }
+    }
+  } else {
+    Write-Warning "The Visual C++ runtime wasn't found to bundle: computers without it will need it installed."
+  }
+
   Push-Location app
   npm install --no-audit --no-fund --silent
   npx tauri build
