@@ -44,7 +44,7 @@ pub fn download(folder: &Path) -> Result<()> {
             let response = request.call().with_context(|| format!("can't download {}", file.name))?;
             // A server that ignores the range sends the whole file again.
             let resumed = response.status() == 206;
-            let mut output = std::fs::OpenOptions::new().create(true).write(true).open(&part)?;
+            let mut output = std::fs::OpenOptions::new().create(true).truncate(false).write(true).open(&part)?;
             if resumed {
                 output.seek(SeekFrom::End(0))?;
             } else {
