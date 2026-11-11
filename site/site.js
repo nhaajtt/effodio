@@ -41,6 +41,7 @@
     root.lang = lang;
     document.querySelectorAll("[data-t]").forEach((el) => (el.textContent = words()[el.dataset.t] ?? en[el.dataset.t]));
     $("lang").textContent = lang === "vi" ? "EN" : "VI";
+    document.dispatchEvent(new CustomEvent("glint:lang"));
   }
   $("lang").onclick = () => {
     lang = lang === "vi" ? "en" : "vi";
@@ -88,6 +89,7 @@
     if (still) return;
     el.classList.add("reveal");
     el.style.transitionDelay = (index % 3) * 70 + "ms";
+    el.addEventListener("transitionend", () => (el.style.transitionDelay = ""), { once: true });
     seen.observe(el);
   });
 
@@ -117,6 +119,7 @@
           `<div class="row" style="animation-delay:${index * 90}ms"><span class="thumb k-${kind}"><svg viewBox="0 0 24 24">${icons[kind]}</svg></span><div><strong>${name}</strong><small>${sub}</small></div><span class="badge">${badge}</span></div>`,
       )
       .join("");
+    document.dispatchEvent(new CustomEvent("glint:search"));
   }
   async function run() {
     if (still) {

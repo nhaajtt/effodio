@@ -1,0 +1,64 @@
+/* The moving parts: the field of points behind everything, the lens under the pointer, tilt, sparks, the tape. */
+
+#stars { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+.defs { position: absolute; }
+
+/* A drop of glass that rides the pointer and bends what's under it. */
+#lens {
+  position: fixed; left: 0; top: 0; width: 104px; height: 104px; border-radius: 50%;
+  pointer-events: none; z-index: 40; opacity: 0; transition: opacity 0.35s var(--ease);
+  -webkit-backdrop-filter: saturate(190%) brightness(1.12);
+  backdrop-filter: saturate(190%) brightness(1.12);
+  backdrop-filter: url(#bend) saturate(190%) brightness(1.12);
+  border: 1px solid var(--edge);
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.16), inset 0 1px 0 var(--edge), inset 0 -8px 16px rgba(217, 166, 58, 0.12), 0 10px 30px rgba(0, 0, 0, 0.22);
+}
+#lens.on { opacity: 1; }
+
+/* The headline arrives a letter at a time; "Find it." catches the light now and then. */
+.ch { display: inline-block; animation: letter 0.9s var(--spring) both; }
+@keyframes letter { from { opacity: 0; transform: translateY(0.55em) rotate(9deg) scale(0.8); filter: blur(12px); } }
+h1 em {
+  background: linear-gradient(100deg, #f4d58a 0%, var(--accent) 22%, #9b7bf5 40%, #fff 50%, #9b7bf5 60%, var(--accent) 78%, #f4d58a 100%);
+  background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  animation: sweep 6s var(--ease) infinite;
+}
+@keyframes sweep { 0%, 35% { background-position: 100% 0; } 75%, 100% { background-position: 0 0; } }
+
+/* Glass tilts toward the pointer. */
+.card, .panel, .facts { transform-style: preserve-3d; transition: transform 0.5s var(--spring); will-change: transform; }
+.card:hover, .panel:hover, .facts:hover { transition-duration: 0.12s; }
+.reveal { transform: none; translate: 0 22px; transition: opacity 0.7s var(--ease), translate 0.8s var(--spring), transform 0.5s var(--spring); }
+.reveal.in { translate: 0 0; }
+
+.btn, .chip { transition: transform 0.25s var(--spring), translate 0.35s var(--spring), filter 0.2s, background 0.2s; }
+
+.spark {
+  position: fixed; z-index: 50; pointer-events: none;
+  background: linear-gradient(140deg, #fff, #f4d58a 40%, var(--accent));
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+}
+
+/* Searches running past, as fast as you scroll. */
+.tape { width: 100vw; margin: 84px 0 0 calc(50% - 50vw); overflow: hidden; padding: 6px 0; }
+.run {
+  display: flex; white-space: nowrap; will-change: transform;
+  font: 700 clamp(46px, 8.5vw, 116px)/1.12 var(--display); letter-spacing: -0.03em;
+  color: transparent; -webkit-text-stroke: 1px var(--ink-3);
+}
+.run + .run { -webkit-text-stroke: 0; color: var(--ink); opacity: 0.09; }
+.run span { padding: 0 0.28em; }
+.run b { color: var(--accent); -webkit-text-stroke: 0; font-weight: 400; opacity: 1; }
+.tape + section { padding-top: 56px; }
+
+/* Light and dark swap through an iris that opens from the button. */
+::view-transition-old(root) { animation: none; }
+::view-transition-new(root) { animation: iris 0.75s var(--ease); }
+@keyframes iris { from { clip-path: circle(0 at var(--vx, 50%) var(--vy, 0)); } to { clip-path: circle(150vmax at var(--vx, 50%) var(--vy, 0)); } }
+
+@media (hover: none), (pointer: coarse) { #lens { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  #lens, .tape { display: none; }
+  .reveal { translate: 0 0; }
+}
