@@ -98,5 +98,7 @@
 .g-form button { padding: 10px 22px; border-radius: 99px; border: 0; font: 600 14px var(--sans); color: #1a1305; background: var(--ac); cursor: pointer; }
 .g-form button:disabled { opacity: 0.6; cursor: default; }
 
-/* The install line where the page itself puts it, before a script moves it in beside the introduction. */
-.g-top-static { padding: 0 var(--lab-content-x) 28px; margin-top: 0; animation: none; }
+/* The install line: a strip of its own under the introduction, the whole command in view. */
+.g-top-static { padding: 22px var(--lab-content-x); margin: 0; animation: none; border-bottom: 1px solid var(--border); }
+.g-top-static .g-cmd { width: fit-content; max-width: 100%; }
+.g-top-static .g-cmd code { flex: 0 1 auto; }

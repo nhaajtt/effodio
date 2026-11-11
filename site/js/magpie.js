@@ -20,18 +20,13 @@ $("ffmpeg").textContent = TEXT.ffmpeg;
 $("thanks").textContent = TEXT.thanks;
 
 // The install line also sits at the top of the page, under the introduction.
-// It is in the page already; here it gets its words in the reader's language and moves in beside the introduction.
+// It is in the page already; here it gets its words in the reader's language.
 const top = document.getElementById("top-install");
 if (top) {
   top.querySelector("code").textContent = COMMAND;
   top.querySelector("button").textContent = TEXT.copy;
   top.querySelector("[data-label]").textContent = TEXT.download;
   top.querySelector("a").href = INSTALLER;
-  const intro = document.querySelector(".lab-intro-main");
-  if (intro) {
-    top.classList.remove("g-top-static");
-    intro.append(top);
-  }
 }
 
 document.querySelectorAll(".g-cmd").forEach((bar) => {
