@@ -78,23 +78,27 @@ impl Default for Settings {
     }
 }
 
-struct FileMeta {
-    kind: FileKind,
+pub(crate) struct FileMeta {
+    pub(crate) kind: FileKind,
     /// Folded, for `in:` filters.
-    path: String,
-    extension: String,
-    modified: f64,
+    pub(crate) path: String,
+    pub(crate) extension: String,
+    pub(crate) modified: f64,
+    /// A picture's main colours, for `color:` filters.
+    pub(crate) tones: Vec<String>,
 }
 
 pub struct Searcher {
     pub store: Store,
-    halves: Vec<half::f16>,
-    row_file: Vec<i64>,
-    row_segment: Vec<i64>,
-    row_modality: Vec<Modality>,
-    row_sets_scale: Vec<bool>,
-    files: HashMap<i64, FileMeta>,
-    loaded: bool,
+    pub(crate) halves: Vec<half::f16>,
+    pub(crate) row_file: Vec<i64>,
+    pub(crate) row_segment: Vec<i64>,
+    pub(crate) row_modality: Vec<Modality>,
+    pub(crate) row_sets_scale: Vec<bool>,
+    pub(crate) files: HashMap<i64, FileMeta>,
+    /// Who is in which files, by folded name, for `person:` filters.
+    pub(crate) people: HashMap<String, HashSet<i64>>,
+    pub(crate) loaded: bool,
 }
 
 /// On the map, a file is tied to at most this many others whose centred vector is at least `TIE_FLOOR` close to its
@@ -164,7 +168,7 @@ pub fn is_lookup(terms: &[String]) -> bool {
         })
 }
 
-fn dot(a: &[f32], b: &[f32]) -> f32 {
+pub(crate) fn dot(a: &[f32], b: &[f32]) -> f32 {
     let mut sums = [0f32; 8];
     for (x, y) in a.chunks_exact(8).zip(b.chunks_exact(8)) {
         for lane in 0..8 {
@@ -220,6 +224,7 @@ impl Searcher {
             row_modality: Vec::new(),
             row_sets_scale: Vec::new(),
             files: HashMap::new(),
+            people: HashMap::new(),
             loaded: false,
         };
         if load_vectors {
@@ -250,7 +255,7 @@ impl Searcher {
 
     fn reload_files(&mut self) -> Result<()> {
         self.files.clear();
-        let mut select = self.store.db.prepare("SELECT id, kind, path, mtime FROM files")?;
+        let mut select = self.store.db.prepare("SELECT id, kind, path, mtime, info FROM files")?;
         let mut rows = select.query([])?;
         while let Some(row) = rows.next()? {
             let path: String = row.get(2)?;
@@ -263,8 +268,12 @@ impl Searcher {
                 path: text::fold(&path),
                 extension,
                 modified: row.get(3)?,
+                tones: crate::insight::tones_in(row.get_ref(4)?.as_str().unwrap_or_default()),
             });
         }
+        drop(rows);
+        drop(select);
+        self.people = crate::insight::people(&self.store).unwrap_or_default();
         Ok(())
     }
 
@@ -300,7 +309,7 @@ impl Searcher {
 
     /// Cosine similarity of `query` with every stored vector (all are normalized): a matrix-vector product, a block
     /// of rows at a time, each block turned into float32 first.
-    fn scores(&self, query: &[f32]) -> Vec<f32> {
+    pub(crate) fn scores(&self, query: &[f32]) -> Vec<f32> {
         const BLOCK: usize = 512;
         self.halves
             .par_chunks(BLOCK * DIMENSION)
@@ -319,6 +328,8 @@ impl Searcher {
             && (query.extensions.is_empty() || query.extensions.contains(&meta.extension))
             && query.after.map_or(true, |after| meta.modified >= after)
             && query.before.map_or(true, |before| meta.modified <= before)
+            && query.colors.iter().all(|color| meta.tones.iter().any(|tone| tone == color))
+            && query.people.iter().all(|name| self.people.get(name).is_some_and(|files| files.contains(&file)))
     }
 
     fn is_indexed(&self, pattern: &str) -> bool {

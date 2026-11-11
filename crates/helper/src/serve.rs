@@ -8,6 +8,7 @@ use crate::{device, emit, open_model, vector_source};
 use anyhow::{anyhow, bail, Result};
 use glint_core::config::{self, Config};
 use glint_core::indexer::query_prompt;
+use glint_core::kinds::FileKind;
 use glint_core::query::{self, Query};
 use glint_core::readers::{images, media, Picture};
 use glint_core::search::{Searcher, Settings};
@@ -35,6 +36,56 @@ pub struct Session {
     data_version: i64,
 }
 
+/// What the tidy-up looks for among the photos, in words the model reads.
+const TIDY: &[(&str, &str)] = &[
+    ("blurry", "a blurry, out of focus, shaky photo"),
+    ("receipts", "a photo of a receipt, a bill or an invoice"),
+    ("papers", "a photo of a printed page, a form or a whiteboard"),
+    ("memes", "a meme: a funny picture with a caption"),
+    ("dark", "a photo that came out almost completely black"),
+];
+
+/// What an album can be about: the words the model reads, then its name in English and in Vietnamese.
+const SUBJECTS: &[(&str, &str, &str)] = &[
+    ("the beach and the sea", "Beach", "Biển"),
+    ("mountains and hills", "Mountains", "Núi"),
+    ("a forest, trees and plants", "Nature", "Thiên nhiên"),
+    ("flowers", "Flowers", "Hoa"),
+    ("a sunset or a sunrise", "Sunsets", "Hoàng hôn"),
+    ("a city street and buildings", "City", "Phố xá"),
+    ("a building's architecture", "Architecture", "Kiến trúc"),
+    ("the inside of a home, rooms and furniture", "Home", "Nhà cửa"),
+    ("food and drinks on a table", "Food", "Đồ ăn"),
+    ("a cat or a dog, pets", "Pets", "Thú cưng"),
+    ("wild animals and birds", "Animals", "Động vật"),
+    ("a portrait of one person", "Portraits", "Chân dung"),
+    ("a selfie", "Selfies", "Ảnh tự chụp"),
+    ("a group of people together", "Together", "Tụ họp"),
+    ("a baby or small children", "Children", "Trẻ nhỏ"),
+    ("a wedding", "Wedding", "Đám cưới"),
+    ("a party or a birthday", "Parties", "Tiệc tùng"),
+    ("a concert or a stage", "Shows", "Sân khấu"),
+    ("sport and exercise", "Sport", "Thể thao"),
+    ("cars and motorbikes", "Vehicles", "Xe cộ"),
+    ("an airplane, an airport, travelling", "Travel", "Du lịch"),
+    ("snow and winter", "Winter", "Mùa đông"),
+    ("the night, lights in the dark", "Night", "Đêm"),
+    ("a drawing, a painting or an illustration", "Art", "Tranh vẽ"),
+    ("a chart, a graph or a diagram", "Charts", "Biểu đồ"),
+    ("a map", "Maps", "Bản đồ"),
+    ("a printed page or a document", "Papers", "Giấy tờ"),
+    ("a receipt or an invoice", "Receipts", "Hóa đơn"),
+    ("a product photo, something for sale", "Things", "Đồ vật"),
+    ("clothes and fashion", "Clothes", "Quần áo"),
+    ("a computer screen with an app or a website", "Screens", "Màn hình"),
+    ("a chat conversation with message bubbles", "Chats", "Tin nhắn"),
+    ("a video game", "Games", "Trò chơi"),
+    ("a meme with a caption", "Memes", "Ảnh chế"),
+    ("a logo or an icon", "Logos", "Biểu trưng"),
+    ("work at an office, a desk, a meeting", "Work", "Công việc"),
+    ("a school, a classroom, studying", "School", "Học tập"),
+];
+
 fn now() -> f64 {
     std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs_f64()).unwrap_or(0.0)
 }
@@ -43,6 +94,8 @@ impl Session {
     pub fn open(database: &Path, config: Config) -> Result<Session> {
         let store = Store::open(database)?;
         store.claim_vector_source(&vector_source())?;
+        // Saved searches remember the newest file they had been shown.
+        let _ = store.db.execute("ALTER TABLE collections ADD COLUMN mark INTEGER NOT NULL DEFAULT 0", []);
         let searcher = Searcher::new(store, false)?;
         Ok(Session { searcher, config, text: None, full: None, remembered: HashMap::new(), data_version: -1 })
     }
@@ -137,6 +190,36 @@ impl Session {
         }))
     }
 
+    fn member(&self, id: i64) -> Result<Option<Value>> {
+        Ok(self.searcher.store.file(id)?.map(|row| {
+            json!({
+                "file": row.id, "path": row.path, "kind": row.kind, "size": row.size,
+                "modified": row.modified, "info": row.info,
+            })
+        }))
+    }
+
+    fn members(&self, ids: &[i64]) -> Result<Vec<Value>> {
+        let mut out = Vec::new();
+        for &id in ids {
+            out.extend(self.member(id)?);
+        }
+        Ok(out)
+    }
+
+    fn newest_file(&self) -> i64 {
+        self.searcher.store.db.query_row("SELECT COALESCE(MAX(id), 0) FROM files", [], |row| row.get(0)).unwrap_or(0)
+    }
+
+    /// The files a saved search finds that came after `mark`.
+    fn fresh(&mut self, words: &str, mark: i64) -> Result<usize> {
+        let query = query::parse(words, now());
+        let vector = if query.text.trim().is_empty() { None } else { Some(self.embed_query(&query.text)?) };
+        let settings = Settings { limit: 200, ..Settings::default() };
+        let hits = self.searcher.search(&query, vector.as_deref(), None, None, &settings)?;
+        Ok(hits.iter().filter(|hit| hit.strong && hit.file > mark).count())
+    }
+
     pub fn handle(&mut self, request: &Value) -> Result<Value> {
         self.release_idle();
         let op = request["op"].as_str().unwrap_or_default();
@@ -227,15 +310,109 @@ impl Session {
                 Ok(json!({"points": out, "links": links}))
             }
             "collections" => {
-                let mut select =
-                    self.searcher.store.db.prepare("SELECT id, name, query, created FROM collections ORDER BY created")?;
-                let rows = select.query_map([], |row| {
-                    Ok(json!({
-                        "id": row.get::<_, i64>(0)?, "name": row.get::<_, String>(1)?,
-                        "query": row.get::<_, String>(2)?, "created": row.get::<_, f64>(3)?,
-                    }))
-                })?;
-                Ok(json!({"collections": rows.collect::<glint_core::rusqlite::Result<Vec<_>>>()?}))
+                let rows: Vec<(i64, String, String, f64, i64)> = {
+                    let mut select = self
+                        .searcher
+                        .store
+                        .db
+                        .prepare("SELECT id, name, query, created, mark FROM collections ORDER BY created")?;
+                    let rows = select
+                        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)))?;
+                    rows.collect::<glint_core::rusqlite::Result<_>>()?
+                };
+                // With `fresh`, each comes with how many files it finds that it hasn't shown yet.
+                let count = request["fresh"].as_bool().unwrap_or(false);
+                if count {
+                    self.refresh()?;
+                }
+                let mut out = Vec::new();
+                for (id, name, words, created, mark) in rows {
+                    let fresh = if count { self.fresh(&words, mark).unwrap_or(0) } else { 0 };
+                    out.push(json!({"id": id, "name": name, "query": words, "created": created, "fresh": fresh}));
+                }
+                Ok(json!({"collections": out}))
+            }
+            "collection_seen" => {
+                let id = request["collection"].as_i64().ok_or_else(|| anyhow!("which collection?"))?;
+                self.searcher.store.db.execute("UPDATE collections SET mark = ? WHERE id = ?", (self.newest_file(), id))?;
+                Ok(json!({}))
+            }
+            // Suggestions for a tidier photo library. Nothing is moved or deleted here.
+            "tidy" => {
+                self.refresh()?;
+                let mut heaps = Vec::new();
+                for (name, prompt) in TIDY {
+                    let vector = self.embed_query(prompt)?;
+                    let query = Query { kinds: vec![FileKind::Image], ..Query::default() };
+                    let settings = Settings { limit: 60, ..Settings::default() };
+                    let hits = self.searcher.search(&query, Some(&vector), None, None, &settings)?;
+                    let ids: Vec<i64> = hits.iter().filter(|hit| hit.strong).map(|hit| hit.file).collect();
+                    if !ids.is_empty() {
+                        heaps.push(json!({"name": name, "files": self.members(&ids)?}));
+                    }
+                }
+                let old: Vec<i64> = {
+                    let mut select = self.searcher.store.db.prepare(
+                        "SELECT id FROM files WHERE kind = 'screenshot' AND mtime < ? ORDER BY mtime LIMIT 60",
+                    )?;
+                    let rows = select.query_map([now() - 365.0 * 86400.0], |row| row.get(0))?;
+                    rows.collect::<glint_core::rusqlite::Result<_>>()?
+                };
+                if !old.is_empty() {
+                    heaps.push(json!({"name": "screens", "files": self.members(&old)?}));
+                }
+                // Shots taken one after another: the largest file of each is the one to keep.
+                let mut bursts = Vec::new();
+                for group in self.searcher.bursts(20.0, 0.86, 60)? {
+                    let files = self.members(&group)?;
+                    if files.len() > 1 {
+                        let keep = files
+                            .iter()
+                            .max_by_key(|file| file["size"].as_u64().unwrap_or(0))
+                            .map(|file| file["file"].clone());
+                        bursts.push(json!({"keep": keep, "files": files}));
+                    }
+                }
+                Ok(json!({"heaps": heaps, "bursts": bursts}))
+            }
+            // Photos gathered by what they show, each album named after what sets it apart from the rest.
+            "albums" => {
+                self.refresh()?;
+                let near = request["near"].as_f64().unwrap_or(0.34) as f32;
+                let (albums, whole) = self.searcher.albums(near, 4, 60)?;
+                let mut subjects = Vec::new();
+                if !albums.is_empty() {
+                    for (prompt, _, _) in SUBJECTS {
+                        subjects.push(self.embed_query(&format!("a photo of {prompt}"))?);
+                    }
+                }
+                let dot = |a: &[f32], b: &[f32]| a.iter().zip(b).map(|(x, y)| x * y).sum::<f32>();
+                let mut out = Vec::new();
+                for album in &albums {
+                    let mut ranked: Vec<(usize, f32)> = subjects
+                        .iter()
+                        .enumerate()
+                        .map(|(index, subject)| (index, dot(&album.centre, subject) - dot(&whole, subject)))
+                        .collect();
+                    ranked.sort_by(|a, b| b.1.total_cmp(&a.1));
+                    let (index, lead) = ranked[0];
+                    let name = (lead > 0.0).then(|| json!({"en": SUBJECTS[index].1, "vi": SUBJECTS[index].2}));
+                    out.push(json!({"name": name, "lead": lead, "files": self.members(&album.files)?}));
+                }
+                Ok(json!({"albums": out}))
+            }
+            // From one file through the others about the same thing.
+            "thread" => {
+                self.refresh()?;
+                let file = request["file"].as_i64().ok_or_else(|| anyhow!("thread needs a file"))?;
+                let mut out = Vec::new();
+                for (id, nearness) in self.searcher.thread(file, 9)? {
+                    if let Some(mut member) = self.member(id)? {
+                        member["nearness"] = json!(nearness);
+                        out.push(member);
+                    }
+                }
+                Ok(json!({"thread": out}))
             }
             "collection_add" => {
                 let name = request["name"].as_str().unwrap_or_default().trim();
@@ -244,8 +421,8 @@ impl Session {
                     bail!("a collection needs a name and a search");
                 }
                 self.searcher.store.db.execute(
-                    "INSERT INTO collections(name, query, created) VALUES(?, ?, ?)",
-                    (name, query, now()),
+                    "INSERT INTO collections(name, query, created, mark) VALUES(?, ?, ?, ?)",
+                    (name, query, now(), self.newest_file()),
                 )?;
                 Ok(json!({"id": self.searcher.store.db.last_insert_rowid()}))
             }

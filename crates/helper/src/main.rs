@@ -149,6 +149,7 @@ fn index(arguments: &Arguments) -> Result<()> {
         "event": "crawled", "files": found.files.len(), "added": added, "changed": changed, "removed": removed,
         "cloud_only": found.cloud_only, "datasets": found.datasets,
     }));
+    glint_core::insight::backfill_tones(&mut store, &stop)?;
     let counts = store.counts()?;
     if counts.pending == 0 && counts.partial == 0 {
         emit(&json!({"event": "finished", "indexed": 0, "failed": 0, "seconds": 0.0, "stopped": false}));

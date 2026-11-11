@@ -1,6 +1,7 @@
 pub mod config;
 pub mod crawler;
 pub mod indexer;
+pub mod insight;
 pub mod kinds;
 pub mod query;
 pub mod readers;

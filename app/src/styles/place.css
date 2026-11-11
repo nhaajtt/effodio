@@ -73,6 +73,41 @@
 .lang:hover { color: var(--ink); background: var(--accent-soft); transform: translateY(-1px); }
 .lang.floating { position: fixed; right: 18px; top: 16px; z-index: 5; }
 
+/* The tidy-up, the albums, the thread. */
+.member { position: relative; }
+.member .thumb { position: relative; }
+.member .keep { position: absolute; left: 6px; top: 6px; padding: 2px 7px; border-radius: 99px; font: 500 9.5px var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: #1a1305; background: var(--accent); }
+.member.more { place-items: center; min-height: 100px; font: 500 18px var(--display); color: var(--ink-2); background: var(--glass-faint); box-shadow: inset 0 0 0 1px var(--line); }
+.thread { display: flex; align-items: flex-start; gap: 26px; padding: 22px; border-radius: var(--radius-m); overflow-x: auto; }
+.thread .member { flex: 0 0 150px; animation: bead 420ms var(--spring) both; }
+.thread .member + .member::before { content: ""; position: absolute; left: -26px; top: 56px; width: 26px; height: 2px; background: linear-gradient(90deg, var(--accent), rgba(138, 107, 240, 0.9)); border-radius: 2px; }
+@keyframes bead { from { opacity: 0; transform: translateX(-14px) scale(0.94); } }
+
+/* What a search's results say besides themselves: the months they fall in, the folder a file belongs in. */
+.insight { display: flex; align-items: flex-end; gap: 12px; padding: 0 14px; min-height: 0; }
+.insight:empty { display: none; }
+.insight > * { margin-bottom: 8px; }
+.timeline { flex: 1; display: flex; align-items: flex-end; gap: 3px; height: 54px; min-width: 0; overflow: hidden; }
+.timeline .bar { flex: 1 1 0; min-width: 0; height: 100%; display: grid; grid-template-rows: 1fr auto; align-items: end; gap: 3px; }
+.timeline .bar i { display: block; width: 100%; border-radius: 4px 4px 2px 2px; background: linear-gradient(180deg, var(--accent), rgba(138, 107, 240, 0.55)); opacity: 0.75; transition: opacity 140ms var(--ease), transform 200ms var(--spring); transform-origin: bottom; }
+.timeline .bar:hover i { opacity: 1; transform: scaleY(1.08); }
+.timeline .bar:disabled i { background: var(--line); }
+.timeline .bar span { font: 9px var(--mono); color: var(--ink-3); white-space: nowrap; overflow: hidden; text-align: center; }
+.belongs { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 10px; border-radius: 10px; font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+.belongs b { color: var(--ink); font-weight: 600; }
+.nav-item .fresh { margin-left: auto; min-width: 18px; padding: 1px 6px; border-radius: 99px; font: 500 10px var(--mono); text-align: center; color: #1a1305; background: var(--accent); }
+
+/* The drawing pad. */
+.searchbox .draw { width: 28px; height: 28px; flex: none; color: var(--ink-3); }
+.searchbox .draw:hover { color: var(--accent); }
+.veil { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(4, 6, 12, 0.55); backdrop-filter: blur(6px); animation: veil 180ms var(--ease); }
+@keyframes veil { from { opacity: 0; } }
+.sketch { display: grid; gap: 10px; padding: 12px; border-radius: 18px; background: var(--tint); }
+.sketch header, .sketch footer { display: flex; align-items: center; gap: 8px; }
+.sketch .grow { flex: 1; }
+.sketch canvas { width: 560px; max-width: 80vw; height: auto; border-radius: 12px; background: #fff; cursor: crosshair; touch-action: none; }
+.sketch .ink { width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5); }
+
 /* The map. */
 .map { border-radius: var(--radius-m); background: radial-gradient(80% 70% at 50% 45%, rgba(255, 255, 255, 0.04), transparent 75%); box-shadow: inset 0 0 0 1px var(--line); }
 .map .legend .pill { cursor: default; transition: opacity 160ms var(--ease), transform 200ms var(--spring); }

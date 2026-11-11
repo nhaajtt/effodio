@@ -10,16 +10,18 @@ import { t } from "./i18n";
 import { languageButton } from "./fx";
 import { idleView, statusLine } from "./panel";
 import { card, Lens, Preview, report } from "./results";
+import { belongs, mountAlbums, mountThread, mountTidy, sketchPad, timeline } from "./more";
 import { mountSettings } from "./settings";
 import { mountSetup } from "./setup";
-import { followPointer, h, icon, number } from "./ui";
+import { followPointer, h, icon, number, toast } from "./ui";
 
-type View = "search" | "map" | "duplicates" | "settings" | "setup";
+type View = "search" | "map" | "duplicates" | "tidy" | "albums" | "people" | "thread" | "settings" | "setup";
 
 interface Collection {
   id: number;
   name: string;
   query: string;
+  fresh: number;
 }
 
 export async function mountWindow(root: HTMLElement): Promise<void> {
@@ -30,11 +32,13 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
   let files: number | null = null;
   let finder: Finder | null = null;
   let pendingQuery: string | null = null;
+  let threadFrom: api.Hit | null = null;
   const appWindow = getCurrentWindow();
 
   // The title bar: drag it to move the window, double-click to fill the screen.
   const input = h("input", { type: "text", placeholder: t("search.placeholder"), spellcheck: false, autocomplete: "off", "aria-label": t("search.placeholder") });
-  const searchbox = h("div.searchbox.glass", { "data-light": "" }, h("span.spark", icon("spark", 18)), input);
+  const draw = h("button.icon-button.draw", { title: t("sketch.open"), onclick: () => sketchPad((path) => (go("search"), finder?.searchBy(path))) }, icon("pencil", 16));
+  const searchbox = h("div.searchbox.glass", { "data-light": "" }, h("span.spark", icon("spark", 18)), input, draw);
   const controls = h(
     "div.window-controls",
     languageButton(),
@@ -78,6 +82,8 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
   sidebar.append(
     navButton("search", "search", t("nav.search")),
     navButton("map", "map", t("nav.map")),
+    navButton("albums", "album", t("nav.albums")),
+    navButton("tidy", "tidy", t("nav.tidy")),
     navButton("duplicates", "copies", t("nav.duplicates")),
     h("div.group", t("nav.collections")),
     collectionsBox,
@@ -86,9 +92,11 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
     navButton("settings", "settings", t("nav.settings")),
   );
 
-  const loadCollections = async () => {
+  // A saved search keeps watch: after files are read, it says how many new ones it finds.
+  const loadCollections = async (announce = false) => {
     try {
-      const { collections } = await api.ask<{ collections: Collection[] }>({ op: "collections" });
+      const { collections } = await api.ask<{ collections: Collection[] }>({ op: "collections", fresh: true });
+      if (announce) for (const one of collections) if (one.fresh > 0) toast(t("watch.new", { n: one.fresh, name: one.name }));
       if (!collections.length) {
         collectionsBox.replaceChildren(h("div.hint", t("collections.none")));
         return;
@@ -98,13 +106,20 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
           const remove = h("span.remove.icon-button", { title: t("collections.remove"), style: { width: "24px", height: "24px" } }, icon("close", 12));
           remove.addEventListener("click", (event) => {
             event.stopPropagation();
-            api.ask({ op: "collection_remove", collection: collection.id }).then(loadCollections, report);
+            api.ask({ op: "collection_remove", collection: collection.id }).then(() => loadCollections(), report);
           });
           return h(
             "button.nav-item",
-            { title: collection.query, onclick: () => search(collection.query) },
+            {
+              title: collection.query,
+              onclick: () => {
+                search(collection.query);
+                if (collection.fresh) void api.ask({ op: "collection_seen", collection: collection.id }).then(() => loadCollections());
+              },
+            },
             icon("bookmark", 17),
             h("span", collection.name),
+            collection.fresh ? h("b.fresh", String(collection.fresh)) : null,
             remove,
           );
         }),
@@ -155,13 +170,20 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
     save.addEventListener("click", () => {
       const query = finder?.query.trim();
       if (!query) return;
-      api.ask({ op: "collection_add", name: query, q: query }).then(loadCollections, report);
+      api.ask({ op: "collection_add", name: query, q: query }).then(() => loadCollections(), report);
     });
     const filters = h("div.filters", { style: { padding: "0 14px 8px" } });
     const grid = h("div.grid", { role: "listbox" });
     const previewPane = h("div.preview");
-    const preview = new Preview(previewPane, { similar: (hit) => finder?.similarTo(hit) });
-    const main = h("div.view", { style: { gridTemplateRows: "auto auto minmax(0, 1fr)" } }, h("div.toolbar", pills, h("span.grow"), meta, save), filters, grid);
+    const preview = new Preview(previewPane, {
+      similar: (hit) => finder?.similarTo(hit),
+      thread: (hit) => {
+        threadFrom = hit;
+        go("thread");
+      },
+    });
+    const insight = h("div.insight");
+    const main = h("div.view", { style: { gridTemplateRows: "auto auto auto minmax(0, 1fr)" } }, h("div.toolbar", pills, h("span.grow"), meta, save), filters, insight, grid);
     content.replaceChildren(main, previewPane);
     finder = new Finder({
       searchbox,
@@ -179,6 +201,15 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
         if (result) meta.textContent = `${t("search.results", { n: number(result.hits.length) })} · ${t("search.ms", { ms: Math.round(result.ms) })}`;
         else if (!selected) meta.textContent = "";
         save.hidden = !finder?.query.trim();
+        if (result || !selected) {
+          // When the results fall across months, the months; for a search by example, the folder it belongs in.
+          const months = timeline(result, (after, before) => {
+            const words = (finder?.query ?? "").replace(/\b(after|before|since|sau|truoc):\S+/gi, "").trim();
+            finder?.setQuery(`${words} after:${after} before:${before}`.trim());
+          });
+          const home = finder?.example ? belongs(result) : null;
+          insight.replaceChildren(...[home, months].filter((part): part is HTMLElement => !!part));
+        }
       },
     });
     if (pendingQuery !== null) {
@@ -216,6 +247,15 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
         break;
       case "duplicates":
         void mountDuplicates(content);
+        break;
+      case "tidy":
+        void mountTidy(content);
+        break;
+      case "albums":
+        void mountAlbums(content);
+        break;
+      case "thread":
+        if (threadFrom) void mountThread(content, threadFrom, () => go("search"));
         break;
       case "settings":
         void mountSettings(content);
@@ -264,6 +304,7 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
   api.on<IndexState>("index", showIndex);
   api.on("index-finished", () => {
     void refresh();
+    void loadCollections(true);
     if (view === "search" && finder && (finder.query || finder.example)) void finder.run(false);
   });
   api.on<api.Config>("config", (next) => {

@@ -165,6 +165,7 @@ function momentStrip(hit: Hit, found: Moment[], media: HTMLMediaElement | null):
 
 export interface PreviewActions {
   similar(hit: Hit): void;
+  thread?(hit: Hit): void;
   opened?(): void;
 }
 
@@ -259,6 +260,7 @@ export class Preview {
       h("button.button.primary", { onclick: () => void api.openResult(hit.path, page, second).then(() => this.actions.opened?.(), report) }, icon("open", 16), t("action.open")),
       h("button.button", { onclick: () => void api.reveal(hit.path).catch(report) }, icon("folder", 16), t("action.reveal")),
       h("button.button", { onclick: () => this.actions.similar(hit) }, icon("similar", 16), t("action.similar")),
+      this.actions.thread ? h("button.button", { onclick: () => this.actions.thread?.(hit) }, icon("thread", 16), t("action.thread")) : null,
       h("button.button.quiet", { onclick: () => void api.copyFiles([hit.path]).then(() => toast(t("action.copied")), report) }, icon("copies", 16), t("action.copy")),
     );
 

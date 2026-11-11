@@ -280,6 +280,7 @@ impl<'a, E: Embed> Indexer<'a, E> {
         let mut info = images::exif(path);
         info.insert("width".into(), picture.width.into());
         info.insert("height".into(), picture.height.into());
+        info.insert("tones".into(), crate::insight::tones(&picture).into());
         let budget = if kind == FileKind::Screenshot { SCREENSHOT_BUDGET } else { PHOTO_BUDGET };
         let mut whole = Segment::new(SegmentKind::Image, Modality::Image);
         whole.vector = Some(self.embed.image(&picture, budget)?);
