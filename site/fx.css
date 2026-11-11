@@ -1,44 +1,124 @@
-/* The moving parts: the field of points behind everything, the lens under the pointer, tilt, sparks, the tape. */
+/* The moving parts: the field of points, the shine on the glass, the glints, the tape. */
+
+@property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+:root { --chrome: linear-gradient(180deg, #ffffff 18%, #aab3cf 52%, #ffffff 62%, #dfe4f3); --foil: 0.2; }
+:root[data-theme="light"] { --chrome: linear-gradient(180deg, #14161c 18%, #5c6480 52%, #14161c 62%, #2b3044); --foil: 0.34; }
 
 #stars { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
-.defs { position: absolute; }
 
-/* A drop of glass that rides the pointer and bends what's under it. */
-#lens {
-  position: fixed; left: 0; top: 0; width: 104px; height: 104px; border-radius: 50%;
-  pointer-events: none; z-index: 40; opacity: 0; transition: opacity 0.35s var(--ease);
-  -webkit-backdrop-filter: saturate(190%) brightness(1.12);
-  backdrop-filter: saturate(190%) brightness(1.12);
-  backdrop-filter: url(#bend) saturate(190%) brightness(1.12);
-  border: 1px solid var(--edge);
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.16), inset 0 1px 0 var(--edge), inset 0 -8px 16px rgba(217, 166, 58, 0.12), 0 10px 30px rgba(0, 0, 0, 0.22);
+/* A band of light crosses every pane now and then. */
+.glass::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(112deg, transparent 44%, rgba(255, 255, 255, 0.26) 50%, transparent 56%) no-repeat;
+  background-size: 260% 100%; background-position: 160% 0;
+  animation: sheen 8s var(--ease) infinite;
 }
-#lens.on { opacity: 1; }
+.grid .glass:nth-child(2)::before { animation-delay: 0.5s; }
+.grid .glass:nth-child(3)::before { animation-delay: 1s; }
+.grid .glass:nth-child(4)::before { animation-delay: 1.5s; }
+.grid .glass:nth-child(5)::before { animation-delay: 2s; }
+.grid .glass:nth-child(6)::before { animation-delay: 2.5s; }
+.panel::before { animation-delay: 3s; }
+.facts::before { animation-delay: 4s; }
+@keyframes sheen { 0%, 62% { background-position: 160% 0; } 100% { background-position: -60% 0; } }
 
-/* The headline arrives a letter at a time; "Find it." catches the light now and then. */
-.ch { display: inline-block; animation: letter 0.9s var(--spring) both; }
+/* Under the pointer the glass turns to foil: the colours slide as the pointer moves. */
+.glass::after {
+  background:
+    radial-gradient(240px circle at var(--mx, 50%) var(--my, -40%), var(--specular), transparent 62%),
+    repeating-linear-gradient(118deg, rgba(255, 110, 200, var(--foil)), rgba(110, 190, 255, var(--foil)) 9%, rgba(140, 255, 210, var(--foil)) 18%, rgba(255, 226, 130, var(--foil)) 27%, rgba(255, 110, 200, var(--foil)) 36%);
+  background-size: auto, 320% 320%;
+  background-position: 0 0, calc(var(--mx, 0px) * -0.9) calc(var(--my, 0px) * -0.9);
+  -webkit-mask-image: radial-gradient(340px circle at var(--mx, 50%) var(--my, -40%), #000, transparent 72%);
+  mask-image: radial-gradient(340px circle at var(--mx, 50%) var(--my, -40%), #000, transparent 72%);
+}
+
+/* A light runs round the rim. */
+.rim {
+  position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; pointer-events: none;
+  background: conic-gradient(from var(--spin), transparent 0 58%, #f4d58a 72%, #fff 80%, #9b7bf5 88%, transparent 96%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: spin 5.5s linear infinite;
+}
+.panel .rim { animation-duration: 8s; animation-direction: reverse; }
+@keyframes spin { to { --spin: 360deg; } }
+
+/* The star behind the headline. */
+.hero { position: relative; isolation: isolate; }
+.gem {
+  position: absolute; z-index: -1; left: 50%; top: 20px; width: min(620px, 92vw); aspect-ratio: 1;
+  translate: -50% 0; opacity: 0.2; filter: blur(1.5px) saturate(140%);
+  background: conic-gradient(from var(--spin), #f4d58a, #fff, #9b7bf5, #3f6bd8, #2fb3a0, #fff, #d9a63a, #f4d58a);
+  clip-path: polygon(50% 0, 56% 44%, 100% 50%, 56% 56%, 50% 100%, 44% 56%, 0 50%, 44% 44%);
+  animation: spin 14s linear infinite, breathe 7s var(--ease) infinite alternate;
+}
+@keyframes breathe { from { scale: 0.86; rotate: -8deg; } to { scale: 1.08; rotate: 10deg; } }
+
+/* The headline: polished letters that arrive one at a time; "Find it." catches the light. */
+.ch {
+  display: inline-block; background: var(--chrome); -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: letter 0.9s var(--spring) both;
+}
 @keyframes letter { from { opacity: 0; transform: translateY(0.55em) rotate(9deg) scale(0.8); filter: blur(12px); } }
 h1 em {
   background: linear-gradient(100deg, #f4d58a 0%, var(--accent) 22%, #9b7bf5 40%, #fff 50%, #9b7bf5 60%, var(--accent) 78%, #f4d58a 100%);
   background-size: 300% 100%;
   -webkit-background-clip: text; background-clip: text;
-  animation: sweep 6s var(--ease) infinite;
+  filter: drop-shadow(0 0 22px rgba(217, 166, 58, 0.35));
+  animation: sweep 4.5s var(--ease) infinite;
 }
-@keyframes sweep { 0%, 35% { background-position: 100% 0; } 75%, 100% { background-position: 0 0; } }
+@keyframes sweep { 0%, 25% { background-position: 100% 0; } 75%, 100% { background-position: 0 0; } }
 
-/* Glass tilts toward the pointer. */
-.card, .panel, .facts { transform-style: preserve-3d; transition: transform 0.5s var(--spring); will-change: transform; }
+.brand img { animation: wink 9s var(--spring) infinite; }
+@keyframes wink {
+  0%, 82%, 100% { rotate: 0deg; scale: 1; filter: none; }
+  90% { rotate: 180deg; scale: 1.25; filter: drop-shadow(0 0 10px #f4d58a); }
+  96% { rotate: 360deg; scale: 1; }
+}
+
+/* The gold button never quite stops shining. */
+.btn.gold { position: relative; overflow: hidden; }
+.btn.gold::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.85) 50%, transparent 65%) no-repeat;
+  background-size: 250% 100%; animation: sheen 3.2s var(--ease) infinite;
+}
+.row { position: relative; overflow: hidden; }
+.row:first-child::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 40%, rgba(244, 213, 138, 0.4) 50%, transparent 60%) no-repeat;
+  background-size: 250% 100%; background-position: 160% 0; animation: once 1.1s 0.25s var(--ease) forwards;
+}
+@keyframes once { to { background-position: -60% 0; } }
+
+/* Glass tilts toward the pointer; panes fold up into place as they come into view. */
+.grid, .split { perspective: 1300px; }
+.card, .panel, .facts { transition: transform 0.5s var(--spring); will-change: transform; }
 .card:hover, .panel:hover, .facts:hover { transition-duration: 0.12s; }
-.reveal { transform: none; translate: 0 22px; transition: opacity 0.7s var(--ease), translate 0.8s var(--spring), transform 0.5s var(--spring); }
-.reveal.in { translate: 0 0; }
+.reveal {
+  transform: none; translate: 0 46px; rotate: 1 0 0 -38deg; scale: 0.9; filter: blur(8px);
+  transform-origin: 50% 100%;
+  transition: opacity 0.8s var(--ease), translate 0.9s var(--spring), rotate 0.9s var(--spring), scale 0.9s var(--spring), filter 0.8s var(--ease), transform 0.5s var(--spring);
+}
+.reveal.in { translate: 0 0; rotate: 1 0 0 0deg; scale: 1; filter: none; }
+h2.reveal.in {
+  background: linear-gradient(100deg, var(--ink) 42%, #f4d58a 50%, var(--ink) 58%) no-repeat;
+  background-size: 300% 100%; background-position: 160% 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: once 1.8s 0.3s var(--ease) forwards;
+}
 
 .btn, .chip { transition: transform 0.25s var(--spring), translate 0.35s var(--spring), filter 0.2s, background 0.2s; }
 
 .spark {
   position: fixed; z-index: 50; pointer-events: none;
   background: linear-gradient(140deg, #fff, #f4d58a 40%, var(--accent));
-  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%);
+  filter: drop-shadow(0 0 6px rgba(244, 213, 138, 0.9));
 }
+.spark.cool { background: linear-gradient(140deg, #fff, #b9a6ff 45%, #3f6bd8); }
 
 /* Searches running past, as fast as you scroll. */
 .tape { width: 100vw; margin: 84px 0 0 calc(50% - 50vw); overflow: hidden; padding: 6px 0; }
@@ -49,7 +129,8 @@ h1 em {
 }
 .run + .run { -webkit-text-stroke: 0; color: var(--ink); opacity: 0.09; }
 .run span { padding: 0 0.28em; }
-.run b { color: var(--accent); -webkit-text-stroke: 0; font-weight: 400; opacity: 1; }
+.run b { color: var(--accent); -webkit-text-stroke: 0; font-weight: 400; display: inline-block; animation: turn 6s linear infinite; }
+@keyframes turn { to { rotate: 360deg; } }
 .tape + section { padding-top: 56px; }
 
 /* Light and dark swap through an iris that opens from the button. */
@@ -57,8 +138,7 @@ h1 em {
 ::view-transition-new(root) { animation: iris 0.75s var(--ease); }
 @keyframes iris { from { clip-path: circle(0 at var(--vx, 50%) var(--vy, 0)); } to { clip-path: circle(150vmax at var(--vx, 50%) var(--vy, 0)); } }
 
-@media (hover: none), (pointer: coarse) { #lens { display: none; } }
 @media (prefers-reduced-motion: reduce) {
-  #lens, .tape { display: none; }
-  .reveal { translate: 0 0; }
+  .tape, .rim, .gem { display: none; }
+  .reveal { translate: 0 0; rotate: none; scale: 1; filter: none; }
 }
