@@ -29,6 +29,15 @@ It's for Windows 10 and 11 (64-bit). A Mac version is planned.
 - **Other ways in.** A map of everything by meaning, a list of duplicates and near-duplicates, and saved searches.
 - **A local search door for your own tools**, off unless you open it (see below).
 
+## Install
+
+```powershell
+powershell -c "irm https://glint.nhaajt.com/install.ps1 | iex"
+```
+
+That downloads the installer from [glint.nhaajt.com](https://glint.nhaajt.com), checks its SHA-256 and installs it for
+the current user. Run it again to update. The installer can also be downloaded from the site and run by hand.
+
 Press **Ctrl+Shift+Space** in any app for the search panel.
 
 | Key | What it does |
@@ -128,6 +137,7 @@ python scripts/smoke.py                  # everything the app asks of the helper
 | `crates/helper` | The helper process: indexing, searching, the speed check, the model download |
 | `app/src-tauri` | The app: tray, shortcut, windows, the folder watcher, the local door |
 | `app/src` | The interface |
+| `site` | The website and the install script (`pwsh scripts\site.ps1 -Deploy` publishes them with the installer) |
 
 Your data is in `%LOCALAPPDATA%\app.glint.search`: the model, the index, the settings and a cache of thumbnails.
 Uninstalling with "Delete the application data" ticked removes it.
