@@ -9,7 +9,7 @@
     note: "Miễn phí, cho Windows 10 và 11. Không có gì bạn lập chỉ mục rời khỏi máy. Nó chỉ lên mạng một lần để tải model.",
     meta_a: "model 865 MB", meta_b: "không tài khoản", meta_c: "không thu thập",
     act_install: "Cài bằng một dòng", act_dl: "Tải file .exe",
-    g_index: "Chỉ mục", g_files: "file", g_match: "Độ khớp",
+   
     hotkey: "từ mọi ứng dụng", demo_open: "Mở", demo_like: "Tương tự",
     how_l: "Cách hoạt động · trên máy bạn, từ đầu đến cuối",
     s1h: "Thư mục của bạn", s1p: "bạn chọn cái nào",
@@ -104,15 +104,6 @@
     seen.observe(el);
   });
 
-  // The gauges on the device: what's indexed, and how well each result of the last search matched.
-  const bars = (id, heights) => ($(id).innerHTML = heights.map((tall, index) => `<i style="height:${tall}%;transition-delay:${index * 14}ms"></i>`).join(""));
-  bars("bars-a", Array.from({ length: 26 }, (_, index) => (index < 2 ? 100 - index * 18 : 38 + Math.sin(index * 1.7) * 9 + Math.random() * 12)));
-  function scores() {
-    let tall = 100;
-    bars("bars-b", Array.from({ length: 26 }, (_, index) => (tall *= index < 3 ? 0.78 + Math.random() * 0.12 : 0.9 + Math.random() * 0.07)));
-    $("took").textContent = 14 + Math.floor(Math.random() * 12) + " ms";
-  }
-
   // The search panel, playing a few searches.
   const icons = {
     photo: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4 4 3 3-2 4 3"/>',
@@ -139,7 +130,6 @@
           `<div class="row" style="animation-delay:${index * 90}ms"><span class="thumb k-${kind}"><svg viewBox="0 0 24 24">${icons[kind]}</svg></span><div><strong>${name}</strong><small>${sub}</small></div><span class="badge">${badge}</span></div>`,
       )
       .join("");
-    scores();
     document.dispatchEvent(new CustomEvent("glint:search"));
   }
   async function run() {
