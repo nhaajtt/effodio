@@ -19,7 +19,7 @@ interface Kit {
 const megabytes = (bytes: number) => Math.round(bytes / 2 ** 20);
 
 /** A card for something that needs a download first. `ready` draws what's there once it has arrived. */
-function kitCard(name: "speech" | "answers", title: string, body: string, ready: () => HTMLElement | null): HTMLElement {
+function kitCard(name: "speech" | "answers" | "media", title: string, body: string, ready: () => HTMLElement | null): HTMLElement {
   const slot = h("div.kit-slot");
   const card = h("div.group-card.glass.kit", h("header", title), h("p", body), slot);
   let timer = 0;
@@ -145,4 +145,13 @@ export async function mountAsk(container: HTMLElement): Promise<void> {
     kitCard("answers", t("ask.title"), t("kit.answers"), asking),
     kitCard("speech", t("kit.speech.title"), t("kit.speech"), listening),
   );
+  // FFmpeg, only where it's missing.
+  const kits = await api.ask<Record<string, Kit>>({ op: "kits" }).catch(() => null);
+  if (kits && !kits.media.ready) {
+    const card = kitCard("media", t("kit.media.title"), t("kit.media"), () => {
+      void api.indexNow();
+      return h("span.pill", icon("check", 14), "FFmpeg");
+    });
+    body.prepend(card);
+  }
 }

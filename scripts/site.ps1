@@ -14,10 +14,10 @@ $out = "$root\site\dist"
 Remove-Item $out -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force "$out\download" | Out-Null
 $site = "$root\site"
-Get-ChildItem $site -File -Recurse | Where-Object { $_.FullName -notlike "$out\*" -and $_.FullName -notlike "$site\.wrangler\*" -and $_.Extension -ne ".jsonc" } | ForEach-Object {
+Get-ChildItem $site -File -Recurse | Where-Object { $_.FullName -notlike "$out\*" -and $_.FullName -notlike "$site\.wrangler\*" -and $_.Extension -ne ".jsonc" -and $_.Name -ne "worker.js" } | ForEach-Object {
   $target = Join-Path $out $_.FullName.Substring($site.Length + 1)
   New-Item -ItemType Directory -Force (Split-Path $target) | Out-Null
-  if ($_.Extension -in ".html", ".ps1", ".js") {
+  if ($_.Extension -in ".html", ".ps1", ".js", ".json") {
     $text = (Get-Content $_.FullName -Raw).Replace("__VERSION__", $version).Replace("__SHA256__", $sha256)
     [IO.File]::WriteAllText($target, $text, [Text.UTF8Encoding]::new($false))
   } else {

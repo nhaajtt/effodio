@@ -27,10 +27,29 @@ fn tool(name: &str, variable: &str) -> Option<PathBuf> {
             return Some(beside);
         }
     }
-    std::env::var_os("PATH").and_then(|paths| std::env::split_paths(&paths).map(|p| p.join(&file)).find(|p| p.is_file()))
+    std::env::var_os("PATH")
+        .and_then(|paths| std::env::split_paths(&paths).map(|p| p.join(&file)).find(|p| p.is_file()))
+        .or_else(|| find(&crate::config::models_folder().join("Tools").join("media"), &file, 0))
 }
 
-/// FFmpeg: `$GLINT_FFMPEG`, beside this executable, or on the PATH.
+/// A program somewhere under a folder (the copy of FFmpeg Glint fetched for itself).
+fn find(folder: &Path, file: &str, depth: usize) -> Option<PathBuf> {
+    for entry in std::fs::read_dir(folder).ok()?.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            if depth < 3 {
+                if let Some(found) = find(&path, file, depth + 1) {
+                    return Some(found);
+                }
+            }
+        } else if path.file_name().is_some_and(|name| name.eq_ignore_ascii_case(file)) {
+            return Some(path);
+        }
+    }
+    None
+}
+
+/// FFmpeg: `$GLINT_FFMPEG`, beside this executable, on the PATH, or the copy Glint fetched for itself.
 pub fn ffmpeg() -> Option<PathBuf> {
     tool("ffmpeg", "GLINT_FFMPEG")
 }

@@ -1709,7 +1709,7 @@ dependencies = [
 
 [[package]]
 name = "glint"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "blake3",
@@ -1730,7 +1730,7 @@ dependencies = [
 
 [[package]]
 name = "glint-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "blake3",
@@ -1752,7 +1752,7 @@ dependencies = [
 
 [[package]]
 name = "glint-embed"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "cc",
@@ -1761,7 +1761,7 @@ dependencies = [
 
 [[package]]
 name = "glint-faces"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "tract-onnx",
@@ -1769,7 +1769,7 @@ dependencies = [
 
 [[package]]
 name = "glint-helper"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "glint-core",

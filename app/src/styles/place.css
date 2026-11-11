@@ -141,3 +141,19 @@ button.person:hover { transform: translateY(-2px); background: var(--glass); }
 .map-hint { position: absolute; right: 14px; bottom: 18px; font: 10px var(--pixel); text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); pointer-events: none; }
 .map .tip { box-shadow: inset 0 1px 0 var(--edge-light), inset 0 0 0 1px var(--line), 0 14px 34px rgba(0, 0, 0, 0.4); }
 .map .tip .related { margin-top: 3px; font: 10px var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
+
+/* People: a card holds its name box whole, and can be picked up and dropped on another to join the two. */
+.person { grid-template-columns: minmax(0, 1fr); }
+.name-box { min-width: 0; }
+.name-box input { width: 0; flex: 1 1 0; }
+.name-box .button { flex: none; }
+.people-bar { flex-wrap: wrap; }
+.merge-hint { margin: -4px 2px 0; }
+.mergeable { cursor: grab; touch-action: none; user-select: none; }
+.mergeable.lifted { opacity: 0.35; }
+.mergeable.over { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); transform: scale(1.03); }
+.person.ghost { position: fixed; left: 0; top: 0; z-index: 60; pointer-events: none; opacity: 0.92; background: #1a1e2b; box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5), inset 0 0 0 1px var(--accent); }
+.person .rename { position: absolute; right: 30px; top: 6px; width: 22px; height: 22px; opacity: 0; }
+.person:hover .rename { opacity: 1; }
+
+.nav-item.update { color: var(--accent); margin-bottom: 6px; background: var(--accent-soft); }

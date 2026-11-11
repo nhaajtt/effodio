@@ -246,6 +246,8 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
     for (const [name, item] of navItems) item.setAttribute("aria-current", String(name === view));
     navLens.moveTo(navItems.get(view) ?? null, false);
     if (view !== "search") finder = null;
+    // Left in the search box, the focus would come back to it with the window and pull the view back to the search.
+    if (view !== "search") input.blur();
     switch (view) {
       case "search":
         mountSearch();
@@ -363,5 +365,12 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
   });
   void refresh();
   void loadCollections();
+  // A newer version: a line above the index card that opens the website's install section.
+  if (settings.updates !== false) {
+    api.ask<{ newer: boolean; latest: string }>({ op: "update_check" }).then((found) => {
+      if (!found.newer) return;
+      indexCard.before(h("button.nav-item.update", { onclick: () => void api.openSite("#install").catch(report) }, icon("drop", 17), h("span", t("update.there", { v: found.latest }))));
+    }, () => {});
+  }
   requestAnimationFrame(() => navLens.moveTo(navItems.get(view) ?? null, false));
 }

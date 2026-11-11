@@ -60,6 +60,16 @@
       <p class="g-fine" id="ffmpeg"></p>
     </section>
 
+    <section class="g-band" id="feedback">
+      <p class="g-kicker" id="fb-kicker"></p>
+      <h2 class="g-title" id="fb-title"></h2>
+      <form class="g-form" id="fb-form">
+        <textarea id="fb-text" maxlength="4000" rows="5" required></textarea>
+        <input id="fb-contact" type="text" maxlength="200" autocomplete="off">
+        <div class="g-form-row"><button type="submit" id="fb-send"></button><span class="g-fine" id="fb-note"></span></div>
+      </form>
+    </section>
+
     <footer class="g-foot">
       <p id="thanks"></p>
       <p class="g-kicker">© 2026 Nhaajt · v__VERSION__</p>
@@ -72,5 +82,6 @@
 <script type="module" src="js/timeline.js"></script>
 <script type="module" src="js/grid.js"></script>
 <script type="module" src="js/glint.js"></script>
+<script type="module" src="js/feedback.js"></script>
 </body>
 </html>

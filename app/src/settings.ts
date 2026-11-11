@@ -180,6 +180,8 @@ export async function mountSettings(container: HTMLElement): Promise<void> {
         h("div.field", h("div.label", h("span", t("settings.ocr")), languages), toggle(settings.ocr, (value) => void save((draft) => (draft.ocr = value)), t("settings.ocr"))),
         field(t("settings.pause"), toggle(settings.paused, (value) => void save((draft) => (draft.paused = value)), t("settings.pause"))),
         field(t("settings.power"), toggle(settings.only_on_power, (value) => void save((draft) => (draft.only_on_power = value)), t("settings.power"))),
+        field(t("settings.updates"), toggle(settings.updates !== false, (value) => void save((draft) => (draft.updates = value)), t("settings.updates"))),
+        field(t("settings.feedback"), h("button.button", { onclick: () => void api.appVersion().then((version) => api.openSite(`?v=${version}#feedback`)) }, t("settings.feedbackGo"))),
         h(
           "div.field",
           h("div.label", h("span", t("settings.device")), speedNote),

@@ -80,6 +80,11 @@ pub fn download(folder: &Path) -> Result<()> {
         before += file.bytes;
         emit(&json!({"event": "progress", "file": file.name, "done": before, "total": total}));
     }
+    // Videos and recordings need FFmpeg: fetched now if this computer has none.
+    emit(&json!({"event": "checking", "file": "FFmpeg"}));
+    if let Err(error) = crate::kits::get_media() {
+        emit(&json!({"event": "note", "note": format!("FFmpeg: {error:#}")}));
+    }
     emit(&json!({"event": "finished", "total": total}));
     Ok(())
 }

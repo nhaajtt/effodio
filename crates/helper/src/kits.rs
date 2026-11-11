@@ -75,8 +75,30 @@ const ANSWERS: Kit = Kit {
     ],
 };
 
+/// FFmpeg, for computers that don't have it: videos and recordings can't be read without.
+const MEDIA: Kit = Kit {
+    name: "media",
+    program: "ffmpeg.exe",
+    parts: &[Part {
+        name: "ffmpeg-9.0.2-essentials_build.zip",
+        url: "https://github.com/GyanD/codexffmpeg/releases/download/9.0.2/ffmpeg-9.0.2-essentials_build.zip",
+        bytes: 114_768_076,
+        sha256: "60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba",
+        programs: true,
+    }],
+};
+
+/// Fetches FFmpeg if this computer has none.
+pub fn get_media() -> Result<()> {
+    if glint_core::readers::media::ffmpeg().is_some() {
+        return Ok(());
+    }
+    get(&MEDIA)
+}
+
 fn kit(name: &str) -> Result<&'static Kit> {
     match name {
+        "media" => Ok(&MEDIA),
         "speech" => Ok(&SPEECH),
         "answers" => Ok(&ANSWERS),
         _ => bail!("no such kit: {name}"),
@@ -87,8 +109,8 @@ fn tools(kit: &Kit) -> PathBuf {
     config::models_folder().join("Tools").join(kit.name)
 }
 
-fn model(kit: &Kit) -> PathBuf {
-    config::models_folder().join(kit.parts[1].name)
+fn model(kit: &Kit) -> Option<PathBuf> {
+    kit.parts.iter().find(|part| !part.programs).map(|part| config::models_folder().join(part.name))
 }
 
 /// The kit's program, wherever the zip put it.
@@ -110,7 +132,7 @@ fn program(kit: &Kit) -> Option<PathBuf> {
 }
 
 fn ready(kit: &Kit) -> bool {
-    tools(kit).join(".whole").exists() && model(kit).exists() && program(kit).is_some()
+    tools(kit).join(".whole").exists() && model(kit).map_or(true, |file| file.exists()) && program(kit).is_some()
 }
 
 #[derive(Clone, Default)]
@@ -121,11 +143,15 @@ struct Progress {
     error: Option<String>,
 }
 
-static PROGRESS: Mutex<[Progress; 2]> =
-    Mutex::new([Progress { getting: false, done: 0, total: 0, error: None }, Progress { getting: false, done: 0, total: 0, error: None }]);
+const IDLE: Progress = Progress { getting: false, done: 0, total: 0, error: None };
+static PROGRESS: Mutex<[Progress; 3]> = Mutex::new([IDLE, IDLE, IDLE]);
 
 fn slot(kit: &Kit) -> usize {
-    usize::from(kit.name == "answers")
+    match kit.name {
+        "speech" => 0,
+        "answers" => 1,
+        _ => 2,
+    }
 }
 
 fn sha256(path: &Path) -> Result<String> {
@@ -266,7 +292,7 @@ fn listen(kit: &Kit, path: &Path) -> Result<Vec<(f64, f64, String)>> {
     let base = folder.join(format!("{}", std::process::id()));
     let ran = quiet(&program(kit).ok_or_else(|| anyhow!("the speech kit isn't there"))?)
         .arg("-m")
-        .arg(model(kit))
+        .arg(model(kit).unwrap_or_default())
         .arg("-f")
         .arg(&wave)
         .args(["-l", "auto", "-oj", "-np", "-t", &threads(), "-of"])
@@ -404,7 +430,7 @@ pub fn answer(searcher: &mut Searcher, question: &str, vector: Option<&[f32]>, v
     std::fs::write(&file, &prompt)?;
     let output = quiet(&program)
         .arg("-m")
-        .arg(model(kit))
+        .arg(model(kit).unwrap_or_default())
         .arg("-f")
         .arg(&file)
         .args(["-n", "400", "--temp", "0.2", "-c", "8192", "-t", &threads(), "-no-cnv", "--no-display-prompt", "--simple-io"])
@@ -445,7 +471,25 @@ pub fn answer(searcher: &mut Searcher, question: &str, vector: Option<&[f32]>, v
 /// The requests about the kits themselves. `None`: not one of them.
 pub fn handle(request: &Value) -> Option<Result<Value>> {
     match request["op"].as_str().unwrap_or_default() {
-        "kits" => Some(Ok(json!({"speech": status_of(&SPEECH), "answers": status_of(&ANSWERS)}))),
+        "kits" => {
+            let mut media = status_of(&MEDIA);
+            // FFmpeg from anywhere will do: installed on the computer, or the copy fetched here.
+            media["ready"] = json!(glint_core::readers::media::ffmpeg().is_some());
+            Some(Ok(json!({"speech": status_of(&SPEECH), "answers": status_of(&ANSWERS), "media": media})))
+        }
+        // Is there a newer Glint? Asks the website for its version number, and sends nothing.
+        "update_check" => Some((|| {
+            let current = env!("CARGO_PKG_VERSION");
+            let reply = ureq::get("https://glint.nhaajt.com/version.json")
+                .set("User-Agent", "glint")
+                .timeout(std::time::Duration::from_secs(8))
+                .call()?;
+            let mut body = String::new();
+            reply.into_reader().take(4096).read_to_string(&mut body)?;
+            let latest = serde_json::from_str::<Value>(&body)?["version"].as_str().unwrap_or_default().to_string();
+            let parts = |version: &str| -> Vec<u64> { version.split('.').map(|part| part.parse().unwrap_or(0)).collect() };
+            Ok(json!({"current": current, "latest": latest, "newer": !latest.is_empty() && parts(&latest) > parts(current)}))
+        })()),
         // Starts the download and returns at once: `kits` says how far it is.
         "kit_get" => Some((|| {
             let kit = kit(request["kit"].as_str().unwrap_or_default())?;
@@ -467,7 +511,9 @@ pub fn handle(request: &Value) -> Option<Result<Value>> {
         "kit_remove" => Some((|| {
             let kit = kit(request["kit"].as_str().unwrap_or_default())?;
             std::fs::remove_dir_all(tools(kit)).ok();
-            std::fs::remove_file(model(kit)).ok();
+            if let Some(file) = model(kit) {
+                std::fs::remove_file(file).ok();
+            }
             Ok(json!({}))
         })()),
         _ => None,

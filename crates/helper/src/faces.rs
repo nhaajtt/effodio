@@ -229,7 +229,7 @@ pub fn handle(store: &Store, request: &Value) -> Option<Result<Value>> {
     let op = request["op"].as_str().unwrap_or_default();
     if !matches!(
         op,
-        "faces_status" | "faces_enable" | "faces_wipe" | "faces_of" | "face_name" | "people" | "person_rename"
+        "faces_status" | "faces_enable" | "faces_wipe" | "faces_of" | "face_name" | "people" | "person_rename" | "people_merge"
             | "person_forget" | "face_example"
     ) {
         return None;
@@ -294,8 +294,63 @@ fn answer(store: &Store, op: &str, request: &Value) -> Result<Value> {
             if name.is_empty() {
                 bail!("a person needs a name");
             }
-            db.execute("UPDATE people SET name = ? WHERE id = ?", (name, person))?;
+            // Renamed to someone who's already there: the two are one person.
+            let other: Option<i64> =
+                db.query_row("SELECT id FROM people WHERE name = ? AND id != ?", (name, person), |row| row.get(0)).ok();
+            match other {
+                Some(other) => {
+                    db.execute("UPDATE faces SET person = ? WHERE person = ?", (other, person))?;
+                    db.execute("DELETE FROM people WHERE id = ?", [person])?;
+                }
+                None => {
+                    db.execute("UPDATE people SET name = ? WHERE id = ?", (name, person))?;
+                }
+            }
             Ok(json!({}))
+        }
+        // Two cards dropped on each other are one person: `from` and `into` are each a named person
+        // (`{"person": id}`) or a gathering of unnamed faces (`{"group": [face ids]}`). Two gatherings become a
+        // person called `label` and a number, to be given a real name later.
+        "people_merge" => {
+            let faces_of = |side: &Value| -> Vec<i64> {
+                side["group"].as_array().map(|list| list.iter().filter_map(Value::as_i64).collect()).unwrap_or_default()
+            };
+            let (from, into) = (&request["from"], &request["into"]);
+            let target = match into["person"].as_i64() {
+                Some(person) => person,
+                None => {
+                    let label = request["label"].as_str().unwrap_or("Person");
+                    let mut number = 1;
+                    let name = loop {
+                        let name = format!("{label} {number}");
+                        let taken: bool =
+                            db.query_row("SELECT 1 FROM people WHERE name = ?", [&name], |_| Ok(true)).unwrap_or(false);
+                        if !taken {
+                            break name;
+                        }
+                        number += 1;
+                    };
+                    db.execute("INSERT INTO people(name, created) VALUES(?, ?)", (&name, now()))?;
+                    let person = db.last_insert_rowid();
+                    for face in faces_of(into) {
+                        db.execute("UPDATE faces SET person = ? WHERE id = ?", (person, face))?;
+                    }
+                    person
+                }
+            };
+            match from["person"].as_i64() {
+                Some(person) if person != target => {
+                    db.execute("UPDATE faces SET person = ? WHERE person = ?", (target, person))?;
+                    db.execute("DELETE FROM people WHERE id = ?", [person])?;
+                }
+                Some(_) => {}
+                None => {
+                    for face in faces_of(from) {
+                        db.execute("UPDATE faces SET person = ? WHERE id = ?", (target, face))?;
+                    }
+                }
+            }
+            Ok(json!({"person": target, "spread": spread_names(db)?}))
         }
         "person_forget" => {
             let person = request["person"].as_i64().ok_or_else(|| anyhow!("which person?"))?;

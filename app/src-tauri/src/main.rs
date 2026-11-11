@@ -408,9 +408,19 @@ fn apply(app: &AppHandle, settings: &Config, before: Option<&Config>) -> Result<
 // Commands
 
 /// A request to the search helper: `{"op": "search", "q": "…"}` and the others it knows.
+#[tauri::command]
+fn open_site(rest: String) -> Result<(), String> {
+    native::open_site(&rest).map_err(text)
+}
+
+#[tauri::command]
+fn app_version() -> &'static str {
+    env!("CARGO_PKG_VERSION")
+}
+
 #[tauri::command(async)]
 fn ask(app: AppHandle, request: Value) -> Result<Value, String> {
-    let slow = matches!(request["op"].as_str(), Some("example" | "duplicates" | "map" | "page" | "frame" | "tidy" | "albums" | "thread" | "collections" | "people" | "faces_enable" | "face_example" | "faces_of" | "face_name" | "ask_files" | "transcribe"));
+    let slow = matches!(request["op"].as_str(), Some("example" | "duplicates" | "map" | "page" | "frame" | "tidy" | "albums" | "thread" | "collections" | "people" | "faces_enable" | "face_example" | "faces_of" | "face_name" | "ask_files" | "update_check" | "people_merge"));
     state(&app).serve.ask(request, Duration::from_secs(if slow { 180 } else { 60 })).map_err(text)
 }
 
@@ -773,7 +783,7 @@ fn main() {
             launch: Mutex::new(None),
         })
         .invoke_handler(tauri::generate_handler![
-            ask, get_config, set_config, status, index_state, index_now, index_retry, estimate, model_download,
+            ask, open_site, app_version, get_config, set_config, status, index_state, index_now, index_retry, estimate, model_download,
             speed_check, pick_folders, pick_example, suggested_folders, save_example, thumbnail, open_result, reveal,
             copy_files, open_main, hide_panel, pin_panel, quit, ocr_languages, launch_target,
         ])

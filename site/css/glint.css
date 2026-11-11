@@ -89,3 +89,11 @@
 @media (prefers-reduced-motion: reduce) {
   .g-sky i, .g-device figcaption b { animation: none; }
 }
+
+/* The feedback form. */
+.g-form { display: grid; gap: 10px; max-width: 640px; margin-top: 18px; }
+.g-form textarea, .g-form input { width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 12px; font: 15px/1.5 var(--sans); color: var(--tp); background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); resize: vertical; }
+.g-form textarea:focus, .g-form input:focus { outline: none; border-color: var(--ac); }
+.g-form-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.g-form button { padding: 10px 22px; border-radius: 99px; border: 0; font: 600 14px var(--sans); color: #1a1305; background: var(--ac); cursor: pointer; }
+.g-form button:disabled { opacity: 0.6; cursor: default; }

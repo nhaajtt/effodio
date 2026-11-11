@@ -57,6 +57,7 @@ export interface Root {
 
 export interface Config {
   faces?: boolean;
+  updates?: boolean;
   speech?: boolean;
   roots: Root[];
   rules: { skip_folders: string[]; skip_extensions: string[]; skip_kinds: Kind[] };
@@ -169,6 +170,8 @@ export const openMain = (view?: string, query?: string) =>
   invoke<void>("open_main", { view: view ?? null, query: query ?? null });
 export const hidePanel = () => invoke<void>("hide_panel");
 export const pinPanel = (pinned: boolean) => invoke<void>("pin_panel", { pinned });
+export const openSite = (rest: string) => invoke<void>("open_site", { rest });
+export const appVersion = () => invoke<string>("app_version");
 export const quit = () => invoke<void>("quit");
 export const launchTarget = () => invoke<{ view: string | null; query: string | null } | null>("launch_target");
 export const ocrLanguages = () => invoke<string[]>("ocr_languages");
