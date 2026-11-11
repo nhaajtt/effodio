@@ -160,12 +160,6 @@ Magpie works on your computer and keeps what it learns there.
   needs a token.
 - **Feedback is yours to send.** The form on the website sends only what you type into it.
 
-## Thanks
-
-Magpie learned from [DigUp](https://github.com/ARahim3/DigUp) by Abdur Rahim (MIT), which showed how well
-EmbeddingGemma 2 searches a computer: the way pictures are sized for the model, the pinned llama.cpp build and its
-one-line patch, and the ranking that puts meaning and words on one scale started there.
-
 It's built on [EmbeddingGemma 2](https://huggingface.co/google/embeddinggemma-2) by Google DeepMind,
 [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT), [Tauri](https://tauri.app) (MIT or Apache 2.0) and
 [SQLite](https://sqlite.org). Their notices are in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
