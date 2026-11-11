@@ -174,6 +174,10 @@ kbd { font: 10px var(--mono); border: 1px solid var(--line); background: var(--g
 
 .label { font: 10.5px var(--pixel); text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-3); margin-bottom: 22px; }
 
+.film { padding: 74px 0 0; }
+.screen { padding: 8px; border-radius: 20px; }
+.screen video { display: block; width: 100%; height: auto; aspect-ratio: 1220 / 780; border-radius: 13px; background: #0b0d14; }
+
 /* How it works, laid out like a timeline. */
 .pipe { padding: 74px 0 84px; }
 .axis { display: grid; grid-template-columns: repeat(5, 1fr); font: 11px var(--mono); color: var(--ink-3); border-bottom: 1px solid var(--line); }

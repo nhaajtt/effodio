@@ -1,0 +1,147 @@
+/* The second coat: the typefaces, colour behind the glass, and the light that plays on it. Loaded after glass.css. */
+
+@font-face { font-family: "Geist"; font-weight: 100 900; font-display: swap; src: url("./fonts/Geist-100-900-vietnamese.woff2") format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: "Geist"; font-weight: 100 900; font-display: swap; src: url("./fonts/Geist-100-900-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F; }
+@font-face { font-family: "Geist"; font-weight: 100 900; font-display: swap; src: url("./fonts/Geist-100-900-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Geist Mono"; font-weight: 100 900; font-display: swap; src: url("./fonts/GeistMono-100-900-vietnamese.woff2") format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: "Geist Mono"; font-weight: 100 900; font-display: swap; src: url("./fonts/GeistMono-100-900-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Departure Mono"; font-weight: 400; font-display: swap; src: url("./fonts/DepartureMono-Regular.woff2") format("woff2"); }
+
+@property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+
+:root {
+  --font: "Geist", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --display: "Geist", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --mono: "Geist Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+  --pixel: "Departure Mono", var(--mono);
+  --foil: 0.2;
+  --aurora: 0.78;
+}
+:root[lang="vi"] { --pixel: var(--mono); }
+:root[data-theme="light"] { --foil: 0.3; --aurora: 0.5; }
+:root[data-theme="dark"] { --tint: rgba(12, 14, 22, 0.42); }
+
+/* Colour behind the sheet, so the glass always has something to blur, whatever the desktop looks like. */
+body::before {
+  content: ""; position: fixed; inset: -18%; z-index: -1; pointer-events: none; opacity: var(--aurora);
+  background:
+    radial-gradient(36% 40% at 14% 12%, rgba(217, 166, 58, 0.75), transparent 72%),
+    radial-gradient(40% 46% at 90% 30%, rgba(63, 107, 216, 0.8), transparent 72%),
+    radial-gradient(44% 44% at 30% 96%, rgba(138, 107, 240, 0.75), transparent 72%),
+    radial-gradient(30% 34% at 84% 92%, rgba(31, 138, 138, 0.55), transparent 72%);
+  animation: aurora 32s ease-in-out infinite alternate;
+}
+@keyframes aurora { to { transform: translate3d(3%, -2%, 0) rotate(7deg) scale(1.08); } }
+
+/* Thicker, glossier panes: a wash of light across the top, more of what's behind coming through. */
+.glass {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent 36%),
+    linear-gradient(155deg, var(--glass-strong), var(--glass) 55%);
+  backdrop-filter: blur(30px) saturate(190%);
+}
+/* Under the pointer the glass turns to foil: colours that slide as the pointer moves. */
+.glass[data-light]::after {
+  background:
+    radial-gradient(240px circle at var(--mx, -400px) var(--my, -400px), var(--specular), transparent 62%),
+    repeating-linear-gradient(118deg, rgba(255, 110, 200, var(--foil)), rgba(110, 190, 255, var(--foil)) 9%, rgba(140, 255, 210, var(--foil)) 18%, rgba(255, 226, 130, var(--foil)) 27%, rgba(255, 110, 200, var(--foil)) 36%);
+  background-size: auto, 320% 320%;
+  background-position: 0 0, calc(var(--mx, 0px) * -0.9) calc(var(--my, 0px) * -0.9);
+  -webkit-mask-image: radial-gradient(320px circle at var(--mx, -400px) var(--my, -400px), #000, transparent 72%);
+  mask-image: radial-gradient(320px circle at var(--mx, -400px) var(--my, -400px), #000, transparent 72%);
+  opacity: 0.8; mix-blend-mode: normal;
+}
+
+/* The search box: a light runs round its rim, faster while it's searching. */
+.searchbox { border-radius: 14px; }
+.searchbox::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; pointer-events: none;
+  background: conic-gradient(from var(--spin), transparent 0 58%, #f4d58a 72%, #fff 80%, #9b7bf5 88%, transparent 96%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: spin 7s linear infinite; opacity: 0.75;
+}
+.searchbox.busy::before { animation-duration: 1.1s; opacity: 1; }
+.searchbox:focus-within { box-shadow: inset 0 1px 0 var(--edge-light), inset 0 0 0 1px var(--line), 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent), 0 10px 34px rgba(217, 166, 58, 0.16), var(--shadow-small); }
+.searchbox .spark { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 80%, transparent)); }
+@keyframes spin { to { --spin: 360deg; } }
+
+/* The selection lens glows a little gold. */
+.lens { box-shadow: inset 0 1px 0.5px var(--edge-light), inset 0 -1px 0.5px var(--edge-dark), inset 0 0 0 1px var(--line), inset 0 0 22px var(--accent-soft), 0 0 26px color-mix(in srgb, var(--accent) 16%, transparent), var(--shadow-small); }
+
+/* Small print in a typewriter face. */
+.brand span, .brand { font-family: var(--pixel); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 400; }
+.sidebar .group, .section-label, .toolbar .meta, .moments-caption, .panel .footer, .row .place, .index-card .line, .preview .path {
+  font-family: var(--mono); letter-spacing: 0.03em;
+}
+.sidebar .group, .section-label, .toolbar .meta { font-family: var(--pixel); text-transform: uppercase; letter-spacing: 0.14em; font-size: 10px; }
+.pill { font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; }
+.card .badge { font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 6px; }
+kbd { font-family: var(--mono); }
+.preview h3, .card .name, .row .name { letter-spacing: -0.01em; }
+
+/* Nothing typed yet: the sign, lit. */
+.empty h2 {
+  font: 400 38px/1.1 var(--pixel); text-transform: uppercase; letter-spacing: 0.05em;
+  background: linear-gradient(100deg, var(--accent) 0%, #f4d58a 30%, #fff 50%, #f4d58a 70%, var(--accent) 100%);
+  background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 16px rgba(217, 166, 58, 0.5));
+  animation: sweep 4.5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+:root[lang="vi"] .empty h2 { font: 600 32px/1.15 var(--display); text-transform: none; letter-spacing: -0.02em; }
+:root[data-theme="light"] .empty h2 { background-image: linear-gradient(100deg, #8a5e0a 0%, #b9851c 30%, #e6bb55 50%, #b9851c 70%, #8a5e0a 100%); filter: none; }
+@keyframes sweep { 0%, 25% { background-position: 100% 0; } 75%, 100% { background-position: 0 0; } }
+.empty p { font-size: 15px; color: var(--ink-2); }
+.empty .orb { animation: bob 5s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-5px) rotate(8deg); } }
+
+/* Cards lift, and a band of light crosses the picture. */
+.card { transition: transform 320ms var(--spring); }
+.card:hover { transform: translateY(-3px); }
+.card .thumb img { transition: transform 500ms var(--ease); }
+.card:hover .thumb img { transform: scale(1.05); }
+.card .thumb::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(112deg, transparent 42%, rgba(255, 255, 255, 0.34) 50%, transparent 58%) no-repeat;
+  background-size: 260% 100%; background-position: 160% 0;
+}
+.card:hover .thumb::after { animation: once 900ms var(--ease) forwards; }
+.grid .card:first-child .thumb::after { animation: once 1100ms 200ms var(--ease) forwards; }
+@keyframes once { to { background-position: -60% 0; } }
+
+/* The gold button, polished. */
+.button.primary {
+  position: relative; overflow: hidden;
+  background: linear-gradient(180deg, #f3cf78, var(--accent));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65), inset 0 -1px 0 rgba(120, 80, 0, 0.35), 0 6px 18px color-mix(in srgb, var(--accent) 36%, transparent);
+}
+:root[data-accent="navy"] .button.primary { background: linear-gradient(180deg, #6f93ea, var(--accent)); }
+:root[data-accent="violet"] .button.primary { background: linear-gradient(180deg, #ab94f7, var(--accent)); }
+.button.primary::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.7) 50%, transparent 65%) no-repeat;
+  background-size: 250% 100%; background-position: 160% 0; animation: shine 3.6s var(--ease) infinite;
+}
+@keyframes shine { 0%, 60% { background-position: 160% 0; } 100% { background-position: -60% 0; } }
+
+.meter i { background: linear-gradient(90deg, #f4d58a, var(--accent)); box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent); }
+.moments .bar { box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 45%, transparent); }
+.nav-item { transition: transform 220ms var(--spring), color 140ms var(--ease); }
+.nav-item:hover { transform: translateX(2px); }
+
+/* A glint: a four-pointed star that flies off and goes out. */
+.glint {
+  position: fixed; z-index: 90; pointer-events: none;
+  background: linear-gradient(140deg, #fff, #f4d58a 40%, var(--accent));
+  clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%);
+  filter: drop-shadow(0 0 6px rgba(244, 213, 138, 0.9));
+}
+.glint.cool { background: linear-gradient(140deg, #fff, #b9a6ff 45%, #3f6bd8); }
+
+@media (prefers-reduced-motion: reduce) {
+  body::before, .searchbox::before, .empty h2, .empty .orb, .button.primary::after { animation: none; }
+}
+
+/* The filter row stays on one line. */
+.toolbar button.pill { font-size: 10.5px; letter-spacing: 0; padding: 0 9px; gap: 5px; }

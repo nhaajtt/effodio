@@ -1,6 +1,7 @@
 // One page, two faces: the search panel (`#panel`) and the window (`#main`).
 
 import * as api from "./api";
+import { mountGlints } from "./fx";
 import { setLanguage } from "./i18n";
 import { mountPanel } from "./panel";
 import { applyAppearance } from "./ui";
@@ -19,6 +20,7 @@ async function start(): Promise<void> {
   window.addEventListener("contextmenu", (event) => {
     if (!(event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement)) event.preventDefault();
   });
+  mountGlints();
   if (location.hash === "#panel") await mountPanel(root);
   else await mountWindow(root);
 }

@@ -11,6 +11,7 @@
     act_install: "Cài bằng một dòng", act_dl: "Tải file .exe",
    
     hotkey: "từ mọi ứng dụng", demo_open: "Mở", demo_like: "Tương tự",
+    film_l: "Bản thật · quay ngay trong app, trên một thư mục file mẫu",
     how_l: "Cách hoạt động · trên máy bạn, từ đầu đến cuối",
     s1h: "Thư mục của bạn", s1p: "bạn chọn cái nào",
     s2h: "Bộ đọc", s2p: "ảnh, chữ, âm thanh",
@@ -96,7 +97,7 @@
     (entries) => entries.forEach((entry) => entry.isIntersecting && (entry.target.classList.add("in"), seen.unobserve(entry.target))),
     { threshold: 0.15 },
   );
-  document.querySelectorAll(".card, .steps li, .label, .big, .cmd, .two p").forEach((el, index) => {
+  document.querySelectorAll(".card, .steps li, .label, .big, .cmd, .two p, .screen").forEach((el, index) => {
     if (still) return;
     el.classList.add("reveal");
     el.style.transitionDelay = (index % 5) * 80 + "ms";
