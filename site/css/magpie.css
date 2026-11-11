@@ -98,7 +98,12 @@
 .g-form button { padding: 10px 22px; border-radius: 99px; border: 0; font: 600 14px var(--sans); color: #1a1305; background: var(--ac); cursor: pointer; }
 .g-form button:disabled { opacity: 0.6; cursor: default; }
 
-/* The install line: a strip of its own under the introduction, the whole command in view. */
-.g-top-static { padding: 22px var(--lab-content-x); margin: 0; animation: none; border-bottom: 1px solid var(--border); }
+/* The install line closes the introduction: one frame, the same ground and the same fine rules, no line between. */
+#intro-mount { border-bottom: 0; padding-bottom: 0; }
+.g-top-static {
+  position: relative; margin: 0; animation: none; background: var(--bg);
+  padding: 28px var(--lab-content-x) var(--lab-hero-pad-y); border-bottom: 1px solid var(--border);
+}
+.g-top-static::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(#ffffff0a 0 1px, #0000 1px 3px); }
 .g-top-static .g-cmd { width: fit-content; max-width: 100%; }
 .g-top-static .g-cmd code { flex: 0 1 auto; }
