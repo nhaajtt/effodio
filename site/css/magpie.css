@@ -97,3 +97,6 @@
 .g-form-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .g-form button { padding: 10px 22px; border-radius: 99px; border: 0; font: 600 14px var(--sans); color: #1a1305; background: var(--ac); cursor: pointer; }
 .g-form button:disabled { opacity: 0.6; cursor: default; }
+
+/* The install line where the page itself puts it, before a script moves it in beside the introduction. */
+.g-top-static { padding: 0 var(--lab-content-x) 28px; margin-top: 0; animation: none; }

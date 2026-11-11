@@ -20,14 +20,18 @@ $("ffmpeg").textContent = TEXT.ffmpeg;
 $("thanks").textContent = TEXT.thanks;
 
 // The install line also sits at the top of the page, under the introduction.
-const intro = document.querySelector(".lab-intro-main");
-if (intro) {
-  const top = document.createElement("div");
-  top.className = "g-top";
-  top.innerHTML = `<div class="g-cmd"><span aria-hidden="true">PS&gt;</span><code></code><button type="button"></button></div><a class="g-top-link" href="${INSTALLER}">${TEXT.download} <span aria-hidden="true">↓</span></a>`;
+// It is in the page already; here it gets its words in the reader's language and moves in beside the introduction.
+const top = document.getElementById("top-install");
+if (top) {
   top.querySelector("code").textContent = COMMAND;
   top.querySelector("button").textContent = TEXT.copy;
-  intro.append(top);
+  top.querySelector("[data-label]").textContent = TEXT.download;
+  top.querySelector("a").href = INSTALLER;
+  const intro = document.querySelector(".lab-intro-main");
+  if (intro) {
+    top.classList.remove("g-top-static");
+    intro.append(top);
+  }
 }
 
 document.querySelectorAll(".g-cmd").forEach((bar) => {
