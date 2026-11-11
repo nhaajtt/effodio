@@ -5,13 +5,17 @@ PDF by what a page says, a recording or a video by the moment. Everything runs o
 
 It's for Windows 10 and 11 (64-bit). A Mac version is planned.
 
+[![Magpie finding a photo of a lighthouse from the words "a lighthouse at dusk"](site/demo.jpg)](https://magpie.nhaajt.com)
+
+The pictures, the clip and the papers in the tour on [magpie.nhaajt.com](https://magpie.nhaajt.com) were made for it.
+
 ```
-"a dog on the beach"                  the photo
-"zebra in a video"                    the clip, at the second the zebra shows up
-"the clause about pets in the lease"  the PDF, at page 3
-"payment declined error"              the screenshot, by the text in it
-"hoa don tien dien"                   "Hóa đơn tiền điện tháng 10.txt" (accents are optional)
-"PAY-7731-DX"                         an exact code, wherever it's written, pictures included
+"a lighthouse at dusk"                        the photo
+"a train crossing a bridge"                   the clip, at the second the train comes on
+"what the warranty says about water damage"   the PDF, at page 3
+"sync failed error"                           the screenshot, by the text in it
+"hoa don tien nuoc"                           "Hóa đơn tiền nước tháng 9.pdf" (accents are optional)
+"SYNC-4412-QX"                                an exact code, wherever it's written, pictures included
 ```
 
 ## What it does
@@ -111,7 +115,7 @@ check finds it faster with the same vectors. To build one, install the Vulkan SD
 Off by default. Switched on in Settings, it lets other programs on the same computer search the index:
 
 ```sh
-curl -H "Authorization: Bearer <token>" "http://127.0.0.1:47600/search?q=dog+on+the+beach&limit=5"
+curl -H "Authorization: Bearer <token>" "http://127.0.0.1:47600/search?q=lighthouse+at+dusk&limit=5"
 ```
 
 After that: only this computer can reach it (it listens on 127.0.0.1, never on the network); every request needs the

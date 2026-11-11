@@ -150,7 +150,7 @@ export async function mountSettings(container: HTMLElement): Promise<void> {
             h("div.label", h("span", t("settings.door.token")), h("span.mono", `${door.token.slice(0, 10)}…${door.token.slice(-6)}`)),
             h("button.button", { onclick: () => void navigator.clipboard.writeText(door.token).then(() => toast(t("action.copied"))) }, t("settings.door.copy")),
           ),
-          h("div.mono", { style: { color: "var(--ink-3)" } }, `curl -H "Authorization: Bearer <token>" "http://127.0.0.1:${door.port}/search?q=dog+on+the+beach"`),
+          h("div.mono", { style: { color: "var(--ink-3)" } }, `curl -H "Authorization: Bearer <token>" "http://127.0.0.1:${door.port}/search?q=lighthouse+at+dusk"`),
         )
       : null;
 
