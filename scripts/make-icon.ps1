@@ -68,54 +68,59 @@ $edge = New-Object System.Drawing.Drawing2D.LinearGradientBrush $from, $to, (Arg
 $pen = New-Object System.Drawing.Pen $edge, 10
 $g.DrawPath($pen, (RoundRect 77 77 870 870 205))
 
-# The magpie: black and white with a blue wing and a long tail, and in its beak the bright thing it found.
-function Oval($brush, [float]$cx, [float]$cy, [float]$rx, [float]$ry, [float]$angle) {
-  $state = $g.Save()
-  $g.TranslateTransform($cx, $cy)
-  $g.RotateTransform($angle)
-  $g.FillEllipse($brush, -$rx, -$ry, 2 * $rx, 2 * $ry)
-  $g.Restore($state)
+# The magpie, folded from paper: flat facets with straight creases, each a shade apart from the next. Black and
+# white, a blue wing, a long tail; and at the tip of its beak the small bright thing it found.
+function Facet($color, [float[]]$xy, $shadow) {
+  $points = for ($i = 0; $i -lt $xy.Length; $i += 2) { Point $xy[$i] $xy[$i + 1] }
+  if ($shadow) { $color = $shadow }
+  $brush = New-Object System.Drawing.SolidBrush $color
+  $g.FillPolygon($brush, [System.Drawing.PointF[]]$points)
+  # A hair of the same colour along the edges, so no seam shows between two facets.
+  if (-not $shadow) { $g.DrawPolygon((New-Object System.Drawing.Pen $color, 1.6), [System.Drawing.PointF[]]$points) }
 }
-function Shape($brush, $points) {
-  $path = New-Object System.Drawing.Drawing2D.GraphicsPath
-  $path.AddClosedCurve([System.Drawing.PointF[]]$points, 0.35)
-  $g.FillPath($brush, $path)
+function Bird($shadow) {
+  # tail: two long facets and a blue fold between them
+  Facet (Argb 255 30 35 54) @(372,512, 452,668, 118,884) $shadow
+  Facet (Argb 255 50 60 92) @(372,512, 118,884, 96,772) $shadow
+  Facet (Argb 255 52 110 220) @(372,512, 96,772, 150,700) $shadow
+  # back and nape
+  Facet (Argb 255 44 52 80) @(650,286, 612,404, 372,512, 486,348) $shadow
+  Facet (Argb 255 26 31 48) @(612,404, 566,612, 372,512) $shadow
+  # wing: three blue facets
+  Facet (Argb 255 86 150 255) @(500,392, 566,612, 300,588) $shadow
+  Facet (Argb 255 46 100 220) @(500,392, 300,588, 318,452) $shadow
+  Facet (Argb 255 54 204 196) @(566,612, 300,588, 452,668) $shadow
+  # white shoulder, breast and belly
+  Facet (Argb 255 255 255 255) @(612,404, 500,392, 566,612) $shadow
+  Facet (Argb 255 246 248 253) @(612,404, 716,430, 700,580, 566,612) $shadow
+  Facet (Argb 255 214 221 236) @(566,612, 700,580, 628,712, 452,668) $shadow
+  # leg
+  Facet (Argb 255 58 62 82) @(560,694, 606,706, 590,786) $shadow
+  # head: two facets, and the beak
+  Facet (Argb 255 36 42 66) @(650,286, 776,322, 716,430, 612,404) $shadow
+  Facet (Argb 255 58 68 104) @(650,286, 776,322, 704,300) $shadow
+  Facet (Argb 255 120 130 160) @(776,322, 892,368, 750,368) $shadow
+  Facet (Argb 255 84 92 120) @(750,368, 892,368, 742,398) $shadow
+  if (-not $shadow) { Facet (Argb 255 255 255 255) @(694,336, 714,348, 696,362, 678,348) $null }
 }
-$ink = New-Object System.Drawing.SolidBrush (Argb 255 16 18 30)
-$shade = New-Object System.Drawing.SolidBrush (Argb 90 2 4 12)
-$white = New-Object System.Drawing.SolidBrush (Argb 255 246 247 252)
-$blueFrom = Point 300 420
-$blueTo = Point 620 660
-$blue = New-Object System.Drawing.Drawing2D.LinearGradientBrush $blueFrom, $blueTo, (Argb 255 70 130 255), (Argb 255 40 200 190)
-
-# Its shadow on the glass.
-Oval $shade 500 590 215 150 -24
-Shape $shade @((Point 420 640), (Point 170 900), (Point 250 915), (Point 520 690))
-# The tail, the body, the white of the belly and the shoulder, the wing.
-Shape $ink @((Point 400 590), (Point 150 850), (Point 232 878), (Point 500 660))
-$tailShine = New-Object System.Drawing.Pen (Argb 200 60 150 235), 16
-$tailShine.StartCap = 'Round'; $tailShine.EndCap = 'Round'
-$g.DrawLine($tailShine, (Point 410 640), (Point 232 822))
-Oval $ink 490 545 215 150 -24
-Oval $white 545 615 150 88 -24
-Oval $blue 440 545 165 74 -30
-Oval $white 505 455 74 40 -30
-# The head, the eye, the beak.
-Oval $ink 672 392 112 108 0
-Oval $white 706 368 21 21 0
-Oval $ink 711 368 10 10 0
-$beak = New-Object System.Drawing.SolidBrush (Argb 255 52 56 74)
-Shape $beak @((Point 762 352), (Point 868 398), (Point 764 432))
-
-# What it found: a gold glint in its beak, and a smaller one behind.
-$goldFrom = Point 800 300
-$goldTo = Point 960 500
+$state = $g.Save()
+$g.TranslateTransform(512, 522)
+$g.ScaleTransform(0.9, 0.9)
+$g.TranslateTransform(-521, -585)
+$g.TranslateTransform(12, 22)
+Bird (Argb 80 2 4 12)
+$g.TranslateTransform(-12, -22)
+Bird $null
+# What it found.
+$goldFrom = Point 850 320
+$goldTo = Point 940 420
 $gold = New-Object System.Drawing.Drawing2D.LinearGradientBrush $goldFrom, $goldTo, (Argb 255 255 240 190), (Argb 255 222 164 48)
-$g.FillPath((New-Object System.Drawing.SolidBrush (Argb 70 255 214 120)), (Star 846 400 122 38))
-$g.FillPath($gold, (Star 846 400 92 22))
-$g.FillPath((New-Object System.Drawing.SolidBrush (Argb 235 255 255 255)), (Star 846 400 38 8))
-$small = New-Object System.Drawing.SolidBrush (Argb 215 255 240 196)
-$g.FillPath($small, (Star 300 250 58 14))
+$g.FillPath((New-Object System.Drawing.SolidBrush (Argb 60 255 214 120)), (Star 896 368 70 22))
+$g.FillPath($gold, (Star 896 368 50 12))
+$g.FillPath((New-Object System.Drawing.SolidBrush (Argb 235 255 255 255)), (Star 896 368 20 5))
+$g.Restore($state)
+$small = New-Object System.Drawing.SolidBrush (Argb 190 255 240 196)
+$g.FillPath($small, (Star 300 232 34 8))
 
 $g.Dispose()
 $bmp.Save($out, [System.Drawing.Imaging.ImageFormat]::Png)
