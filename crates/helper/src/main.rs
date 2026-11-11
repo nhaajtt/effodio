@@ -9,6 +9,7 @@
 //!   glint-helper status           what's in the index
 
 mod faces;
+mod kits;
 mod model;
 mod serve;
 mod speed;
@@ -154,6 +155,11 @@ fn index(arguments: &Arguments) -> Result<()> {
     if config.faces && glint_faces::Faces::ready(&config::models_folder()) {
         if let Err(error) = faces::scan(&mut store, &stop) {
             emit(&json!({"event": "note", "note": format!("faces: {error:#}")}));
+        }
+    }
+    if config.speech {
+        if let Err(error) = kits::listen_all(&mut store, &stop) {
+            emit(&json!({"event": "note", "note": format!("speech: {error:#}")}));
         }
     }
     let counts = store.counts()?;
@@ -343,6 +349,10 @@ fn main() {
             .and_then(|mut store| faces::scan(&mut store, &AtomicBool::new(false)))
             .map(|read| emit(&json!({"event": "finished", "read": read}))),
         "faces" => faces::check(&rest.bare),
+        // `speech`: listens to the recordings in the index now, without a crawl.
+        "speech" => Store::open(&rest.database())
+            .and_then(|mut store| kits::listen_all(&mut store, &AtomicBool::new(false)))
+            .map(|heard| emit(&json!({"event": "finished", "heard": heard}))),
         "ocr" => ocr(&rest),
         _ => {
             println!(

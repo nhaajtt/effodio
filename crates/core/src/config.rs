@@ -125,6 +125,9 @@ pub struct Config {
     /// Find the faces in photos, so people can be searched for by name. Off until someone turns it on.
     #[serde(default)]
     pub faces: bool,
+    /// Listen to recordings and videos, so the words said in them can be searched for. Needs the speech kit.
+    #[serde(default)]
+    pub speech: bool,
     #[serde(default)]
     pub door: Door,
 }

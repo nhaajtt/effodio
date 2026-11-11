@@ -57,6 +57,7 @@ export interface Root {
 
 export interface Config {
   faces?: boolean;
+  speech?: boolean;
   roots: Root[];
   rules: { skip_folders: string[]; skip_extensions: string[]; skip_kinds: Kind[] };
   ocr: boolean;

@@ -224,6 +224,9 @@ impl Session {
     pub fn handle(&mut self, request: &Value) -> Result<Value> {
         self.release_idle();
         let op = request["op"].as_str().unwrap_or_default();
+        if let Some(answer) = crate::kits::handle(request) {
+            return answer;
+        }
         if let Some(answer) = crate::faces::handle(&self.searcher.store, request) {
             // Names may have changed: `person:` filters read them.
             self.searcher.reload_people();
@@ -412,6 +415,17 @@ impl Session {
                     out.push(json!({"name": name, "lead": lead, "files": self.members(&album.files)?}));
                 }
                 Ok(json!({"albums": out}))
+            }
+            // A question answered from the files, by a language model on this computer, with its sources.
+            "ask_files" => {
+                self.refresh()?;
+                let question = request["q"].as_str().unwrap_or_default().trim().to_string();
+                if question.is_empty() {
+                    bail!("what's the question?");
+                }
+                let vector = self.embed_query(&question)?;
+                let vietnamese = request["language"].as_str() == Some("vi");
+                crate::kits::answer(&mut self.searcher, &question, Some(&vector), vietnamese)
             }
             // From one file through the others about the same thing.
             "thread" => {

@@ -2,6 +2,7 @@
 // the settings.
 
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { mountAsk } from "./ask";
 import * as api from "./api";
 import { IndexState, Kind } from "./api";
 import { mountDuplicates, mountMap } from "./extras";
@@ -16,7 +17,7 @@ import { mountSettings } from "./settings";
 import { mountSetup } from "./setup";
 import { followPointer, h, icon, number, toast } from "./ui";
 
-type View = "search" | "map" | "duplicates" | "tidy" | "albums" | "people" | "thread" | "settings" | "setup";
+type View = "search" | "map" | "duplicates" | "tidy" | "albums" | "people" | "ask" | "thread" | "settings" | "setup";
 
 interface Collection {
   id: number;
@@ -84,6 +85,7 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
   sidebar.append(
     navButton("search", "search", t("nav.search")),
     navButton("map", "map", t("nav.map")),
+    navButton("ask", "ask", t("nav.ask")),
     navButton("albums", "album", t("nav.albums")),
     navButton("people", "people", t("nav.people")),
     navButton("tidy", "tidy", t("nav.tidy")),
@@ -268,6 +270,9 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
             finder?.searchBy(path, true);
           },
         });
+        break;
+      case "ask":
+        void mountAsk(content);
         break;
       case "tidy":
         void mountTidy(content);
