@@ -349,6 +349,10 @@ fn main() {
             .and_then(|mut store| faces::scan(&mut store, &AtomicBool::new(false)))
             .map(|read| emit(&json!({"event": "finished", "read": read}))),
         "faces" => faces::check(&rest.bare),
+        // `looks`: works out how the pictures in the index look (colours, sharpness, subject), without a crawl.
+        "looks" => Store::open(&rest.database())
+            .and_then(|mut store| glint_core::insight::backfill_tones(&mut store, &AtomicBool::new(false)))
+            .map(|done| emit(&json!({"event": "finished", "done": done}))),
         // `speech`: listens to the recordings in the index now, without a crawl.
         "speech" => Store::open(&rest.database())
             .and_then(|mut store| kits::listen_all(&mut store, &AtomicBool::new(false)))

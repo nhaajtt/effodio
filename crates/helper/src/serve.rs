@@ -38,7 +38,6 @@ pub struct Session {
 
 /// What the tidy-up looks for among the photos, in words the model reads.
 const TIDY: &[(&str, &str)] = &[
-    ("blurry", "a blurry, out of focus, shaky photo"),
     ("receipts", "a photo of a receipt, a bill or an invoice"),
     ("papers", "a photo of a printed page, a form or a whiteboard"),
     ("memes", "a meme: a funny picture with a caption"),
@@ -365,6 +364,18 @@ impl Session {
                     if !ids.is_empty() {
                         heaps.push(json!({"name": name, "files": self.members(&ids)?}));
                     }
+                }
+                // Blurry by measure, not by guess: the photos whose edges are softest.
+                let soft: Vec<i64> = {
+                    let mut select = self.searcher.store.db.prepare(
+                        "SELECT id FROM files WHERE kind = 'image' AND json_extract(info, '$.sharp') < ?
+                         ORDER BY json_extract(info, '$.sharp') LIMIT 60",
+                    )?;
+                    let rows = select.query_map([request["soft"].as_f64().unwrap_or(100.0)], |row| row.get(0))?;
+                    rows.collect::<glint_core::rusqlite::Result<_>>()?
+                };
+                if !soft.is_empty() {
+                    heaps.insert(0, json!({"name": "blurry", "files": self.members(&soft)?}));
                 }
                 let old: Vec<i64> = {
                     let mut select = self.searcher.store.db.prepare(

@@ -128,7 +128,14 @@ export class Finder {
       if (sequence !== this.sequence) return;
       this.show(result);
     } catch (error) {
-      if (sequence === this.sequence) report(error);
+      if (sequence === this.sequence) {
+        report(error);
+        // A sample with no face in it: back to what it looks like.
+        if (this.faces) {
+          this.faces = false;
+          void this.run(false);
+        }
+      }
     } finally {
       if (sequence === this.sequence) this.parts.searchbox.classList.remove("busy");
     }

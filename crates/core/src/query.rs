@@ -23,13 +23,15 @@ pub struct Query {
     pub phrases: Vec<String>,
     /// `color:` filters: a picture's main colours, by their names in `insight::TONES`.
     pub colors: Vec<String>,
+    /// `subject:` filters: the side of the picture its subject is on (`left`, `center`, `right`).
+    pub sides: Vec<String>,
     /// `person:` filters: folded names of people who must be in the picture.
     pub people: Vec<String>,
 }
 
 impl Query {
     pub fn has_filters(&self) -> bool {
-        !self.kinds.is_empty() || !self.colors.is_empty() || !self.people.is_empty() || !self.folders.is_empty() || !self.extensions.is_empty() || self.after.is_some()
+        !self.kinds.is_empty() || !self.colors.is_empty() || !self.sides.is_empty() || !self.people.is_empty() || !self.folders.is_empty() || !self.extensions.is_empty() || self.after.is_some()
             || self.before.is_some()
     }
 
@@ -148,6 +150,13 @@ pub fn parse(input: &str, now: f64) -> Query {
                     "color" | "colour" | "mau" => match crate::insight::tone_named(value) {
                         Some(tone) => {
                             query.colors.push(tone.to_string());
+                            true
+                        }
+                        None => false,
+                    },
+                    "subject" | "side" | "chuthe" | "vitri" => match crate::insight::side_named(value) {
+                        Some(side) => {
+                            query.sides.push(side.to_string());
                             true
                         }
                         None => false,

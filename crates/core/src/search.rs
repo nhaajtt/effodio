@@ -86,6 +86,8 @@ pub(crate) struct FileMeta {
     pub(crate) modified: f64,
     /// A picture's main colours, for `color:` filters.
     pub(crate) tones: Vec<String>,
+    /// The side a picture's subject is on, for `subject:` filters; empty when it has none.
+    pub(crate) focus: String,
 }
 
 pub struct Searcher {
@@ -269,6 +271,7 @@ impl Searcher {
                 extension,
                 modified: row.get(3)?,
                 tones: crate::insight::tones_in(row.get_ref(4)?.as_str().unwrap_or_default()),
+                focus: crate::insight::focus_in(row.get_ref(4)?.as_str().unwrap_or_default()),
             });
         }
         drop(rows);
@@ -329,6 +332,7 @@ impl Searcher {
             && query.after.map_or(true, |after| meta.modified >= after)
             && query.before.map_or(true, |before| meta.modified <= before)
             && query.colors.iter().all(|color| meta.tones.iter().any(|tone| tone == color))
+            && query.sides.iter().all(|side| &meta.focus == side)
             && query.people.iter().all(|name| self.people.get(name).is_some_and(|files| files.contains(&file)))
     }
 

@@ -83,6 +83,110 @@ pub fn tones(picture: &Picture) -> Vec<&'static str> {
     ranked.into_iter().take(3).map(|tone| TONES[tone]).collect()
 }
 
+/// How sharp a picture is: the spread of its brightness's second differences, on the picture fitted into 256
+/// pixels. A sharp photo is in the hundreds or thousands; one out of focus or shaken, in the tens.
+pub fn sharpness(picture: &Picture) -> f64 {
+    let small = picture.fit(256);
+    let (width, height) = (small.width, small.height);
+    if width < 3 || height < 3 {
+        return 0.0;
+    }
+    let gray: Vec<f32> =
+        small.rgb.chunks_exact(3).map(|p| 0.299 * p[0] as f32 + 0.587 * p[1] as f32 + 0.114 * p[2] as f32).collect();
+    let (mut sum, mut squares, mut count) = (0f64, 0f64, 0f64);
+    for y in 1..height - 1 {
+        for x in 1..width - 1 {
+            let at = y * width + x;
+            let edge = (gray[at - 1] + gray[at + 1] + gray[at - width] + gray[at + width] - 4.0 * gray[at]) as f64;
+            sum += edge;
+            squares += edge * edge;
+            count += 1.0;
+        }
+    }
+    let mean = sum / count;
+    (squares / count - mean * mean).max(0.0)
+}
+
+/// Where a picture's subject sits: `left`, `center` or `right`, from where the pixels that differ most from the
+/// picture's border are. `None` when nothing stands out from the border.
+pub fn focus(picture: &Picture) -> Option<&'static str> {
+    let small = picture.fit(64);
+    let (width, height) = (small.width, small.height);
+    if width < 8 || height < 8 {
+        return None;
+    }
+    let pixel = |x: usize, y: usize| {
+        let at = (y * width + x) * 3;
+        [small.rgb[at] as f32, small.rgb[at + 1] as f32, small.rgb[at + 2] as f32]
+    };
+    let mut border = [0f32; 3];
+    let mut around = 0f32;
+    for y in 0..height {
+        for x in 0..width {
+            if x < 2 || y < 2 || x >= width - 2 || y >= height - 2 {
+                let colour = pixel(x, y);
+                for channel in 0..3 {
+                    border[channel] += colour[channel];
+                }
+                around += 1.0;
+            }
+        }
+    }
+    for channel in &mut border {
+        *channel /= around;
+    }
+    let (mut weight, mut across) = (0f32, 0f32);
+    for y in 0..height {
+        for x in 0..width {
+            let colour = pixel(x, y);
+            let apart = (0..3).map(|channel| (colour[channel] - border[channel]).abs()).sum::<f32>();
+            // Only what clearly differs counts: a soft gradient in the background isn't a subject.
+            if apart > 90.0 {
+                weight += apart;
+                across += apart * (x as f32 + 0.5) / width as f32;
+            }
+        }
+    }
+    if weight < 90.0 * (width * height) as f32 * 0.03 {
+        return None;
+    }
+    Some(match across / weight {
+        middle if middle < 0.42 => "left",
+        middle if middle > 0.58 => "right",
+        _ => "center",
+    })
+}
+
+/// A side as someone types it.
+pub fn side_named(word: &str) -> Option<&'static str> {
+    Some(match fold(word).as_str() {
+        "left" | "trai" => "left",
+        "right" | "phai" => "right",
+        "center" | "centre" | "middle" | "giua" => "center",
+        _ => return None,
+    })
+}
+
+/// What is kept about how a picture looks, in its file's `info`.
+pub fn look(picture: &Picture, info: &mut serde_json::Map<String, serde_json::Value>) {
+    info.insert("tones".into(), tones(picture).into());
+    info.insert("sharp".into(), sharpness(picture).round().into());
+    if let Some(side) = focus(picture) {
+        info.insert("focus".into(), side.into());
+    }
+}
+
+/// The side a file's `info` says its subject is on.
+pub(crate) fn focus_in(info: &str) -> String {
+    if !info.contains("\"focus\"") {
+        return String::new();
+    }
+    serde_json::from_str::<serde_json::Value>(info)
+        .ok()
+        .and_then(|value| value["focus"].as_str().map(String::from))
+        .unwrap_or_default()
+}
+
 /// The colours written in a file's `info`.
 pub(crate) fn tones_in(info: &str) -> Vec<String> {
     if !info.contains("\"tones\"") {
@@ -95,12 +199,13 @@ pub(crate) fn tones_in(info: &str) -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// Pictures read before colours were kept: works them out now. Returns how many it did.
+/// Pictures read before their look was kept (colours, sharpness, where the subject is): works it out now.
+/// Returns how many it did.
 pub fn backfill_tones(store: &mut Store, stop: &std::sync::atomic::AtomicBool) -> Result<usize> {
     let waiting: Vec<(i64, String, String)> = {
         let mut select = store.db.prepare(
             "SELECT id, path, info FROM files WHERE state IN ('done', 'partial') AND kind IN ('image', 'screenshot')
-             AND info NOT LIKE '%\"tones\"%'",
+             AND info NOT LIKE '%\"sharp\"%'",
         )?;
         let rows = select.query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?;
         rows.collect::<rusqlite::Result<_>>()?
@@ -113,10 +218,15 @@ pub fn backfill_tones(store: &mut Store, stop: &std::sync::atomic::AtomicBool) -
         let found: Vec<(i64, String)> = batch
             .par_iter()
             .map(|(id, path, info)| {
-                let tones = crate::readers::images::load(std::path::Path::new(path)).map(|p| tones(&p)).unwrap_or_default();
-                let mut value: serde_json::Value = serde_json::from_str(info).unwrap_or_else(|_| serde_json::json!({}));
-                value["tones"] = tones.into();
-                (*id, value.to_string())
+                let mut value: serde_json::Map<String, serde_json::Value> = serde_json::from_str(info).unwrap_or_default();
+                match crate::readers::images::load(std::path::Path::new(path)) {
+                    Ok(picture) => look(&picture, &mut value),
+                    // A picture that can't be opened isn't asked again.
+                    Err(_) => {
+                        value.insert("sharp".into(), serde_json::Value::Null);
+                    }
+                }
+                (*id, serde_json::Value::Object(value).to_string())
             })
             .collect();
         let change = store.db.transaction()?;
