@@ -107,3 +107,7 @@
 .g-top-static::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(#ffffff0a 0 1px, #0000 1px 3px); }
 .g-top-static .g-cmd { width: fit-content; max-width: 100%; }
 .g-top-static .g-cmd code { flex: 0 1 auto; }
+/* It comes up after the introduction's words have, the command first and the link a moment later. */
+.g-top-static > * { animation: g-rise 0.9s 1.5s var(--ease-out) backwards; }
+.g-top-static > .g-top-link { animation-delay: 1.75s; }
+@media (prefers-reduced-motion: reduce) { .g-top-static > * { animation: none; } }
