@@ -14,7 +14,7 @@ export const INSTALLER = `download/Glint_${VERSION}_x64-setup.exe`;
 export const COMMAND = 'powershell -c "irm https://glint.nhaajt.com/install.ps1 | iex"';
 
 const en = {
-  lede: "[[#GLINT]] by [[Nhaajt]]. It finds the files on your computer by what's in them: [[describe it]] the way you remember it and get [[the photo]], [[the PDF page]], [[the second of the video]]. One small model, running on [[your own PC]], in 100+ languages.",
+  lede: "[[#GLINT]] by [[@Nhaajt|https://www.nhaajt.com]]. It finds the files on your computer by what's in them: [[describe it]] the way you remember it and get [[the photo]], [[the PDF page]], [[the second of the video]]. One small model, running on [[your own PC]], in 100+ languages.",
   note: "Free, for Windows 10 and 11. Nothing you index leaves your computer. It goes online once, to download the model.",
   place: "on your PC",
   install: "Install",
@@ -51,7 +51,7 @@ const en = {
 
 const vi = {
   ...en,
-  lede: "[[#GLINT]] của [[Nhaajt]]. Nó tìm file trên máy bạn theo nội dung bên trong: [[tả nó ra]] theo cách bạn nhớ và nhận về [[tấm ảnh]], [[trang PDF]], [[đúng giây của video]]. Một model nhỏ, chạy trên [[chính máy bạn]], hiểu hơn 100 ngôn ngữ.",
+  lede: "[[#GLINT]] của [[@Nhaajt|https://www.nhaajt.com]]. Nó tìm file trên máy bạn theo nội dung bên trong: [[tả nó ra]] theo cách bạn nhớ và nhận về [[tấm ảnh]], [[trang PDF]], [[đúng giây của video]]. Một model nhỏ, chạy trên [[chính máy bạn]], hiểu hơn 100 ngôn ngữ.",
   note: "Miễn phí, cho Windows 10 và 11. Không có gì bạn lập chỉ mục rời khỏi máy. Nó chỉ lên mạng một lần để tải model.",
   place: "trên máy bạn",
   install: "Cài đặt",

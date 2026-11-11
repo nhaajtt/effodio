@@ -1,4 +1,4 @@
-# Draws the app icon (a gold glint on deep blue glass) at 1024 px, then makes every size from it.
+# Draws the app icon (a gold spade and the glint it turned up, on deep blue glass) at 1024 px, then makes every size from it.
 #   pwsh scripts\make-icon.ps1
 Add-Type -AssemblyName System.Drawing
 $root = Split-Path $PSScriptRoot -Parent
@@ -68,13 +68,52 @@ $edge = New-Object System.Drawing.Drawing2D.LinearGradientBrush $from, $to, (Arg
 $pen = New-Object System.Drawing.Pen $edge, 10
 $g.DrawPath($pen, (RoundRect 77 77 870 870 205))
 
-# The glint.
-$goldFrom = Point 200 180
-$goldTo = Point 760 820
-$gold = New-Object System.Drawing.Drawing2D.LinearGradientBrush $goldFrom, $goldTo, (Argb 255 255 240 196), (Argb 255 214 160 54)
-$g.FillPath($gold, (Star 470 500 330 74))
-$white = New-Object System.Drawing.SolidBrush (Argb 235 255 255 255)
-$g.FillPath($white, (Star 742 276 112 26))
+# The spade (it digs things up): a grip, a shaft and a pointed blade in gold, leaning, with its shadow under it.
+function Spade($brush, $penBrush) {
+  $grip = New-Object System.Drawing.Pen $penBrush, 46
+  $grip.LineJoin = 'Round'
+  $g.DrawPath($grip, (RoundRect 432 176 160 118 44))
+  $g.FillPath($brush, (RoundRect 489 286 46 330 20))
+  $blade = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $blade.AddLine((Point 366 610), (Point 658 610))
+  $blade.AddLine((Point 658 610), (Point 658 712))
+  $blade.AddBezier((Point 658 712), (Point 658 800), (Point 566 852), (Point 512 884))
+  $blade.AddBezier((Point 512 884), (Point 458 852), (Point 366 800), (Point 366 712))
+  $blade.CloseFigure()
+  $g.FillPath($brush, $blade)
+  $round = New-Object System.Drawing.Pen $penBrush, 26
+  $round.LineJoin = 'Round'
+  $g.DrawPath($round, $blade)
+}
+$state = $g.Save()
+$g.TranslateTransform(512, 512)
+$g.RotateTransform(36)
+$g.ScaleTransform(0.86, 0.86)
+$g.TranslateTransform(-512, -530)
+
+$g.TranslateTransform(14, 26)
+$shade = New-Object System.Drawing.SolidBrush (Argb 95 4 6 16)
+Spade $shade $shade
+$g.TranslateTransform(-14, -26)
+
+$goldFrom = Point 360 170
+$goldTo = Point 660 890
+$gold = New-Object System.Drawing.Drawing2D.LinearGradientBrush $goldFrom, $goldTo, (Argb 255 255 242 200), (Argb 255 210 154 46)
+Spade $gold $gold
+# The ridge down the blade, and the light along the shaft.
+$ridge = New-Object System.Drawing.Pen (Argb 120 255 250 225), 14
+$ridge.StartCap = 'Round'; $ridge.EndCap = 'Round'
+$g.DrawLine($ridge, (Point 512 640), (Point 512 800))
+$shine = New-Object System.Drawing.Pen (Argb 150 255 255 255), 9
+$shine.StartCap = 'Round'; $shine.EndCap = 'Round'
+$g.DrawLine($shine, (Point 500 304), (Point 500 590))
+$g.Restore($state)
+
+# The glint it turned up.
+$white = New-Object System.Drawing.SolidBrush (Argb 240 255 255 255)
+$g.FillPath($white, (Star 300 760 96 22))
+$small = New-Object System.Drawing.SolidBrush (Argb 215 255 240 196)
+$g.FillPath($small, (Star 742 262 62 15))
 
 $g.Dispose()
 $bmp.Save($out, [System.Drawing.Imaging.ImageFormat]::Png)

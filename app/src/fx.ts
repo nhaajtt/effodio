@@ -1,5 +1,7 @@
 // Glints: a few stars fly from the search box when results arrive, and from the gold button when it's pressed.
 
+import * as api from "./api";
+
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let alive = 0;
 
@@ -49,4 +51,20 @@ export function mountGlints(): void {
   document.addEventListener("click", (event) => {
     if ((event.target as HTMLElement).closest?.(".button.primary")) burst(event.clientX, event.clientY, 10, 70);
   });
+}
+
+/** A small button that flips the interface between English and Vietnamese. (Searching understands both either way.) */
+export function languageButton(): HTMLButtonElement {
+  const vietnamese = document.documentElement.lang === "vi";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "lang";
+  button.textContent = vietnamese ? "EN" : "VI";
+  button.title = vietnamese ? "English" : "Tiếng Việt";
+  button.addEventListener("click", async () => {
+    const settings = await api.getConfig();
+    await api.setConfig({ ...settings, language: vietnamese ? "en" : "vi" });
+    location.reload();
+  });
+  return button;
 }

@@ -7,6 +7,7 @@ import { IndexState, Kind } from "./api";
 import { mountDuplicates, mountMap } from "./extras";
 import { Finder } from "./finder";
 import { t } from "./i18n";
+import { languageButton } from "./fx";
 import { idleView, statusLine } from "./panel";
 import { card, Lens, Preview, report } from "./results";
 import { mountSettings } from "./settings";
@@ -36,6 +37,7 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
   const searchbox = h("div.searchbox.glass", { "data-light": "" }, h("span.spark", icon("spark", 18)), input);
   const controls = h(
     "div.window-controls",
+    languageButton(),
     h("button", { title: "Minimize", onclick: () => void appWindow.minimize() }, icon("minimize", 15)),
     h("button", { title: "Maximize", onclick: () => void appWindow.toggleMaximize() }, icon("maximize", 13)),
     h("button.close", { title: t("action.close"), onclick: () => void appWindow.close() }, icon("close", 15)),
@@ -43,7 +45,7 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
   const titlebar = h(
     "div.titlebar",
     { "data-tauri-drag-region": "" },
-    h("div.brand", { "data-tauri-drag-region": "" }, icon("spark", 18), "Glint"),
+    h("div.brand", { "data-tauri-drag-region": "" }, icon("spade", 18), "Glint"),
     h("div", { "data-tauri-drag-region": "", style: { display: "grid" } }, searchbox),
     controls,
   );

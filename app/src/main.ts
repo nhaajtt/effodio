@@ -15,7 +15,11 @@ async function start(): Promise<void> {
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () =>
     api.getConfig().then((now) => applyAppearance(now.theme, now.accent)),
   );
-  api.on<api.Config>("config", (now) => applyAppearance(now.theme, now.accent));
+  api.on<api.Config>("config", (now) => {
+    applyAppearance(now.theme, now.accent);
+    // The other window changed the language: this one follows.
+    if (now.language !== settings.language) location.reload();
+  });
   // The page is the app: no browser menu, no reload keys.
   window.addEventListener("contextmenu", (event) => {
     if (!(event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement)) event.preventDefault();

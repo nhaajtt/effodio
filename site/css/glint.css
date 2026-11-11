@@ -63,6 +63,12 @@
   transition: transform 0.2s var(--ease-out), filter 0.2s;
 }
 .g-cmd button:hover { filter: brightness(1.07); transform: translateY(-1px); }
+.g-top { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; margin-top: 28px; animation: g-rise 0.9s 1.5s var(--ease-out) backwards; }
+.g-top .g-cmd { width: min(640px, 100%); }
+.g-top-link { font: 11px var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ts); text-decoration: none; border-bottom: 1px solid var(--border-h); padding-bottom: 3px; white-space: nowrap; }
+.g-top-link:hover { color: var(--ac-soft); border-color: var(--ac); }
+.g-top-link span { color: var(--ac); }
+@keyframes g-rise { from { opacity: 0; transform: translateY(10px); } }
 .g-two { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 32px; max-width: 900px; }
 .g-two p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ts); }
 .g-two b { color: var(--tp); font-weight: 500; }

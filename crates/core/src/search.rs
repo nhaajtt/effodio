@@ -97,6 +97,12 @@ pub struct Searcher {
     loaded: bool,
 }
 
+/// On the map, a file is tied to at most this many others whose centred vector is at least `TIE_FLOOR` close to its
+/// own; a file with none that close is tied to the one nearest it, if that one is at least `TIE_WEAK` close.
+const TIES_EACH: usize = 3;
+const TIE_FLOOR: f32 = 0.15;
+const TIE_WEAK: f32 = 0.04;
+
 const STOPWORDS: &[&str] = &[
     "a", "an", "the", "of", "in", "on", "at", "to", "for", "with", "and", "or", "my", "me", "that", "this", "these",
     "those", "from", "about", "where", "what", "which", "who", "when", "is", "was", "are", "were", "be", "it", "its",
@@ -710,6 +716,13 @@ impl Searcher {
     /// Every file as a point on a plane: its first vector projected onto the two directions the index varies most
     /// along (found by power iteration). Files that mean similar things land near each other.
     pub fn map(&mut self, limit: usize) -> Result<Vec<(i64, f32, f32)>> {
+        Ok(self.chart(limit)?.0)
+    }
+
+    /// The map's points, and the ties between them: each file with the few files that mean most nearly the same
+    /// (by the cosine of their centred vectors), when they're near enough to call related.
+    #[allow(clippy::type_complexity)]
+    pub fn chart(&mut self, limit: usize) -> Result<(Vec<(i64, f32, f32)>, Vec<(i64, i64, f32)>)> {
         if !self.loaded {
             self.reload()?;
         }
@@ -719,7 +732,7 @@ impl Searcher {
             .take(limit)
             .collect();
         if rows.len() < 3 {
-            return Ok(Vec::new());
+            return Ok((Vec::new(), Vec::new()));
         }
         let mut data: Vec<Vec<f32>> = rows
             .iter()
@@ -771,11 +784,40 @@ impl Searcher {
         };
         let first = component(&data, None);
         let second = component(&data, Some(&first));
-        Ok(rows
+        let points: Vec<(i64, f32, f32)> = rows
             .iter()
             .zip(&data)
             .map(|(&row, vector)| (self.row_file[row], dot(vector, &first), dot(vector, &second)))
-            .collect())
+            .collect();
+
+        let lengths: Vec<f32> = data.iter().map(|vector| dot(vector, vector).sqrt().max(1e-12)).collect();
+        let nearest: Vec<Vec<(usize, f32)>> = (0..data.len())
+            .into_par_iter()
+            .map(|one| {
+                let mut best: Vec<(usize, f32)> = (0..data.len())
+                    .filter(|&other| other != one)
+                    .map(|other| (other, dot(&data[one], &data[other]) / (lengths[one] * lengths[other])))
+                    .filter(|&(_, cosine)| cosine >= TIE_WEAK)
+                    .collect();
+                best.sort_by(|a, b| b.1.total_cmp(&a.1));
+                best.truncate(TIES_EACH);
+                // Its clearly related files; failing any, the one nearest it, as a weaker tie.
+                let strong = best.iter().take_while(|&&(_, cosine)| cosine >= TIE_FLOOR).count();
+                best.truncate(strong.max(1));
+                best
+            })
+            .collect();
+        let mut tied = HashSet::new();
+        let mut links = Vec::new();
+        for (one, list) in nearest.iter().enumerate() {
+            for &(other, cosine) in list {
+                let pair = (one.min(other), one.max(other));
+                if tied.insert(pair) {
+                    links.push((self.row_file[rows[pair.0]], self.row_file[rows[pair.1]], cosine));
+                }
+            }
+        }
+        Ok((points, links))
     }
 }
 
@@ -974,6 +1016,9 @@ mod tests {
         assert_eq!(groups.len(), 2);
         assert!(groups.iter().all(|group| group.len() == 2));
         let map = searcher.map(100).unwrap();
+        let (points, links) = searcher.chart(100).unwrap();
+        assert_eq!(points.len(), map.len());
+        assert!(links.iter().all(|(a, b, cosine)| a != b && *cosine >= TIE_WEAK));
         assert_eq!(map.len(), 6);
         assert!(map.iter().all(|(_, x, y)| x.is_finite() && y.is_finite()));
     }

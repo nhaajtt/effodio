@@ -216,14 +216,15 @@ impl Session {
             }
             "map" => {
                 self.refresh()?;
-                let points = self.searcher.map(request["limit"].as_u64().unwrap_or(4000) as usize)?;
+                let (points, links) = self.searcher.chart(request["limit"].as_u64().unwrap_or(4000) as usize)?;
                 let mut out = Vec::with_capacity(points.len());
                 for (id, x, y) in points {
                     if let Some(row) = self.searcher.store.file(id)? {
                         out.push(json!({"file": id, "x": x, "y": y, "kind": row.kind, "path": row.path}));
                     }
                 }
-                Ok(json!({"points": out}))
+                let links: Vec<Value> = links.iter().map(|(a, b, strength)| json!([a, b, strength])).collect();
+                Ok(json!({"points": out, "links": links}))
             }
             "collections" => {
                 let mut select =

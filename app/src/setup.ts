@@ -3,6 +3,7 @@
 
 import * as api from "./api";
 import { Config, Estimate } from "./api";
+import { languageButton } from "./fx";
 import { t } from "./i18n";
 import { report } from "./results";
 import { bytes, debounce, duration, followPointer, h, icon, number } from "./ui";
@@ -25,7 +26,9 @@ export async function mountSetup(container: HTMLElement, onDone: () => void): Pr
   let measured = false;
 
   const stage = h("div.setup");
-  container.replaceChildren(stage);
+  const language = languageButton();
+  language.classList.add("floating");
+  container.replaceChildren(stage, language);
   followPointer(stage);
 
   const dots = () => h("div.dots", ...[0, 1, 2, 3].map((index) => h(`i${index === step ? ".on" : ""}`)));
@@ -97,7 +100,7 @@ export async function mountSetup(container: HTMLElement, onDone: () => void): Pr
         h(
           "div.step.glass",
           { "data-light": "" },
-          h("div.orb.glass", icon("spark", 34)),
+          h("div.orb.glass", icon("spade", 34)),
           h("h1", t("setup.welcome")),
           h("p", t("setup.welcome.body")),
           h("div.buttons", dots(), h("button.button.primary.large", { onclick: () => go(1) }, t("setup.start"))),
