@@ -78,6 +78,9 @@ export async function mountTidy(container: HTMLElement): Promise<void> {
   );
 }
 
+/** The folder's own name, from the trail `folderOf` writes. */
+const lastFolder = (trail: string) => trail.split(/[›\/]/).pop()!.trim() || trail;
+
 const monthYear = (seconds: number) => new Date(seconds * 1000).toLocaleDateString(locale, { month: "short", year: "numeric" });
 
 export async function mountAlbums(container: HTMLElement): Promise<void> {
@@ -101,7 +104,7 @@ export async function mountAlbums(container: HTMLElement): Promise<void> {
       for (const file of album.files) folders.set(folderOf(file.path), (folders.get(folderOf(file.path)) ?? 0) + 1);
       const [folder, inFolder] = [...folders].sort((a, b) => b[1] - a[1])[0];
       const subject = album.name ? (locale === "vi" ? album.name.vi : album.name.en) : t("albums.unnamed");
-      const title = inFolder * 2 > album.files.length ? `${subject} · ${fileName(folder)}` : subject;
+      const title = inFolder * 2 > album.files.length ? `${subject} · ${lastFolder(folder)}` : subject;
       return groupCard(title, [from === to ? from : `${from} – ${to}`, t("tidy.files", { n: album.files.length })], album.files.map((file) => memberCard(file)), 8);
     }),
   );
@@ -178,7 +181,7 @@ export function belongs(result: SearchResult | null): HTMLElement | null {
     { title: folder, onclick: () => void api.reveal(vote.path).catch(report) },
     icon("folder", 15),
     h("span", t("belongs.label")),
-    h("b", fileName(folder)),
+    h("b", lastFolder(folder)),
     h("span.pill", t("tidy.files", { n: vote.count })),
   );
 }

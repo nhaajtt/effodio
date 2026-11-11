@@ -411,7 +411,21 @@ pub fn answer(searcher: &mut Searcher, question: &str, vector: Option<&[f32]>, v
         .output();
     std::fs::remove_file(&file).ok();
     let output = output?;
-    let mut answer = String::from_utf8_lossy(&output.stdout).to_string();
+    // The program colours its output for a terminal: the colour codes go.
+    let raw = String::from_utf8_lossy(&output.stdout).replace('\r', "");
+    let mut answer = String::new();
+    let mut letters = raw.chars();
+    while let Some(letter) = letters.next() {
+        if letter == '\u{1b}' {
+            for code in letters.by_ref() {
+                if code.is_ascii_alphabetic() {
+                    break;
+                }
+            }
+        } else {
+            answer.push(letter);
+        }
+    }
     for end in ["<end_of_turn>", "[end of text]", "<eos>"] {
         if let Some(at) = answer.find(end) {
             answer.truncate(at);

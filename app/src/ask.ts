@@ -32,6 +32,8 @@ function kitCard(name: "speech" | "answers", title: string, body: string, ready:
     if (kit.ready) {
       clearInterval(timer);
       timer = 0;
+      // Once the answers kit is there, the line about its download has nothing left to say.
+      if (name === "answers") card.querySelector("p")?.remove();
       slot.replaceChildren(ready() ?? "");
     } else if (kit.getting) {
       const share = kit.total ? (kit.done / kit.total) * 100 : 0;
@@ -54,7 +56,7 @@ function answerText(text: string, pick: (index: number) => void): HTMLElement {
   const block = h("div.answer");
   block.innerHTML = escapeHtml(text)
     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
-    .replace(/\[(\d+)\]/g, '<button class="cite" data-source="$1">$1</button>')
+    .replace(/\[(\d+(?:\s*,\s*\d+)*)\]/g, (_, list: string) => list.split(",").map((one) => `<button class="cite" data-source="${one.trim()}">${one.trim()}</button>`).join(""))
     .replace(/\n/g, "<br>");
   block.addEventListener("click", (event) => {
     const source = (event.target as HTMLElement).closest<HTMLElement>(".cite")?.dataset.source;

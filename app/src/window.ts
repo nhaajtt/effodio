@@ -10,6 +10,7 @@ import { Finder } from "./finder";
 import { t } from "./i18n";
 import { languageButton } from "./fx";
 import { idleView, statusLine } from "./panel";
+import { togglePalette } from "./palette";
 import { facesOf, mountPeople } from "./people";
 import { card, Lens, Preview, report } from "./results";
 import { belongs, mountAlbums, mountThread, mountTidy, sketchPad, timeline } from "./more";
@@ -314,7 +315,19 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
   });
   window.addEventListener("keydown", (event) => {
     if (view === "setup") return;
-    if (event.ctrlKey && (event.key === "f" || event.key === "k" || event.key === "l")) {
+    if (event.ctrlKey && event.key === "k") {
+      event.preventDefault();
+      const places: [View, string][] = [["search", "search"], ["ask", "ask"], ["albums", "album"], ["people", "people"], ["map", "map"], ["tidy", "tidy"], ["duplicates", "copies"], ["settings", "settings"]];
+      togglePalette(
+        () => [
+          ...places.map(([place, symbol]) => ({ label: t(`nav.${place}` as "nav.search"), icon: symbol, hint: t("palette.go"), run: () => go(place) })),
+          { label: t("sketch.open"), icon: "pencil", run: () => draw.click() },
+          { label: t("palette.index"), icon: "bolt", run: () => void api.indexNow().catch(report) },
+          { label: t("palette.language"), icon: "spark", run: () => controls.querySelector<HTMLElement>(".lang")?.click() },
+        ],
+        search,
+      );
+    } else if (event.ctrlKey && (event.key === "f" || event.key === "l")) {
       event.preventDefault();
       input.focus();
       input.select();
