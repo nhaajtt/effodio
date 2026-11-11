@@ -177,3 +177,9 @@ button.person:hover { transform: translateY(-2px); background: var(--glass); }
 .person:hover .rename { opacity: 1; }
 
 .nav-item.update { color: var(--accent); margin-bottom: 6px; background: var(--accent-soft); }
+
+/* A picture fills its frame and no more: sized by the frame, it can't grow to its own size and spill onto the name or the next card. */
+.card .thumb, .row .thumb, .member .thumb { min-width: 0; min-height: 0; }
+.card > * { min-width: 0; }
+.card .badge { max-width: calc(100% - 12px); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.card .thumb > img, .member .thumb > img { position: absolute; inset: 0; width: 100%; height: 100%; }
