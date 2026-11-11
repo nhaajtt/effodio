@@ -33,7 +33,7 @@ const ITEMS = [
   {
     id: "magpie", row: 0, logo: "flag", label: T.now[0], sub: T.now[1], start: 2026.6, end: now, range: "(2026)", current: true,
     next: { logo: "cloud", label: T.now[2], sub: T.now[3] },
-    preview: { title: "Magpie 0.1", lines: ["$ magpie --version", "0.1.0, Windows 10 and 11", "$ magpie status", "runs offline, on your PC"] },
+    preview: { title: "Magpie 0.3", lines: ["$ magpie --version", "0.3.1, Windows 10 and 11", "$ magpie status", "runs offline, on your PC"] },
   },
   { id: "signed", row: 1, logo: "cert", label: T.signed[0], sub: T.signed[1], start: 2027, end: 2028, range: "", future: true },
   { id: "gpu", row: 2, logo: "rack", label: T.gpu[0], sub: T.gpu[1], start: 2026.9, end: 2027.9, range: "", future: true },
@@ -42,8 +42,8 @@ const ITEMS = [
     href: "https://huggingface.co/google/embeddinggemma-2", cursor: "Open the model",
   },
   {
-    id: "digup", row: 4, logo: "bug", label: T.digup[0], sub: T.digup[1], start: 2025.2, end: 2026.2, range: "", muted: true, faint: true,
-    href: "https://github.com/ARahim3/DigUp", cursor: "View on GitHub",
+    id: "engine", row: 4, logo: "rack", label: T.engine[0], sub: T.engine[1], start: 2025.2, end: 2026.2, range: "", muted: true, faint: true,
+    href: "https://github.com/ggml-org/llama.cpp", cursor: "View on GitHub",
   },
 ];
 const ROWS = Math.max(...ITEMS.map((i) => i.row)) + 1;

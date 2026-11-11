@@ -45,11 +45,11 @@ const en = {
     ["01", "MEANING · PHOTOS", "Search by what it shows", "Type “a lighthouse at dusk” and get the photo, with no tags and no file names to remember. Drop in a picture, or press Tab on a result, to find more like it.", ["JPG", "PNG", "HEIC", "RAW"]],
   ],
   timeline: {
-    now: ["Magpie 0.1", "Windows", "macOS", "planned"],
+    now: ["Magpie 0.3", "Windows", "macOS", "planned"],
     signed: ["Signed installer", "planned"],
     gpu: ["GPU build", "Vulkan · prepared"],
     model: ["EmbeddingGemma 2", "the model"],
-    digup: ["DigUp", "where it learned"],
+    engine: ["llama.cpp", "the engine"],
   },
 };
 
@@ -86,11 +86,11 @@ const vi = {
     ["01", "Ý NGHĨA · ẢNH", "Tìm theo thứ nó chụp", "Gõ “hải đăng lúc chiều tà” là ra tấm ảnh, không cần nhãn, không cần nhớ tên file. Thả một tấm ảnh vào, hoặc nhấn Tab trên một kết quả, để tìm thứ giống nó.", ["JPG", "PNG", "HEIC", "RAW"]],
   ],
   timeline: {
-    now: ["Magpie 0.1", "Windows", "macOS", "dự kiến"],
+    now: ["Magpie 0.3", "Windows", "macOS", "dự kiến"],
     signed: ["Bộ cài ký số", "dự kiến"],
     gpu: ["Bản GPU", "Vulkan · đã chuẩn bị"],
     model: ["EmbeddingGemma 2", "model"],
-    digup: ["DigUp", "nơi nó học hỏi"],
+    engine: ["llama.cpp", "bộ máy chạy model"],
   },
 };
 
