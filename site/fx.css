@@ -54,6 +54,8 @@
   animation: sweep 4.5s var(--ease) infinite;
 }
 .led span + span { animation-delay: 0.5s; }
+:root[data-theme="light"] .led span { background-image: linear-gradient(100deg, #8a5e0a 0%, #b9851c 30%, #e6bb55 50%, #b9851c 70%, #8a5e0a 100%); }
+:root[data-theme="light"] .led { text-shadow: 0 0 14px rgba(217, 166, 58, 0.3); }
 @keyframes sweep { 0%, 25% { background-position: 100% 0; } 75%, 100% { background-position: 0 0; } }
 #streaks { -webkit-mask-image: radial-gradient(ellipse 70% 90% at 50% 50%, #000 35%, transparent 100%); mask-image: radial-gradient(ellipse 70% 90% at 50% 50%, #000 35%, transparent 100%); }
 

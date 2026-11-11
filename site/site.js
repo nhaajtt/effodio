@@ -10,7 +10,6 @@
     meta_a: "model 865 MB", meta_b: "không tài khoản", meta_c: "không thu thập",
     act_install: "Cài bằng một dòng", act_dl: "Tải file .exe",
     g_index: "Chỉ mục", g_files: "file", g_match: "Độ khớp",
-    led_a: "Tả nó ra.", led_b: "Tìm thấy.",
     hotkey: "từ mọi ứng dụng", demo_open: "Mở", demo_like: "Tương tự",
     how_l: "Cách hoạt động · trên máy bạn, từ đầu đến cuối",
     s1h: "Thư mục của bạn", s1p: "bạn chọn cái nào",
@@ -38,7 +37,8 @@
   const en = { copied: "Copied", ticks: ["runs offline", "12,480 files indexed", "last search: 18 ms", "Ctrl Shift Space to open"] };
   document.querySelectorAll("[data-t]").forEach((el) => (en[el.dataset.t] = el.innerHTML));
 
-  let lang = localStorage.getItem("lang") || (navigator.language.startsWith("vi") ? "vi" : "en");
+  const asked = new URLSearchParams(location.search);
+  let lang = asked.get("lang") || localStorage.getItem("lang") || (navigator.language.startsWith("vi") ? "vi" : "en");
   const words = () => (lang === "vi" ? vi : en);
   function speak() {
     root.lang = lang;
@@ -54,7 +54,7 @@
   speak();
 
   const saved = localStorage.getItem("theme");
-  root.dataset.theme = saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+  root.dataset.theme = asked.get("theme") || saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
   $("theme").onclick = () => {
     root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
     localStorage.setItem("theme", root.dataset.theme);
