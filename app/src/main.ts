@@ -25,6 +25,7 @@ async function start(): Promise<void> {
     if (!(event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement)) event.preventDefault();
   });
   mountGlints();
+  if (location.hash === "#panel") document.documentElement.dataset.face = "panel";
   if (location.hash === "#panel") await mountPanel(root);
   else await mountWindow(root);
 }
