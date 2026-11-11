@@ -142,6 +142,24 @@ python scripts/smoke.py                  # everything the app asks of the helper
 Your data is in `%LOCALAPPDATA%\app.magpie.search`: the model, the index, the settings and a cache of thumbnails.
 Uninstalling with "Delete the application data" ticked removes it.
 
+## Privacy
+
+Magpie works on your computer and keeps what it learns there.
+
+- **Your files stay put.** Reading, indexing and searching all happen on your machine. Nothing you index is
+  uploaded, and there is no account and no telemetry.
+- **Faces are off until you turn them on.** With People on, Magpie finds the faces in your photos and keeps a
+  short description of each in the index beside the files, on this computer only, so that a name you give once
+  finds that person again. "Forget every face" in People deletes all of it, names included. If you share your
+  computer or your index, the people in your photos are in it too: turn it on only where that's fine.
+- **Answers and spoken words run locally.** The language model and the speech model are downloads you ask for;
+  after that, questions, answers and transcripts never leave the machine.
+- **When it does go online.** To download the models and tools you ask for (from Hugging Face and GitHub), and
+  once at start to ask magpie.nhaajt.com for the latest version number, which sends nothing about you and can be
+  switched off in Settings. The local door for other tools is off by default, listens on this computer only and
+  needs a token.
+- **Feedback is yours to send.** The form on the website sends only what you type into it.
+
 ## Thanks
 
 Magpie learned from [DigUp](https://github.com/ARahim3/DigUp) by Abdur Rahim (MIT), which showed how well
