@@ -179,7 +179,6 @@ const GROUPS = [
     heading: "Elsewhere",
     items: [
       { v: "Nhaajt lab home site author", label: "nhaajt.com", ico: "layers", hint: "↗", arrow: true, run: openUrl("https://www.nhaajt.com") },
-      { v: "DigUp Abdur Rahim original idea github", label: "DigUp, where it learned", ico: "github", hint: "↗", arrow: true, run: openUrl("https://github.com/ARahim3/DigUp") },
     ],
   },
 ];

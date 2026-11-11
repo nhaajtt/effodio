@@ -33,7 +33,7 @@ const en = {
   ffmpeg: "Recordings and videos need FFmpeg: Magpie fetches it during setup if your computer has none.",
   privateKicker: "PRIVATE · NOTHING LEAVES YOUR COMPUTER",
   private: "It [[only reads]] your files: never changes, moves or uploads them. It skips [[keys, certificates and password files]], hidden and system folders, and in a code project it reads only screenshots.",
-  thanks: "Magpie learned from DigUp by Abdur Rahim and is built on EmbeddingGemma 2, llama.cpp, Tauri and SQLite. It isn't affiliated with Google or Microsoft.",
+  thanks: "Magpie is built on EmbeddingGemma 2, llama.cpp, Tauri and SQLite. It isn't affiliated with Google or Microsoft.",
   projects: [
     ["08", "PEOPLE · FACES", "Name a face once", "Give one face a name and typing that name finds every photo of the person, old and new. Or drop in a sample photo to find the same face. Faces are read on your computer, only if you turn it on.", ["person:Lan", "Sample photo", "Off by default"]],
     ["07", "ASK · WITH SOURCES", "Ask your files", "A question gets an answer written from what your files say, each statement pointing at the page or the second it came from. The language model runs on your computer.", ["PDF", "DOCX", "Notes", "Offline"]],
@@ -74,7 +74,7 @@ const vi = {
   ffmpeg: "Ghi âm và video cần FFmpeg: Magpie tự tải về lúc cài đặt nếu máy bạn chưa có.",
   privateKicker: "RIÊNG TƯ · KHÔNG GÌ RỜI KHỎI MÁY BẠN",
   private: "Nó [[chỉ đọc]] file của bạn: không bao giờ sửa, chuyển hay tải lên. Nó bỏ qua [[khóa, chứng chỉ và file mật khẩu]], thư mục ẩn và thư mục hệ thống, và trong dự án mã nguồn nó chỉ đọc ảnh chụp màn hình.",
-  thanks: "Magpie học hỏi từ DigUp của Abdur Rahim và dựng trên EmbeddingGemma 2, llama.cpp, Tauri và SQLite. Magpie không liên kết với Google hay Microsoft.",
+  thanks: "Magpie dựng trên EmbeddingGemma 2, llama.cpp, Tauri và SQLite. Magpie không liên kết với Google hay Microsoft.",
   projects: [
     ["08", "MỌI NGƯỜI · KHUÔN MẶT", "Đặt tên một lần", "Đặt tên cho một khuôn mặt, từ đó gõ tên là ra mọi ảnh có người ấy, cả cũ lẫn mới. Hoặc thả một tấm ảnh mẫu để tìm đúng khuôn mặt đó. Khuôn mặt được đọc ngay trên máy bạn, và chỉ khi bạn bật.", ["person:Lan", "Ảnh mẫu", "Mặc định tắt"]],
     ["07", "HỎI ĐÁP · KÈM NGUỒN", "Hỏi các file của bạn", "Đặt câu hỏi, nhận câu trả lời viết từ nội dung file của bạn, mỗi ý chỉ về đúng trang hay đúng giây nó đến từ đâu. Model ngôn ngữ chạy trên máy bạn.", ["PDF", "DOCX", "Ghi chú", "Offline"]],
