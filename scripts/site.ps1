@@ -13,15 +13,17 @@ $sha256 = (Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant()
 $out = "$root\site\dist"
 Remove-Item $out -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force "$out\download" | Out-Null
-Get-ChildItem "$root\site" -File | Where-Object Extension -ne ".jsonc" | ForEach-Object {
-  if ($_.Extension -in ".html", ".ps1") {
+$site = "$root\site"
+Get-ChildItem $site -File -Recurse | Where-Object { $_.FullName -notlike "$out\*" -and $_.FullName -notlike "$site\.wrangler\*" -and $_.Extension -ne ".jsonc" } | ForEach-Object {
+  $target = Join-Path $out $_.FullName.Substring($site.Length + 1)
+  New-Item -ItemType Directory -Force (Split-Path $target) | Out-Null
+  if ($_.Extension -in ".html", ".ps1", ".js") {
     $text = (Get-Content $_.FullName -Raw).Replace("__VERSION__", $version).Replace("__SHA256__", $sha256)
-    [IO.File]::WriteAllText("$out\$($_.Name)", $text, [Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($target, $text, [Text.UTF8Encoding]::new($false))
   } else {
-    Copy-Item $_.FullName $out
+    Copy-Item $_.FullName $target
   }
 }
-Copy-Item "$root\site\fonts" $out -Recurse
 Copy-Item $installer "$out\download"
 "site\dist is ready: Glint $version, SHA-256 $sha256"
 

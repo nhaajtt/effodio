@@ -1,0 +1,85 @@
+/* Glint's own coat over the lab's design: its colours, the glass screen on the stage, the private and install bands. */
+
+:root {
+  --bg: #0b0d14;
+  --bg2: #0f121b;
+  --bg3: #131826;
+  --border: #1d2334;
+  --ac: #d9a63a;
+  --ac-soft: #f4d58a;
+  --sel: #8a5e0a;
+  --ac-dim: #d9a63a1a;
+  --ac-b: #d9a63a38;
+  --st: #f4d58a;
+  --fn: #9bb4f0;
+  --hdr-bg: #0b0d14eb;
+  --desk-stage-h: clamp(300px, 62vw, 680px);
+}
+:root[lang="vi"] { --font-pixel: var(--mono); }
+
+/* Colour far behind everything: gold, navy, violet. */
+.g-sky { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.g-sky i { position: absolute; width: 46vmax; height: 46vmax; border-radius: 50%; filter: blur(100px); opacity: 0.34; animation: g-drift 28s ease-in-out infinite alternate; }
+.g-sky i:nth-child(1) { background: #d9a63a; top: -22vmax; left: -14vmax; }
+.g-sky i:nth-child(2) { background: #3f6bd8; top: 30vh; right: -20vmax; animation-delay: -9s; }
+.g-sky i:nth-child(3) { background: #8a6bf0; top: 120vh; left: 4vw; animation-delay: -16s; }
+@keyframes g-drift { to { transform: translate3d(6vmax, 5vmax, 0) scale(1.12); } }
+
+.g-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--tp); text-decoration: none; font-family: var(--font-pixel); text-transform: uppercase; letter-spacing: 0.04em; font-size: 16px; margin-right: auto; }
+.g-brand img { border-radius: 6px; }
+.hdr { display: flex; align-items: center; }
+
+/* The screen on the stage: a pane of glass over the threads of light, playing the recording. */
+.lab-desk-stage { overflow: hidden; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.g-device {
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%; margin: 0;
+  width: min(820px, calc(100% - 28px)); padding: 0 7px 7px; border-radius: 18px;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05) 60%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 30px 80px rgba(0, 0, 0, 0.55), 0 0 60px rgba(217, 166, 58, 0.12);
+}
+.g-device figcaption { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; font: 10px var(--font-pixel); text-transform: uppercase; letter-spacing: 0.1em; color: var(--tt); white-space: nowrap; overflow: hidden; }
+.g-device figcaption i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); flex: none; }
+.g-device figcaption span { margin-left: 8px; overflow: hidden; text-overflow: ellipsis; }
+.g-device figcaption b { margin-left: auto; font-weight: 400; color: var(--ac); animation: g-rec 1.6s steps(2) infinite; }
+@keyframes g-rec { 50% { opacity: 0.25; } }
+.g-device video { display: block; width: 100%; height: auto; aspect-ratio: 1220 / 780; border-radius: 12px; background: #0b0d14; cursor: pointer; }
+
+.g-band { padding: clamp(48px, 8vh, 84px) var(--lab-content-x); border-top: 1px solid var(--border); }
+.g-kicker { font: 11px var(--font-pixel); text-transform: uppercase; letter-spacing: 0.1em; color: var(--tt); margin: 0 0 22px; }
+.g-band .lab-intro-lede { font-size: clamp(21px, 2.4vw, 32px); line-height: 1.22; margin: 0; max-width: 26em; }
+.g-title { font: 500 clamp(26px, 3vw, 38px)/1.1 var(--sans); letter-spacing: -0.03em; color: var(--tp); margin: 0 0 26px; }
+.g-cmd {
+  display: flex; align-items: center; gap: 12px; width: min(780px, 100%); padding: 9px 9px 9px 16px; border-radius: 14px;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04) 60%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.09), 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+.g-cmd span { font: 12px var(--font-pixel); color: var(--ac); }
+.g-cmd code { flex: 1; font: 13.5px var(--mono); color: var(--tp); overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+.g-cmd button {
+  font: 600 13px var(--sans); border: 0; border-radius: 9px; padding: 8px 16px; cursor: pointer; color: #2a1f05;
+  background: linear-gradient(180deg, #f3cf78, var(--ac)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 6px 16px rgba(217, 166, 58, 0.28);
+  transition: transform 0.2s var(--ease-out), filter 0.2s;
+}
+.g-cmd button:hover { filter: brightness(1.07); transform: translateY(-1px); }
+.g-two { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 32px; max-width: 900px; }
+.g-two p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ts); }
+.g-two b { color: var(--tp); font-weight: 500; }
+.g-two a { color: var(--tp); text-decoration: underline; text-decoration-color: var(--ac); text-underline-offset: 0.2em; }
+.g-two a:hover { color: var(--ac-soft); }
+.g-fine { font: 11px var(--mono); color: var(--tt); margin: 18px 0 0; }
+.g-fine code { color: var(--ts); word-break: break-all; }
+.g-foot { padding: 28px var(--lab-content-x) 70px; border-top: 1px solid var(--border); font-size: 13px; color: var(--tt); }
+.g-foot p { margin: 0 0 12px; max-width: 70ch; }
+
+@media (max-width: 759px) {
+  .g-two { grid-template-columns: 1fr; gap: 20px; }
+  .g-cmd { flex-wrap: wrap; }
+  .g-cmd code { flex-basis: calc(100% - 48px); }
+  .g-cmd button { width: 100%; }
+  .g-device figcaption span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .g-sky i, .g-device figcaption b { animation: none; }
+}

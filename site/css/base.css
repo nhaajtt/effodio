@@ -1,0 +1,534 @@
+/* Self-hosted Google Fonts (OFL): latin, latin-ext, vietnamese, cyrillic subsets. */
+/* latin */
+/* metric-matched fallbacks: no layout shift when Geist swaps in */
+@font-face {
+  font-family: "Geist Fallback";
+  src: local("Arial"), local("Helvetica"), local("Liberation Sans"), local("Arimo");
+  size-adjust: 101.9%;
+  ascent-override: 98.6%;
+  descent-override: 28.9%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Geist Mono Fallback";
+  src: local("Courier New"), local("Liberation Mono"), local("Cousine"), local("Courier");
+  size-adjust: 100%;
+  ascent-override: 100.5%;
+  descent-override: 29.5%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Gaegu";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/Gaegu-400-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin */
+@font-face {
+  font-family: "Gaegu";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/Gaegu-700-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/Geist-100-900-cyrillic-ext.woff2") format("woff2");
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/Geist-100-900-cyrillic.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/Geist-100-900-vietnamese.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/Geist-100-900-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/Geist-100-900-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/GeistMono-100-900-cyrillic-ext.woff2") format("woff2");
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/GeistMono-100-900-cyrillic.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* symbols2 */
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/GeistMono-100-900-symbols2.woff2") format("woff2");
+  unicode-range: U+2000-2001, U+2004-2008, U+200A, U+23B8-23BD, U+2500-259F;
+}
+/* vietnamese */
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/GeistMono-100-900-vietnamese.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/GeistMono-100-900-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/GeistMono-100-900-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/InstrumentSerif-400-italic-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/InstrumentSerif-400-italic-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/InstrumentSerif-400-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/InstrumentSerif-400-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin */
+@font-face {
+  font-family: "Nanum Brush Script";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/NanumBrushScript-400-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin */
+@font-face {
+  font-family: "Nanum Gothic Coding";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/NanumGothicCoding-400-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin */
+@font-face {
+  font-family: "Nanum Gothic Coding";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/NanumGothicCoding-700-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin */
+@font-face {
+  font-family: "Nanum Pen Script";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/NanumPenScript-400-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Departure Mono";
+  src: url("../fonts/DepartureMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+/* Pixel menu face for the desktop mock-ups: a free pixel face stands in for a bitmap system font. */
+@font-face {
+  font-family: "Menu Pixel";
+  src: url("../fonts/DepartureMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* palette */
+  --bg: #0b0d14;
+  --bg2: #191919;
+  --bg3: #1a1c20;
+  --border: #212327;
+  --border-h: #ffffff40;
+  --tp: #fff;
+  --ts: #dadbdf;
+  --tt: #878b91;
+  --tt-aa: #8d9196;
+  --ac: #d9a63a;
+  --ac-soft: #f4d58a;
+  --sel: #8a5e0a;
+  --ac-dim: #d9a63a1a;
+  --ac-b: #d9a63a38;
+  --text-dim: #878b91;
+  --sb-hover: #ffffff0a;
+  --btn-p-bg: #fff;
+  --btn-p-fg: #0a0a0a;
+  --st: #f4d58a;
+  --fn: #a0c3ec;
+  --code-ink: #dadbdf;
+  --focus-ring: 2px solid var(--tp);
+  --focus-offset: 2px;
+
+  /* type */
+  --sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  --serif: "Instrument Serif", Georgia, serif;
+  --mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-pixel: "Departure Mono", var(--mono);
+  --font-menu: "Menu Pixel", "Departure Mono", var(--mono);
+  --font-hand: "Nanum Pen Script", "Bradley Hand", cursive;
+  --font-sticky: "Nanum Pen Script", "Bradley Hand", cursive;
+  --font-sticky-brush: "Nanum Brush Script", "Nanum Pen Script", cursive;
+  --font-sticky-crayon: "Gaegu", "Nanum Pen Script", cursive;
+  --font-sticky-type: "Nanum Gothic Coding", ui-monospace, monospace;
+
+  /* layout */
+  --nav-w: 200px;
+  --hdr-h: 64px;
+  --hdr-bg: #0b0d14eb;
+  --lab-pad-x: clamp(28px, 5vw, 56px);
+  --lab-content-x: calc(2 * var(--lab-pad-x) + 1px);
+  --lab-hero-pad-y: clamp(40px, 6vh, 64px);
+  --garage-pad-x: var(--lab-pad-x);
+  --garage-content-x: var(--lab-content-x);
+  --garage-hero-pad-y: var(--lab-hero-pad-y);
+
+  /* motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*,
+:before,
+:after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+#main-content,
+#desk-stage,
+#timeline-mount,
+#band-mount {
+  scroll-margin-top: var(--hdr-h);
+}
+
+::selection {
+  background: var(--sel, #8a5e0a);
+  color: #fff;
+}
+
+body {
+  background: var(--bg);
+  color: var(--tp);
+  font-family: var(--sans);
+  min-height: 100vh;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1 {
+  font-family: var(--serif);
+  letter-spacing: -0.025em;
+  color: var(--tp);
+  margin: 0 0 24px;
+  font-size: clamp(34px, 4.5vw, 50px);
+  font-weight: 400;
+  line-height: 1.1;
+}
+h2 {
+  font-family: var(--serif);
+  letter-spacing: -0.018em;
+  color: var(--tp);
+  margin: 0 0 14px;
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.25;
+}
+p {
+  color: var(--ts);
+  margin: 0 0 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+p:last-child {
+  margin-bottom: 0;
+}
+code {
+  font-family: var(--mono);
+  color: var(--code-ink);
+  background: var(--bg3);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
+}
+a {
+  color: inherit;
+}
+button {
+  font: inherit;
+  color: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg3);
+  border-radius: 2px;
+}
+
+@keyframes pulse {
+  0%,
+  to {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.skip-link {
+  z-index: 200;
+  background: var(--btn-p-bg);
+  color: var(--btn-p-fg);
+  border-radius: 0 0 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  text-decoration: none;
+  position: absolute;
+  top: 0;
+  left: -9999px;
+}
+.skip-link:focus-visible {
+  left: 0;
+}
+.sr-only {
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  position: absolute;
+  overflow: hidden;
+}
+
+/* page shell */
+.lab-body {
+  min-height: 100vh;
+  padding-top: var(--hdr-h);
+  flex-direction: column;
+  display: flex;
+}
+.lab-shell {
+  min-height: calc(100vh - var(--hdr-h));
+  flex-direction: column;
+  flex: 1;
+  display: flex;
+}
+/* The stage height is reserved before any script runs, so nothing below it shifts when the
+   computer mounts. desk.css may override --desk-stage-h / --desk-stage-h-m per breakpoint. */
+.lab-desk-stage {
+  display: block;
+  position: relative;
+  height: var(--desk-stage-h, 660px);
+}
+@media (max-width: 759px) {
+  :root {
+    --lab-pad-x: 24px;
+  }
+  .lab-shell {
+    min-height: auto;
+  }
+  .lab-desk-stage {
+    height: var(--desk-stage-h-m, min(70vh, 520px));
+  }
+}
+
+/* Sections marked offscreen by js/frame.js pause their CSS animations (no visual change on screen). */
+.is-offscreen,
+.is-offscreen *,
+.is-offscreen *::before,
+.is-offscreen *::after {
+  animation-play-state: paused !important;
+}
+
+/* Phone dock: status and trace pills share one bar at the bottom instead of floating over content. */
+.m-dock {
+  display: contents;
+}
+@media (max-width: 759px), (hover: none) and (pointer: coarse) {
+  body.has-dock {
+    --m-dock-h: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
+  body.has-dock .lab-body {
+    padding-bottom: var(--m-dock-h);
+  }
+  .m-dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 56px;
+    padding: 0 12px env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+    background: #0d0d0de0;
+    border-top: 1px solid #ffffff14;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  html[data-theme="light"] .m-dock {
+    background: #f4f1eae6;
+    border-top-color: #0000001a;
+  }
+}
+
+/* custom spin cursor */
+#spin-cursor {
+  z-index: 2147483000;
+  pointer-events: none;
+  transform-origin: 0 0;
+  opacity: 0;
+  will-change: transform;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+#spin-cursor svg {
+  display: block;
+  overflow: visible;
+}
+#spin-cursor path {
+  fill: #fff;
+  stroke: #0009;
+  stroke-width: 0.9px;
+  stroke-linejoin: round;
+}
+#spin-cursor .sc-mac,
+#spin-cursor.is-mac .sc-spin {
+  display: none;
+}
+#spin-cursor.is-mac .sc-mac {
+  display: block;
+}
+html.spin-cursor-on,
+html.spin-cursor-on * {
+  cursor: none !important;
+}
+html.spin-cursor-on input:not([type]),
+html.spin-cursor-on input[type="text"],
+html.spin-cursor-on input[type="search"],
+html.spin-cursor-on input[type="email"],
+html.spin-cursor-on input[type="url"],
+html.spin-cursor-on input[type="password"],
+html.spin-cursor-on input[type="number"],
+html.spin-cursor-on textarea,
+html.spin-cursor-on [contenteditable]:not([contenteditable="false"]) {
+  cursor: text !important;
+}

@@ -1,0 +1,46 @@
+/* Threads backdrop: fades in over the plaster wall when the screen is not the Mac.
+   Sits above .desk-bg and below the computer (#crt) and the desk notes. */
+.bd-threads {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #0b0d14;
+  opacity: 0;
+  visibility: hidden;
+  transition: none;
+}
+.bd-threads.is-on {
+  opacity: 1;
+  visibility: visible;
+  transition: none;
+}
+.bd-threads-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* fullscreen room: the threads take the place of the room's backdrop */
+html.lab-crt-full .bd-threads {
+  position: fixed;
+  z-index: 1999;
+}
+html.lab-crt-full .bd-threads::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(124% 94% at 50% 46%, #06050429 0%, #06050480 56%, #040303d6 100%);
+}
+html.lab-crt-full #crt:has(.gt-window:not([data-screen="mac"])) {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-threads,
+  .bd-threads.is-on {
+    transition: none;
+  }
+}
