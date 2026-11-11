@@ -65,7 +65,8 @@ export async function mountMap(container: HTMLElement, onPick: (point: Point) =>
     }),
   );
   const hint = h("div.map-hint", t("map.hint"));
-  const map = h("div.map", canvas, tip, legend, hint);
+  const side = h("aside.map-side.glass", { hidden: true });
+  const map = h("div.map", canvas, tip, legend, hint, side);
   container.replaceChildren(h("div.view", h("div.heading", h("h2", t("map.title")), h("p", t("map.body"))), map));
 
   let nodes: Node[] = [];
@@ -181,6 +182,7 @@ export async function mountMap(container: HTMLElement, onPick: (point: Point) =>
   let offsetX = 0;
   let offsetY = 0;
   let hovered: Node | null = null;
+  let selected: Node | null = null;
   let frame = 0;
   const born = performance.now();
 
@@ -211,7 +213,8 @@ export async function mountMap(container: HTMLElement, onPick: (point: Point) =>
     context.clearRect(0, 0, width, height);
     const age = still ? 1 : Math.min(1, (now - born) / 1100);
     const arrive = 1 - Math.pow(1 - age, 3);
-    const lit = hovered ? new Set<Node>([hovered, ...hovered.ties]) : null;
+    const focus = hovered ?? selected;
+    const lit = focus ? new Set<Node>([focus, ...focus.ties]) : null;
     const at = new Map<Node, { x: number; y: number }>();
     for (const node of nodes) at.set(node, place(node, arrive));
 
@@ -245,7 +248,7 @@ export async function mountMap(container: HTMLElement, onPick: (point: Point) =>
       if (hidden.has(tie.a.kind) || hidden.has(tie.b.kind)) continue;
       const from = at.get(tie.a)!, to = at.get(tie.b)!;
       if (Math.max(from.x, to.x) < 0 || Math.min(from.x, to.x) > width || Math.max(from.y, to.y) < 0 || Math.min(from.y, to.y) > height) continue;
-      const bright = !!lit && (tie.a === hovered || tie.b === hovered);
+      const bright = !!lit && (tie.a === focus || tie.b === focus);
       const alpha = (lit ? (bright ? 0.95 : 0.06) : 0.3 + tie.strength * 0.5) * age;
       const line = context.createLinearGradient(from.x, from.y, to.x, to.y);
       line.addColorStop(0, rgba(COLOURS[tie.a.kind], alpha));
@@ -276,7 +279,7 @@ export async function mountMap(container: HTMLElement, onPick: (point: Point) =>
       context.globalAlpha = dim * age;
       const colour = COLOURS[node.kind];
       context.shadowColor = rgba(colour, 0.9);
-      context.shadowBlur = node === hovered ? 26 : 12;
+      context.shadowBlur = node === focus ? 26 : 12;
       if (pictures && PICTURED.includes(node.kind)) {
         if (!node.asked) {
           node.asked = true;
@@ -318,12 +321,12 @@ export async function mountMap(container: HTMLElement, onPick: (point: Point) =>
         context.shadowBlur = 0;
       }
       if (lit?.has(node)) {
-        context.strokeStyle = node === hovered ? ink : rgba(colour, 0.95);
-        context.lineWidth = node === hovered ? 2 : 1.4;
+        context.strokeStyle = node === focus ? ink : rgba(colour, 0.95);
+        context.lineWidth = node === focus ? 2 : 1.4;
         context.beginPath();
         context.arc(spot.x, spot.y, radius + 5, 0, Math.PI * 2);
         context.stroke();
-        if (node !== hovered) {
+        if (node !== focus) {
           context.font = names;
           context.textAlign = "center";
           context.fillStyle = ink;
@@ -333,7 +336,7 @@ export async function mountMap(container: HTMLElement, onPick: (point: Point) =>
       }
     }
     context.globalAlpha = 1;
-    if (age < 1 || (hovered && hovered.ties.length && !still)) wake();
+    if (age < 1 || (focus && focus.ties.length && !still)) wake();
   };
   function wake(): void {
     if (!frame) frame = requestAnimationFrame(draw);
@@ -354,6 +357,61 @@ export async function mountMap(container: HTMLElement, onPick: (point: Point) =>
       }
     }
     return best;
+  };
+
+  // A picked file opens beside the map: what it is, and the files most like it. The search is one button away.
+  const select = (node: Node | null) => {
+    selected = node;
+    side.hidden = !node;
+    tip.hidden = true;
+    if (node) {
+      // Keep the picked dot clear of the panel.
+      const over = place(node).x - (canvas.clientWidth - side.offsetWidth - 60);
+      if (over > 0) offsetX -= over;
+    }
+    wake();
+    if (!node) return;
+    const shot = h("div.shot", kindIcon(node.kind));
+    api.thumbnail(node.path, 512).then((url) => shot.replaceChildren(h("img", { alt: "", src: url })), () => undefined);
+    const alike = h("div.alike", h("p", "…"));
+    const facts = h("div.sub", folderOf(node.path));
+    side.replaceChildren(
+      h("button.close", { type: "button", title: t("map.close"), onclick: () => select(null) }, "×"),
+      shot,
+      h("div.name", fileName(node.path)),
+      facts,
+      h(
+        "div.acts",
+        h("button.button", { type: "button", onclick: () => void api.openResult(node.path).catch(report) }, t("map.open")),
+        h("button.button", { type: "button", onclick: () => void api.reveal(node.path).catch(report) }, t("map.reveal")),
+        h("button.button", { type: "button", onclick: () => onPick(node) }, t("map.search")),
+      ),
+      h("h4", t("map.alike")),
+      alike,
+    );
+    side.scrollTop = 0;
+    api.similar(node.file, "", 9).catch(() => ({ hits: [] as api.Hit[] })).then((result) => {
+      if (selected !== node) return;
+      // The files the map ties it to come first, then whatever else the search finds like it.
+      const hits: { file: number; path: string; kind: Kind }[] = [...node.ties];
+      for (const hit of result.hits) if (hit.file !== node.file && !hits.some((other) => other.file === hit.file)) hits.push(hit);
+      hits.splice(8);
+      alike.replaceChildren(
+        ...(hits.length
+          ? hits.map((hit) => {
+              const thumb = h("div.thumb", kindIcon(hit.kind));
+              api.thumbnail(hit.path, 96).then((url) => thumb.replaceChildren(h("img", { alt: "", src: url })), () => undefined);
+              const there = nodes.find((other) => other.file === hit.file);
+              return h(
+                "button.like",
+                { type: "button", title: hit.path, onclick: () => (there ? select(there) : void api.reveal(hit.path).catch(report)) },
+                thumb,
+                h("div", h("div.name", fileName(hit.path)), h("div.sub", folderOf(hit.path))),
+              );
+            })
+          : [h("p", t("map.alone"))]),
+      );
+    }, report);
   };
 
   let dragging: { x: number; y: number; moved: boolean } | null = null;
@@ -390,7 +448,7 @@ export async function mountMap(container: HTMLElement, onPick: (point: Point) =>
         );
       }
     }
-    tip.hidden = !found;
+    tip.hidden = !found || found === selected;
     if (found) {
       const spot = place(found);
       tip.style.left = `${Math.min(spot.x + size(found) + 12, box.width - 290)}px`;
@@ -403,7 +461,7 @@ export async function mountMap(container: HTMLElement, onPick: (point: Point) =>
     if (wasDrag) return;
     const box = canvas.getBoundingClientRect();
     const found = nearest(event.clientX - box.left, event.clientY - box.top);
-    if (found) onPick(found);
+    select(found);
   });
   canvas.addEventListener("pointerleave", () => {
     hovered = null;
