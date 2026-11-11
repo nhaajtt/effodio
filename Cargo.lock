@@ -2648,7 +2648,7 @@ dependencies = [
 
 [[package]]
 name = "magpie"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "blake3",
@@ -2669,7 +2669,7 @@ dependencies = [
 
 [[package]]
 name = "magpie-core"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "blake3",
@@ -2691,7 +2691,7 @@ dependencies = [
 
 [[package]]
 name = "magpie-embed"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "cc",
@@ -2700,7 +2700,7 @@ dependencies = [
 
 [[package]]
 name = "magpie-faces"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "tract-onnx",
@@ -2708,7 +2708,7 @@ dependencies = [
 
 [[package]]
 name = "magpie-helper"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "magpie-core",
