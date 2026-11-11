@@ -8,8 +8,10 @@
 <meta property="og:title" content="Glint: describe it, find it">
 <meta property="og:description" content="Search your own files by what's in them. Private, on your PC.">
 <meta property="og:image" content="https://glint.nhaajt.com/icon.png">
-<meta name="theme-color" content="#0e1018">
+<meta name="theme-color" content="#0b0d14">
 <link rel="icon" href="icon.png">
+<link rel="preload" href="fonts/Geist-100-900-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/DepartureMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
 <link rel="stylesheet" href="fx.css">
 </head>
@@ -17,92 +19,125 @@
 <div class="sky" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <canvas id="stars" aria-hidden="true"></canvas>
 
-<header class="bar glass">
-  <a class="brand" href="#top"><img src="icon.png" alt="" width="28" height="28"><span>Glint</span></a>
-  <nav>
-    <a href="#does" data-t="nav_does">What it does</a>
-    <a href="#private" data-t="nav_private">Private</a>
-    <a href="#install" data-t="nav_install">Install</a>
-  </nav>
-  <div class="tools">
-    <button id="lang" class="chip" type="button" aria-label="Language">VI</button>
-    <button id="theme" class="chip" type="button" aria-label="Light or dark">◐</button>
+<div class="shell">
+  <header class="hdr">
+    <a class="brand" href="#top"><img src="icon.png" alt="" width="26" height="26"><span class="px">Glint</span></a>
+    <div class="tools">
+      <a class="pill glass" href="#install"><span data-t="jump">Install</span> <kbd>↓</kbd></a>
+      <button id="lang" class="pill glass" type="button" aria-label="Language">VI</button>
+      <button id="theme" class="pill glass round" type="button" aria-label="Light or dark">◐</button>
+    </div>
+  </header>
+  <p class="stamp glass"><i class="dot"></i> <span data-t="stamp">offline</span> · v__VERSION__ · <span id="clock">--:--</span></p>
+
+  <section class="intro" id="top">
+    <div>
+      <h1 class="sr">Glint: describe it, find it</h1>
+      <p class="lede" data-t="lede"><b class="px">Glint</b> finds the files on your computer by what's in them. <b>Describe it</b> the way you remember it and get <b>the photo</b>, <b>the PDF page</b>, <b>the second of the video</b>. One small model, running on <b>your own PC</b>, in <b>100+ languages</b>.</p>
+      <p class="note" data-t="note">Free, for Windows 10 and 11. Nothing you index leaves your computer. It goes online once, to download the model.</p>
+    </div>
+    <aside class="readout">
+      <p class="meta"><span data-t="meta_a">865 MB model</span> <i>|</i> <span data-t="meta_b">no account</span> <i>|</i> <span data-t="meta_c">no telemetry</span></p>
+      <a class="line" href="#install"><span data-t="act_install">Install in one line</span><span aria-hidden="true">&gt;_</span></a>
+      <a class="line" href="download/Glint___VERSION___x64-setup.exe"><span data-t="act_dl">Download .exe</span><span aria-hidden="true">↓</span></a>
+      <svg class="sign" viewBox="0 0 60 60" aria-hidden="true"><path pathLength="1" d="M30 4 C31 20 36 27 56 30 C36 33 31 40 30 56 C29 40 24 33 4 30 C24 27 29 20 30 4 Z"/></svg>
+    </aside>
+  </section>
+</div>
+
+<section class="stage" aria-label="Demo">
+  <canvas id="streaks" aria-hidden="true"></canvas>
+  <div class="device glass" id="demo" aria-hidden="true">
+    <div class="gauges">
+      <div><p><span data-t="g_index">Index</span><span>12,480 <span data-t="g_files">files</span></span></p><div class="bars" id="bars-a"></div></div>
+      <div><p><span data-t="g_match">Match</span><span id="took">18 ms</span></p><div class="bars" id="bars-b"></div></div>
+    </div>
+    <p class="led px"><span data-t="led_a">Describe it.</span> <span data-t="led_b">Find it.</span></p>
+    <div class="ask"><svg viewBox="0 0 24 24"><path d="M12 2l2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2z"/></svg><span id="typed"></span><b class="caret"></b></div>
+    <div class="rows" id="rows"></div>
+    <div class="foot"><span><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd> <span data-t="hotkey">from any app</span></span><span><kbd>Enter</kbd> <span data-t="demo_open">Open</span> <kbd>Tab</kbd> <span data-t="demo_like">Similar</span></span></div>
   </div>
-</header>
+</section>
 
-<main id="top">
-  <section class="hero">
-    <i class="gem" aria-hidden="true"></i>
-    <p class="eyebrow" data-t="eyebrow">For Windows 10 and 11 · free</p>
-    <h1><span data-t="h1a">Describe it.</span> <em data-t="h1b">Find it.</em></h1>
-    <p class="lede" data-t="lede">Glint searches the files on your computer by what's in them: a photo by what it shows, a PDF by what a page says, a recording or a video by the moment. Everything runs on your PC.</p>
+<div class="shell">
+  <section class="pipe" id="how">
+    <p class="label" data-t="how_l">How it works · on your PC, start to finish</p>
+    <div class="axis" aria-hidden="true"><span>01</span><span>02</span><span>03</span><span>04</span><span>05</span></div>
+    <ol class="steps">
+      <li class="glass"><b data-t="s1h">Your folders</b><span data-t="s1p">you choose which</span></li>
+      <li class="glass"><b data-t="s2h">Readers</b><span data-t="s2p">pictures, text, sound</span></li>
+      <li class="glass"><b data-t="s3h">The model</b><span data-t="s3p">EmbeddingGemma 2</span></li>
+      <li class="glass"><b data-t="s4h">One index</b><span data-t="s4p">a single local file</span></li>
+      <li class="glass gold"><b data-t="s5h">Your words</b><span data-t="s5p">matched in milliseconds</span></li>
+    </ol>
+  </section>
 
+  <section class="work" id="does">
+    <article class="card glass">
+      <p class="tag"><span>01</span> <span data-t="f1k">Meaning · photos</span></p>
+      <h3 data-t="f1h">Search by what it shows</h3>
+      <p data-t="f1p">Type "a dog on the beach" and get the photo, with no tags and no file names to remember.</p>
+      <ul class="chips"><li>JPG</li><li>PNG</li><li>HEIC</li><li>RAW</li></ul>
+    </article>
+    <article class="card glass">
+      <p class="tag"><span>02</span> <span data-t="f2k">Moments · video and sound</span></p>
+      <h3 data-t="f2h">To the page, to the second</h3>
+      <p data-t="f2p">A result opens where it matched: the PDF at page 3, the video at the moment the zebra walks in.</p>
+      <ul class="chips"><li>PDF</li><li>MP4</li><li>M4A</li><li>DOCX</li></ul>
+    </article>
+    <article class="card glass">
+      <p class="tag"><span>03</span> <span data-t="f3k">Exact words · screenshots</span></p>
+      <h3 data-t="f3h">Text inside pictures</h3>
+      <p data-t="f3p">Windows reads the words in screenshots and scans, so an error code or a booking number is found exactly as written.</p>
+      <ul class="chips"><li>OCR</li><li>PAY-7731-DX</li></ul>
+    </article>
+    <article class="card glass">
+      <p class="tag"><span>04</span> <span data-t="f4k">By example</span></p>
+      <h3 data-t="f4h">More like this</h3>
+      <p data-t="f4p">Drop or paste a picture, or press Tab on a result, and Glint finds what looks or reads like it.</p>
+      <ul class="chips"><li>Tab</li><li>Ctrl+V</li></ul>
+    </article>
+    <article class="card glass">
+      <p class="tag"><span>05</span> <span data-t="f5k">Filters you type</span></p>
+      <h3 data-t="f5h">Narrow it in the same box</h3>
+      <p data-t="f5p">Kind, folder, type and date go in with your words. A minus steers away from something.</p>
+      <ul class="chips"><li>kind:video</li><li>in:Downloads</li><li>ext:pdf</li><li>after:30d</li><li>-word</li></ul>
+    </article>
+    <article class="card glass">
+      <p class="tag"><span>06</span> <span data-t="f6k">Vietnamese</span></p>
+      <h3 data-t="f6h">Accents optional</h3>
+      <p data-t="f6p">"hoa don tien dien" finds "Hóa đơn tiền điện tháng 10". A map by meaning and a list of near-duplicates come with it.</p>
+      <ul class="chips"><li>EN</li><li>VI</li><li>100+</li></ul>
+    </article>
+  </section>
+
+  <section class="band" id="private">
+    <p class="label" data-t="priv_l">Private · nothing leaves your computer</p>
+    <p class="big" data-t="priv_p">It <b>only reads</b> your files: never changes, moves or uploads them. It skips <b>keys, certificates and password files</b>, hidden and system folders, and in a code project it reads only screenshots.</p>
+  </section>
+
+  <section class="install" id="install">
+    <p class="label" data-t="inst_l">Install · two ways</p>
     <div class="cmd glass" id="cmd">
       <span class="prompt" aria-hidden="true">PS&gt;</span>
       <code id="cmdtext">powershell -c "irm https://glint.nhaajt.com/install.ps1 | iex"</code>
       <button id="copy" class="btn gold" type="button" data-t="copy">Copy</button>
     </div>
-    <p class="or"><span data-t="or">or</span> <a class="link" href="download/Glint___VERSION___x64-setup.exe" data-t="dl">download the installer (8.8 MB)</a></p>
-
-    <div class="panel glass" id="demo" aria-hidden="true">
-      <div class="ask"><svg viewBox="0 0 24 24"><path d="M12 2l2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2z"/></svg><span id="typed"></span><b class="caret"></b></div>
-      <div class="rows" id="rows"></div>
-      <div class="foot"><span><i class="dot"></i> <span data-t="demo_files">12,480 files</span></span><span><kbd>Enter</kbd> <span data-t="demo_open">Open</span> <kbd>Tab</kbd> <span data-t="demo_like">Similar</span> <kbd>Space</kbd> <span data-t="demo_preview">Preview</span></span></div>
+    <div class="two">
+      <p><b data-t="i1h">One line in PowerShell.</b> <span data-t="i1p">Downloads the installer from this site, checks its SHA-256 and installs it quietly, for your user only. Run it again to update.</span> <a class="link" href="install.ps1" data-t="i1read">Read the script first</a></p>
+      <p><b data-t="i2h">Or the installer.</b> <span data-t="i2p">It isn't signed yet, so Windows asks before running it: More info, then Run anyway.</span> <a class="link" href="download/Glint___VERSION___x64-setup.exe">Glint___VERSION___x64-setup.exe</a> <span class="dim">8.8 MB</span></p>
     </div>
-    <p class="hint"><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Space</kbd> <span data-t="hotkey">opens it from any app</span></p>
+    <p class="fine"><span data-t="sha">SHA-256</span> <code>__SHA256__</code></p>
+    <p class="fine" data-t="ffmpeg">Recordings and videos need FFmpeg (winget install Gyan.FFmpeg). Everything else works without it.</p>
   </section>
 
-  <div class="tape" aria-hidden="true"><div class="run"></div><div class="run"></div></div>
+  <footer>
+    <p data-t="thanks">Glint learned from DigUp by Abdur Rahim and is built on EmbeddingGemma 2, llama.cpp, Tauri and SQLite. It isn't affiliated with Google or Microsoft.</p>
+    <p class="px">© 2026 Nhaajt · v__VERSION__</p>
+  </footer>
+</div>
 
-  <section id="does">
-    <h2 data-t="does_h">One search for every kind of file</h2>
-    <div class="grid">
-      <article class="card glass"><h3 data-t="f1h">By meaning</h3><p data-t="f1p">Type "a dog on the beach" and get the photo, with no tags and no file names to remember. It works in more than 100 languages.</p></article>
-      <article class="card glass"><h3 data-t="f2h">To the page, to the second</h3><p data-t="f2p">A result opens where it matched: the PDF at page 3, the video at the moment the zebra walks in. A strip shows every matching moment.</p></article>
-      <article class="card glass"><h3 data-t="f3h">Text inside pictures</h3><p data-t="f3p">Windows reads the words in screenshots and scans, so an error code or a booking number is found exactly as written.</p></article>
-      <article class="card glass"><h3 data-t="f4h">Search by example</h3><p data-t="f4p">Drop or paste a picture, or press Tab on a result, and Glint finds what looks or reads like it.</p></article>
-      <article class="card glass"><h3 data-t="f5h">Filters you type</h3><p><code>kind:video</code> <code>in:Downloads</code> <code>ext:pdf</code> <code>after:30d</code> <code>"exact words"</code> <code>-word</code></p></article>
-      <article class="card glass"><h3 data-t="f6h">Accents optional</h3><p data-t="f6p">"hoa don tien dien" finds "Hóa đơn tiền điện tháng 10". A map of everything by meaning and a list of near-duplicates come with it.</p></article>
-    </div>
-  </section>
-
-  <section id="private" class="split">
-    <div>
-      <h2 data-t="priv_h">Nothing you index leaves your computer</h2>
-      <p data-t="priv_p">The model that understands your files is a small one that runs on your own PC. Glint goes online once, to download it (865 MB). After that it works offline. No account, no telemetry.</p>
-    </div>
-    <ul class="facts glass">
-      <li data-t="p1">Only reads your files. Never changes, moves or uploads them.</li>
-      <li data-t="p2">Skips keys, certificates, password files, hidden and system folders.</li>
-      <li data-t="p3">In a code project it reads only screenshots.</li>
-      <li data-t="p4">Installs for your user only. No administrator rights.</li>
-    </ul>
-  </section>
-
-  <section id="install">
-    <h2 data-t="inst_h">Two ways to install</h2>
-    <div class="grid two">
-      <article class="card glass">
-        <h3 data-t="i1h">One line in PowerShell</h3>
-        <p data-t="i1p">Downloads the installer from this site, checks its SHA-256, and installs it quietly. Run the same line again to update.</p>
-        <p class="small"><a class="link" href="install.ps1" data-t="i1read">Read the script before you run it</a></p>
-      </article>
-      <article class="card glass">
-        <h3 data-t="i2h">The installer</h3>
-        <p data-t="i2p">The installer isn't signed yet, so Windows asks before running it: choose More info, then Run anyway.</p>
-        <p class="small"><a class="link" href="download/Glint___VERSION___x64-setup.exe">Glint___VERSION___x64-setup.exe</a></p>
-      </article>
-    </div>
-    <p class="small sha"><span data-t="sha">SHA-256 of the installer:</span> <code id="sha">__SHA256__</code></p>
-    <p class="small" data-t="ffmpeg">Recordings and videos need FFmpeg: winget install Gyan.FFmpeg. Everything else works without it.</p>
-  </section>
-</main>
-
-<footer>
-  <p data-t="thanks">Glint learned from DigUp by Abdur Rahim and is built on EmbeddingGemma 2, llama.cpp, Tauri and SQLite. It isn't affiliated with Google or Microsoft.</p>
-  <p>© 2026 Nhaajt · v__VERSION__</p>
-</footer>
-
+<div class="dock" aria-hidden="true"><span class="pill glass"><i class="dot"></i> <span id="ticker"></span></span></div>
 <script src="site.js"></script>
 <script src="fx.js"></script>
 </body>

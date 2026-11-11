@@ -1,45 +1,48 @@
 (() => {
   const root = document.documentElement;
   const $ = (id) => document.getElementById(id);
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const vi = {
-    nav_does: "Tính năng", nav_private: "Riêng tư", nav_install: "Cài đặt",
-    eyebrow: "Cho Windows 10 và 11 · miễn phí",
-    h1a: "Tả nó ra.", h1b: "Tìm thấy ngay.",
-    lede: "Glint tìm file trên máy bạn theo nội dung: ảnh theo thứ nó chụp, PDF theo điều một trang viết, ghi âm hay video theo đúng khoảnh khắc. Mọi thứ chạy ngay trên máy bạn.",
-    copy: "Sao chép", copied: "Đã chép", or: "hoặc", dl: "tải bộ cài (8,8 MB)",
-    demo_files: "12.480 file", demo_open: "Mở", demo_like: "Tương tự", demo_preview: "Xem trước",
-    hotkey: "mở nó từ bất kỳ ứng dụng nào",
-    does_h: "Một ô tìm kiếm cho mọi loại file",
-    f1h: "Theo ý nghĩa", f1p: "Gõ \"chó trên bãi biển\" là ra tấm ảnh, không cần nhãn hay nhớ tên file. Dùng được với hơn 100 ngôn ngữ.",
-    f2h: "Đến đúng trang, đúng giây", f2p: "Kết quả mở tại chỗ khớp: PDF ở trang 3, video ở lúc con ngựa vằn bước vào. Một dải thời gian chỉ ra mọi đoạn khớp.",
-    f3h: "Chữ trong ảnh", f3p: "Windows đọc chữ trong ảnh chụp màn hình và bản scan, nên mã lỗi hay mã đặt chỗ được tìm đúng từng ký tự.",
-    f4h: "Tìm theo ví dụ", f4p: "Thả hoặc dán một tấm ảnh, hoặc nhấn Tab trên một kết quả, Glint sẽ tìm những thứ giống nó.",
-    f5h: "Bộ lọc gõ thẳng",
-    f6h: "Không cần gõ dấu", f6p: "\"hoa don tien dien\" vẫn ra \"Hóa đơn tiền điện tháng 10\". Kèm theo là bản đồ mọi file theo ý nghĩa và danh sách file gần trùng.",
-    priv_h: "Không có gì rời khỏi máy bạn",
-    priv_p: "Model hiểu file của bạn là một model nhỏ chạy ngay trên máy. Glint lên mạng đúng một lần để tải nó (865 MB), sau đó chạy offline. Không tài khoản, không thu thập dữ liệu.",
-    p1: "Chỉ đọc file. Không bao giờ sửa, chuyển hay tải chúng lên.",
-    p2: "Bỏ qua khóa, chứng chỉ, file mật khẩu, thư mục ẩn và thư mục hệ thống.",
-    p3: "Trong dự án mã nguồn, chỉ đọc ảnh chụp màn hình.",
-    p4: "Cài cho riêng tài khoản của bạn. Không cần quyền quản trị.",
-    inst_h: "Hai cách cài",
-    i1h: "Một dòng trong PowerShell", i1p: "Tải bộ cài từ trang này, kiểm SHA-256 rồi cài im lặng. Chạy lại đúng dòng đó để cập nhật.",
-    i1read: "Đọc script trước khi chạy",
-    i2h: "Bộ cài", i2p: "Bộ cài chưa được ký số nên Windows sẽ hỏi trước khi chạy: chọn More info rồi Run anyway.",
-    sha: "SHA-256 của bộ cài:",
-    ffmpeg: "Ghi âm và video cần FFmpeg: winget install Gyan.FFmpeg. Những thứ khác chạy được mà không cần nó.",
+    jump: "Cài đặt", stamp: "ngoại tuyến",
+    lede: '<b class="px">Glint</b> tìm file trên máy bạn theo nội dung bên trong. <b>Tả nó ra</b> theo cách bạn nhớ và nhận về <b>tấm ảnh</b>, <b>trang PDF</b>, <b>đúng giây của video</b>. Một model nhỏ, chạy trên <b>chính máy bạn</b>, hiểu <b>hơn 100 ngôn ngữ</b>.',
+    note: "Miễn phí, cho Windows 10 và 11. Không có gì bạn lập chỉ mục rời khỏi máy. Nó chỉ lên mạng một lần để tải model.",
+    meta_a: "model 865 MB", meta_b: "không tài khoản", meta_c: "không thu thập",
+    act_install: "Cài bằng một dòng", act_dl: "Tải file .exe",
+    g_index: "Chỉ mục", g_files: "file", g_match: "Độ khớp",
+    led_a: "Tả nó ra.", led_b: "Tìm thấy.",
+    hotkey: "từ mọi ứng dụng", demo_open: "Mở", demo_like: "Tương tự",
+    how_l: "Cách hoạt động · trên máy bạn, từ đầu đến cuối",
+    s1h: "Thư mục của bạn", s1p: "bạn chọn cái nào",
+    s2h: "Bộ đọc", s2p: "ảnh, chữ, âm thanh",
+    s3h: "Model", s3p: "EmbeddingGemma 2",
+    s4h: "Một chỉ mục", s4p: "một file duy nhất trên máy",
+    s5h: "Lời bạn gõ", s5p: "khớp trong vài mili giây",
+    f1k: "Ý nghĩa · ảnh", f1h: "Tìm theo thứ nó chụp", f1p: 'Gõ "chó trên bãi biển" là ra tấm ảnh, không cần nhãn, không cần nhớ tên file.',
+    f2k: "Khoảnh khắc · video và âm thanh", f2h: "Đến đúng trang, đúng giây", f2p: "Kết quả mở tại chỗ khớp: PDF ở trang 3, video ở lúc con ngựa vằn bước vào.",
+    f3k: "Đúng từng chữ · ảnh chụp màn hình", f3h: "Chữ nằm trong ảnh", f3p: "Windows đọc chữ trong ảnh chụp màn hình và bản scan, nên mã lỗi hay mã đặt chỗ được tìm đúng từng ký tự.",
+    f4k: "Theo ví dụ", f4h: "Thêm cái giống thế này", f4p: "Thả hoặc dán một tấm ảnh, hoặc nhấn Tab trên một kết quả, Glint sẽ tìm những thứ giống nó.",
+    f5k: "Bộ lọc gõ thẳng", f5h: "Thu hẹp ngay trong ô tìm", f5p: "Loại, thư mục, đuôi file và ngày tháng gõ chung với câu tìm. Dấu trừ để tránh một thứ.",
+    f6k: "Tiếng Việt", f6h: "Không cần gõ dấu", f6p: '"hoa don tien dien" vẫn ra "Hóa đơn tiền điện tháng 10". Kèm theo là bản đồ theo ý nghĩa và danh sách file gần trùng.',
+    priv_l: "Riêng tư · không gì rời khỏi máy bạn",
+    priv_p: "Nó <b>chỉ đọc</b> file của bạn: không bao giờ sửa, chuyển hay tải lên. Nó bỏ qua <b>khóa, chứng chỉ và file mật khẩu</b>, thư mục ẩn và thư mục hệ thống, và trong dự án mã nguồn nó chỉ đọc ảnh chụp màn hình.",
+    inst_l: "Cài đặt · hai cách",
+    copy: "Sao chép", copied: "Đã chép",
+    i1h: "Một dòng trong PowerShell.", i1p: "Tải bộ cài từ trang này, kiểm SHA-256 rồi cài im lặng, chỉ cho tài khoản của bạn. Chạy lại để cập nhật.", i1read: "Đọc script trước",
+    i2h: "Hoặc bộ cài.", i2p: "Nó chưa được ký số nên Windows sẽ hỏi trước khi chạy: More info rồi Run anyway.",
+    sha: "SHA-256",
+    ffmpeg: "Ghi âm và video cần FFmpeg (winget install Gyan.FFmpeg). Những thứ khác chạy được mà không cần nó.",
     thanks: "Glint học hỏi từ DigUp của Abdur Rahim và dựng trên EmbeddingGemma 2, llama.cpp, Tauri và SQLite. Glint không liên kết với Google hay Microsoft.",
+    ticks: ["chạy ngoại tuyến", "12.480 file trong chỉ mục", "lần tìm gần nhất: 18 ms", "Ctrl Shift Space để mở"],
   };
-  const en = {};
-  document.querySelectorAll("[data-t]").forEach((el) => (en[el.dataset.t] = el.textContent));
-  en.copied = "Copied";
+  const en = { copied: "Copied", ticks: ["runs offline", "12,480 files indexed", "last search: 18 ms", "Ctrl Shift Space to open"] };
+  document.querySelectorAll("[data-t]").forEach((el) => (en[el.dataset.t] = el.innerHTML));
 
   let lang = localStorage.getItem("lang") || (navigator.language.startsWith("vi") ? "vi" : "en");
   const words = () => (lang === "vi" ? vi : en);
   function speak() {
     root.lang = lang;
-    document.querySelectorAll("[data-t]").forEach((el) => (el.textContent = words()[el.dataset.t] ?? en[el.dataset.t]));
+    document.querySelectorAll("[data-t]").forEach((el) => (el.innerHTML = words()[el.dataset.t] ?? en[el.dataset.t]));
     $("lang").textContent = lang === "vi" ? "EN" : "VI";
     document.dispatchEvent(new CustomEvent("glint:lang"));
   }
@@ -56,6 +59,15 @@
     root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
     localStorage.setItem("theme", root.dataset.theme);
   };
+
+  const tick = () => ($("clock").textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+  tick();
+  setInterval(tick, 1000);
+
+  let turn = 0;
+  const say = () => ($("ticker").textContent = words().ticks[turn++ % 4]);
+  say();
+  setInterval(say, 3200);
 
   $("copy").onclick = async () => {
     const text = $("cmdtext").textContent;
@@ -80,18 +92,26 @@
     glass.style.setProperty("--my", event.clientY - box.top + "px");
   });
 
-  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const seen = new IntersectionObserver(
     (entries) => entries.forEach((entry) => entry.isIntersecting && (entry.target.classList.add("in"), seen.unobserve(entry.target))),
     { threshold: 0.15 },
   );
-  document.querySelectorAll(".card, .facts, h2, .split p").forEach((el, index) => {
+  document.querySelectorAll(".card, .steps li, .label, .big, .cmd, .two p").forEach((el, index) => {
     if (still) return;
     el.classList.add("reveal");
-    el.style.transitionDelay = (index % 3) * 70 + "ms";
+    el.style.transitionDelay = (index % 5) * 80 + "ms";
     el.addEventListener("transitionend", () => (el.style.transitionDelay = ""), { once: true });
     seen.observe(el);
   });
+
+  // The gauges on the device: what's indexed, and how well each result of the last search matched.
+  const bars = (id, heights) => ($(id).innerHTML = heights.map((tall, index) => `<i style="height:${tall}%;transition-delay:${index * 14}ms"></i>`).join(""));
+  bars("bars-a", Array.from({ length: 26 }, (_, index) => (index < 2 ? 100 - index * 18 : 38 + Math.sin(index * 1.7) * 9 + Math.random() * 12)));
+  function scores() {
+    let tall = 100;
+    bars("bars-b", Array.from({ length: 26 }, (_, index) => (tall *= index < 3 ? 0.78 + Math.random() * 0.12 : 0.9 + Math.random() * 0.07)));
+    $("took").textContent = 14 + Math.floor(Math.random() * 12) + " ms";
+  }
 
   // The search panel, playing a few searches.
   const icons = {
@@ -119,6 +139,7 @@
           `<div class="row" style="animation-delay:${index * 90}ms"><span class="thumb k-${kind}"><svg viewBox="0 0 24 24">${icons[kind]}</svg></span><div><strong>${name}</strong><small>${sub}</small></div><span class="badge">${badge}</span></div>`,
       )
       .join("");
+    scores();
     document.dispatchEvent(new CustomEvent("glint:search"));
   }
   async function run() {

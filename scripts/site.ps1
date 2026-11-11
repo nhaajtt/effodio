@@ -21,6 +21,7 @@ Get-ChildItem "$root\site" -File | Where-Object Extension -ne ".jsonc" | ForEach
     Copy-Item $_.FullName $out
   }
 }
+Copy-Item "$root\site\fonts" $out -Recurse
 Copy-Item $installer "$out\download"
 "site\dist is ready: Glint $version, SHA-256 $sha256"
 

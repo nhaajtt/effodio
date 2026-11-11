@@ -1,4 +1,4 @@
-/* The moving parts: the field of points, the shine on the glass, the glints, the tape. */
+/* The moving parts: the field of points, the shine on the glass, the glints, the light round the device. */
 
 @property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 :root { --chrome: linear-gradient(180deg, #ffffff 18%, #aab3cf 52%, #ffffff 62%, #dfe4f3); --foil: 0.2; }
@@ -13,13 +13,12 @@
   background-size: 260% 100%; background-position: 160% 0;
   animation: sheen 8s var(--ease) infinite;
 }
-.grid .glass:nth-child(2)::before { animation-delay: 0.5s; }
-.grid .glass:nth-child(3)::before { animation-delay: 1s; }
-.grid .glass:nth-child(4)::before { animation-delay: 1.5s; }
-.grid .glass:nth-child(5)::before { animation-delay: 2s; }
-.grid .glass:nth-child(6)::before { animation-delay: 2.5s; }
-.panel::before { animation-delay: 3s; }
-.facts::before { animation-delay: 4s; }
+.work .glass:nth-child(2)::before { animation-delay: 0.5s; }
+.work .glass:nth-child(3)::before { animation-delay: 1s; }
+.work .glass:nth-child(4)::before { animation-delay: 1.5s; }
+.work .glass:nth-child(5)::before { animation-delay: 2s; }
+.work .glass:nth-child(6)::before { animation-delay: 2.5s; }
+.device::before { animation-delay: 3s; }
 @keyframes sheen { 0%, 62% { background-position: 160% 0; } 100% { background-position: -60% 0; } }
 
 /* Under the pointer the glass turns to foil: the colours slide as the pointer moves. */
@@ -42,34 +41,21 @@
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
   animation: spin 5.5s linear infinite;
 }
-.panel .rim { animation-duration: 8s; animation-direction: reverse; }
+.device .rim { animation-duration: 8s; animation-direction: reverse; }
 @keyframes spin { to { --spin: 360deg; } }
 
-/* The star behind the headline. */
-.hero { position: relative; isolation: isolate; }
-.gem {
-  position: absolute; z-index: -1; left: 50%; top: 20px; width: min(620px, 92vw); aspect-ratio: 1;
-  translate: -50% 0; opacity: 0.2; filter: blur(1.5px) saturate(140%);
-  background: conic-gradient(from var(--spin), #f4d58a, #fff, #9b7bf5, #3f6bd8, #2fb3a0, #fff, #d9a63a, #f4d58a);
-  clip-path: polygon(50% 0, 56% 44%, 100% 50%, 56% 56%, 50% 100%, 44% 56%, 0 50%, 44% 44%);
-  animation: spin 14s linear infinite, breathe 7s var(--ease) infinite alternate;
-}
-@keyframes breathe { from { scale: 0.86; rotate: -8deg; } to { scale: 1.08; rotate: 10deg; } }
-
-/* The headline: polished letters that arrive one at a time; "Find it." catches the light. */
-.ch {
-  display: inline-block; background: var(--chrome); -webkit-background-clip: text; background-clip: text; color: transparent;
-  animation: letter 0.9s var(--spring) both;
-}
-@keyframes letter { from { opacity: 0; transform: translateY(0.55em) rotate(9deg) scale(0.8); filter: blur(12px); } }
-h1 em {
-  background: linear-gradient(100deg, #f4d58a 0%, var(--accent) 22%, #9b7bf5 40%, #fff 50%, #9b7bf5 60%, var(--accent) 78%, #f4d58a 100%);
-  background-size: 300% 100%;
-  -webkit-background-clip: text; background-clip: text;
-  filter: drop-shadow(0 0 22px rgba(217, 166, 58, 0.35));
+/* The introduction arrives a word at a time; the sign on the device catches the light. */
+.w { display: inline-block; animation: word 0.75s var(--ease) backwards; }
+@keyframes word { from { opacity: 0; transform: translateY(0.35em); filter: blur(6px); } }
+.led span {
+  display: block;
+  background: linear-gradient(100deg, var(--accent) 0%, #f4d58a 30%, #fff 50%, #f4d58a 70%, var(--accent) 100%);
+  background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
   animation: sweep 4.5s var(--ease) infinite;
 }
+.led span + span { animation-delay: 0.5s; }
 @keyframes sweep { 0%, 25% { background-position: 100% 0; } 75%, 100% { background-position: 0 0; } }
+#streaks { -webkit-mask-image: radial-gradient(ellipse 70% 90% at 50% 50%, #000 35%, transparent 100%); mask-image: radial-gradient(ellipse 70% 90% at 50% 50%, #000 35%, transparent 100%); }
 
 .brand img { animation: wink 9s var(--spring) infinite; }
 @keyframes wink {
@@ -94,23 +80,16 @@ h1 em {
 @keyframes once { to { background-position: -60% 0; } }
 
 /* Glass tilts toward the pointer; panes fold up into place as they come into view. */
-.grid, .split { perspective: 1300px; }
-.card, .panel, .facts { transition: transform 0.5s var(--spring); will-change: transform; }
-.card:hover, .panel:hover, .facts:hover { transition-duration: 0.12s; }
+.work, .steps { perspective: 1300px; }
+.card { transition: transform 0.5s var(--spring); will-change: transform; }
+.card:hover { transition-duration: 0.12s; }
 .reveal {
-  transform: none; translate: 0 46px; rotate: 1 0 0 -38deg; scale: 0.9; filter: blur(8px);
+  transform: none; translate: 0 34px; rotate: 1 0 0 -24deg; scale: 0.95; filter: blur(8px);
   transform-origin: 50% 100%;
   transition: opacity 0.8s var(--ease), translate 0.9s var(--spring), rotate 0.9s var(--spring), scale 0.9s var(--spring), filter 0.8s var(--ease), transform 0.5s var(--spring);
 }
 .reveal.in { translate: 0 0; rotate: 1 0 0 0deg; scale: 1; filter: none; }
-h2.reveal.in {
-  background: linear-gradient(100deg, var(--ink) 42%, #f4d58a 50%, var(--ink) 58%) no-repeat;
-  background-size: 300% 100%; background-position: 160% 0;
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-  animation: once 1.8s 0.3s var(--ease) forwards;
-}
-
-.btn, .chip { transition: transform 0.25s var(--spring), translate 0.35s var(--spring), filter 0.2s, background 0.2s; }
+.btn, .pill { transition: transform 0.25s var(--spring), translate 0.35s var(--spring), filter 0.2s, background 0.2s; }
 
 .spark {
   position: fixed; z-index: 50; pointer-events: none;
@@ -120,25 +99,12 @@ h2.reveal.in {
 }
 .spark.cool { background: linear-gradient(140deg, #fff, #b9a6ff 45%, #3f6bd8); }
 
-/* Searches running past, as fast as you scroll. */
-.tape { width: 100vw; margin: 84px 0 0 calc(50% - 50vw); overflow: hidden; padding: 6px 0; }
-.run {
-  display: flex; white-space: nowrap; will-change: transform;
-  font: 700 clamp(46px, 8.5vw, 116px)/1.12 var(--display); letter-spacing: -0.03em;
-  color: transparent; -webkit-text-stroke: 1px var(--ink-3);
-}
-.run + .run { -webkit-text-stroke: 0; color: var(--ink); opacity: 0.09; }
-.run span { padding: 0 0.28em; }
-.run b { color: var(--accent); -webkit-text-stroke: 0; font-weight: 400; display: inline-block; animation: turn 6s linear infinite; }
-@keyframes turn { to { rotate: 360deg; } }
-.tape + section { padding-top: 56px; }
-
 /* Light and dark swap through an iris that opens from the button. */
 ::view-transition-old(root) { animation: none; }
 ::view-transition-new(root) { animation: iris 0.75s var(--ease); }
 @keyframes iris { from { clip-path: circle(0 at var(--vx, 50%) var(--vy, 0)); } to { clip-path: circle(150vmax at var(--vx, 50%) var(--vy, 0)); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .tape, .rim, .gem { display: none; }
+  .rim { display: none; }
   .reveal { translate: 0 0; rotate: none; scale: 1; filter: none; }
 }

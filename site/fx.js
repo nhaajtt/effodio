@@ -5,23 +5,34 @@
   const pointer = { x: -9999, y: -9999 };
   const TURN = 6.283;
 
-  // The headline, a letter at a time (again when the language changes).
-  function letters() {
-    const line = document.querySelector('[data-t="h1a"]');
-    const text = line.textContent;
-    line.textContent = "";
-    [...text].forEach((letter, index) => {
-      const span = document.createElement("span");
-      span.className = "ch";
-      span.textContent = letter === " " ? " " : letter;
-      span.style.animationDelay = index * 45 + "ms";
-      line.append(span);
+  // The introduction, a word at a time (again when the language changes).
+  function words() {
+    let count = 0;
+    document.querySelectorAll(".lede, .note").forEach((block) => {
+      const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+      const texts = [];
+      while (walker.nextNode()) texts.push(walker.currentNode);
+      for (const text of texts) {
+        const parts = document.createDocumentFragment();
+        for (const piece of text.textContent.split(/(\s+)/)) {
+          if (!piece.trim()) {
+            parts.append(piece);
+            continue;
+          }
+          const word = document.createElement("span");
+          word.className = "w";
+          word.textContent = piece;
+          word.style.animationDelay = 120 + count++ * 32 + "ms";
+          parts.append(word);
+        }
+        text.replaceWith(parts);
+      }
     });
   }
   if (!still) {
-    letters();
-    document.addEventListener("glint:lang", letters);
-    document.querySelectorAll(".cmd, .panel").forEach((pane) => {
+    words();
+    document.addEventListener("glint:lang", words);
+    document.querySelectorAll(".cmd, .device").forEach((pane) => {
       const rim = document.createElement("i");
       rim.className = "rim";
       pane.append(rim);
@@ -103,7 +114,7 @@
     const light = root.dataset.theme === "light";
     const white = light ? "120,90,20" : "255,255,255";
     ctx.clearRect(0, 0, width, height);
-    const glow = lit < 0 ? 0 : Math.max(0, 1 - (now - litAt) / 2200);
+    const glow = lit < 0 ? 0 : Math.min(1, Math.max(0, 1 - (now - litAt) / 2200));
     const panel = document.getElementById("demo").getBoundingClientRect();
     const goalX = panel.left + panel.width / 2, goalY = panel.top + 30;
 
@@ -255,44 +266,72 @@
     // The headline glitters.
     setInterval(() => {
       if (document.hidden) return;
-      const box = document.querySelector("h1").getBoundingClientRect();
+      const box = document.querySelector(".led").getBoundingClientRect();
       if (box.bottom < 0 || box.top > innerHeight) return;
       glint(box.left + Math.random() * box.width, box.top + Math.random() * box.height, { wide: 8 + Math.random() * 18, time: 900 + Math.random() * 500, cool: Math.random() < 0.35 });
-    }, 300);
+    }, 420);
   }
 
-  // The tape of searches.
-  const phrases = ["a dog on the beach", "the clause about pets", "hoa don tien dien", "PAY-7731-DX", "zebra in a video", "sunset over the bay", "invoice from March", "the slide about pricing"];
-  const runs = [...document.querySelectorAll(".run")].map((run, row) => {
-    const order = row ? [...phrases].reverse() : phrases;
-    const text = order.map((phrase) => `<span>${phrase}</span><b>✦</b>`).join("");
-    run.innerHTML = text + text;
-    return { run, at: 0, way: row ? 1 : -1 };
-  });
-  let lastScroll = scrollY, speed = 0;
+  // Light streaming round the device: arcs of gold, white and violet, each on its own tilted orbit.
+  const band = document.getElementById("streaks");
+  const ink = band.getContext("2d");
+  let bandWide = 0, bandTall = 0, bandSeen = true;
+  const arcs = Array.from({ length: 64 }, (_, index) => ({
+    reach: 0.22 + Math.random() * 0.62,
+    squash: 0.28 + Math.random() * 0.5,
+    tilt: -0.5 + Math.random() * 0.35,
+    at: Math.random() * TURN,
+    long: 0.25 + Math.random() * 1.1,
+    pace: (0.12 + Math.random() * 0.35) * (index % 5 ? 1 : -1),
+    thick: 0.5 + Math.random() * 1.6,
+    colour: ["244,213,138", "255,255,255", "217,166,58", "155,123,245", "255,236,190"][index % 5],
+    alpha: 0.12 + Math.random() * 0.4,
+  }));
+  function fit() {
+    const ratio = Math.min(devicePixelRatio || 1, 2);
+    const box = band.getBoundingClientRect();
+    bandWide = box.width;
+    bandTall = box.height;
+    band.width = bandWide * ratio;
+    band.height = bandTall * ratio;
+    ink.setTransform(ratio, 0, 0, ratio, 0, 0);
+  }
+  fit();
+  new ResizeObserver(fit).observe(band);
+  new IntersectionObserver(([entry]) => (bandSeen = entry.isIntersecting)).observe(band);
+  function stream(now) {
+    const time = now / 1000;
+    const light = root.dataset.theme === "light";
+    ink.clearRect(0, 0, bandWide, bandTall);
+    ink.globalCompositeOperation = light ? "source-over" : "lighter";
+    ink.lineCap = "round";
+    const pull = fine && pointer.x > -999 ? (pointer.x / innerWidth - 0.5) * 0.12 : 0;
+    for (const arc of arcs) {
+      const from = arc.at + time * arc.pace;
+      ink.strokeStyle = `rgba(${light && arc.colour === "255,255,255" ? "185,133,28" : arc.colour},${arc.alpha * (light ? 1.3 : 1)})`;
+      ink.lineWidth = arc.thick;
+      ink.beginPath();
+      ink.ellipse(bandWide / 2, bandTall / 2, arc.reach * bandWide * 0.62, arc.reach * bandWide * 0.62 * arc.squash, arc.tilt + pull, from, from + arc.long);
+      ink.stroke();
+    }
+  }
 
   function frame(now) {
     if (!document.hidden) {
       draw(now);
-      speed += (scrollY - lastScroll - speed) * 0.2;
-      lastScroll = scrollY;
-      for (const row of runs) {
-        const half = row.run.scrollWidth / 2;
-        row.at += row.way * (0.5 + Math.abs(speed) * 0.6);
-        if (row.at <= -half) row.at += half;
-        if (row.at > 0) row.at -= half;
-        row.run.style.transform = `translate3d(${row.at}px,0,0) skewX(${Math.max(-14, Math.min(14, -speed * row.way * 0.5))}deg)`;
-      }
+      if (bandSeen) stream(now);
     }
     requestAnimationFrame(frame);
   }
-  if (still) draw(0);
-  else requestAnimationFrame(frame);
+  if (still) {
+    draw(0);
+    stream(0);
+  } else requestAnimationFrame(frame);
 
   if (fine && !still) {
     // Glass tilts toward the pointer.
-    document.querySelectorAll(".card, .panel, .facts").forEach((glass) => {
-      const most = glass.classList.contains("panel") ? 5 : 10;
+    document.querySelectorAll(".card").forEach((glass) => {
+      const most = 8;
       glass.addEventListener("pointermove", (event) => {
         const box = glass.getBoundingClientRect();
         const across = (event.clientX - box.left) / box.width - 0.5;
@@ -302,7 +341,7 @@
       glass.addEventListener("pointerleave", () => (glass.style.transform = ""));
     });
     // Buttons lean toward the pointer.
-    document.querySelectorAll(".btn, .chip").forEach((button) => {
+    document.querySelectorAll(".btn, .pill").forEach((button) => {
       button.addEventListener("pointermove", (event) => {
         const box = button.getBoundingClientRect();
         button.style.translate = `${(event.clientX - box.left - box.width / 2) * 0.3}px ${(event.clientY - box.top - box.height / 2) * 0.4}px`;
