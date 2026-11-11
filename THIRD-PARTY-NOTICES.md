@@ -71,3 +71,25 @@ Gemma is a trademark of Google LLC.
 Tauri, rusqlite and SQLite, image, pdf-extract, zip, quick-xml, rayon, half, blake3, notify, ureq, windows-rs and
 the others listed in `Cargo.lock` and `app/package-lock.json` are used under their own licenses (MIT, Apache 2.0,
 or similar). SQLite is in the public domain.
+tract (the runtime the face models run on) is by Sonos, under MIT or Apache 2.0.
+
+## Models and programs fetched on request
+
+None of these is part of this repository or of the installer; the app downloads each one only when its feature
+is turned on, from the address given.
+
+- **Gemma 3 (4B, instruction-tuned)**, for answers from the files: https://huggingface.co/ggml-org/gemma-3-4b-it-GGUF.
+  By Google DeepMind, under the Gemma terms of use.
+- **Whisper (small)**, for the words spoken in recordings: https://huggingface.co/ggerganov/whisper.cpp. The model
+  is by OpenAI (MIT); it runs on whisper.cpp by Georgi Gerganov and contributors (MIT),
+  https://github.com/ggml-org/whisper.cpp
+- **YuNet** (finding faces, MIT) and **SFace** (telling them apart, Apache 2.0), from the OpenCV model zoo:
+  https://huggingface.co/opencv/face_detection_yunet and https://huggingface.co/opencv/face_recognition_sface
+- **llama.cpp** programs, to run Gemma 3: https://github.com/ggml-org/llama.cpp (MIT).
+- **FFmpeg**, to read videos and recordings, when the computer has none: the "essentials" build by Gyan Doshi,
+  https://github.com/GyanD/codexffmpeg, under the GPL v3. https://ffmpeg.org
+
+## Typefaces
+
+Geist and Geist Mono (Vercel), Playpen Sans (TypeTogether) and Departure Mono (Helena Zhang) are used under the
+SIL Open Font License 1.1; the license texts are beside the font files.
