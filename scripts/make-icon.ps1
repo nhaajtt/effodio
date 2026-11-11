@@ -1,6 +1,5 @@
-# Draws the app icon (an E laid down in layers, with the bright thing dug out of the middle one, on deep blue glass)
-# at 1024 px, then makes every size from it. The small sizes (48 px and under) get a drawing of their own: the letter
-# closer, without the far star, which is lost there.
+# Draws the app icon (a meerkat looking up at the bright thing it found, on deep blue glass) at 1024 px, then makes
+# every size from it. The small sizes (48 px and under) get a drawing of their own: the face alone, without the stars.
 #   pwsh scripts\make-icon.ps1
 Add-Type -AssemblyName System.Drawing
 $root = Split-Path $PSScriptRoot -Parent
@@ -72,46 +71,32 @@ $edge = New-Object System.Drawing.Drawing2D.LinearGradientBrush $from, $to, (Arg
 $pen = New-Object System.Drawing.Pen $edge, 10
 $g.DrawPath($pen, (RoundRect 77 77 870 870 205))
 
-# The letter, folded from paper and laid down like layers of ground: a white spine and three bars, each a lit facet
-# over a shaded one. The middle bar stops short, dug away, and where it ends lies the bright thing that was found.
-function Facet($color, [float[]]$xy, $shadow) {
-  $points = for ($i = 0; $i -lt $xy.Length; $i += 2) { Point $xy[$i] $xy[$i + 1] }
-  if ($shadow) { $color = $shadow }
-  $brush = New-Object System.Drawing.SolidBrush $color
-  $g.FillPolygon($brush, [System.Drawing.PointF[]]$points)
-  # A hair of the same colour along the edges, so no seam shows between two facets.
-  if (-not $shadow) { $g.DrawPolygon((New-Object System.Drawing.Pen $color, 1.6), [System.Drawing.PointF[]]$points) }
-}
-function Bar([float]$y, [float]$right, $light, $dark, $shadow) {
-  # The far end is cut on a slant, the way a spade leaves it.
-  Facet $light @(392, $y, ($right + 46), $y, $right, ($y + 66), 392, ($y + 66)) $shadow
-  Facet $dark @(392, ($y + 66), $right, ($y + 66), ($right - 46), ($y + 132), 392, ($y + 132)) $shadow
-}
-function Letter($shadow) {
-  Bar 246 730 (Argb 255 168 140 255) (Argb 255 112 86 222) $shadow
-  Bar 446 566 (Argb 255 96 160 255) (Argb 255 46 100 220) $shadow
-  Bar 646 730 (Argb 255 64 214 204) (Argb 255 30 150 162) $shadow
-  Facet (Argb 255 255 255 255) @(264,246, 330,246, 330,778, 264,778) $shadow
-  Facet (Argb 255 214 221 236) @(330,246, 396,246, 396,778, 330,778) $shadow
-}
+# The meerkat: it digs for what it wants and stands up to look for it. A photograph with its backdrop taken away
+# (icons\mascot.png), set into the tile so the shoulders run off the bottom, looking up at the bright thing it found.
+$mascot = [System.Drawing.Image]::FromFile((Join-Path $root 'app\src-tauri\icons\mascot.png'))
 $state = $g.Save()
-$g.TranslateTransform(512, 512)
-if ($close) { $g.ScaleTransform(1.2, 1.2) }
-$g.TranslateTransform(-512, -512)
-$g.TranslateTransform(14, 24)
-Letter (Argb 90 2 4 12)
-$g.TranslateTransform(-14, -24)
-Letter $null
-# What was dug out.
-$goldFrom = Point 620 430
-$goldTo = Point 800 600
-$gold = New-Object System.Drawing.Drawing2D.LinearGradientBrush $goldFrom, $goldTo, (Argb 255 255 240 190), (Argb 255 222 164 48)
-Glow 560 362 300 300 (Argb 110 255 206 110)
-$g.FillPath($gold, (Star 710 512 104 26))
-$g.FillPath((New-Object System.Drawing.SolidBrush (Argb 235 255 255 255)), (Star 710 512 40 10))
+$g.SetClip((RoundRect 77 77 870 870 205))
+$g.InterpolationMode = 'HighQualityBicubic'
+Glow 330 90 760 620 (Argb 120 255 206 110)
+if ($close) {
+  # Small sizes: the face alone.
+  $w = 1180
+  $g.DrawImage($mascot, [float]-40, [float]96, [float]$w, [float]($w * $mascot.Height / $mascot.Width))
+} else {
+  $w = 860
+  $g.DrawImage($mascot, [float]60, [float]196, [float]$w, [float]($w * $mascot.Height / $mascot.Width))
+}
 $g.Restore($state)
-$small = New-Object System.Drawing.SolidBrush (Argb 190 255 240 196)
-if (-not $close) { $g.FillPath($small, (Star 838 206 30 7)) }
+$mascot.Dispose()
+if (-not $close) {
+  # What it found.
+  $goldFrom = Point 760 130
+  $goldTo = Point 900 290
+  $gold = New-Object System.Drawing.Drawing2D.LinearGradientBrush $goldFrom, $goldTo, (Argb 255 255 240 190), (Argb 255 222 164 48)
+  $g.FillPath($gold, (Star 826 214 84 20))
+  $g.FillPath((New-Object System.Drawing.SolidBrush (Argb 235 255 255 255)), (Star 826 214 32 8))
+  $g.FillPath((New-Object System.Drawing.SolidBrush (Argb 190 255 240 196)), (Star 212 250 28 7))
+}
 
 $g.Dispose()
 $bmp.Save($(if ($close) { $near } else { $out }), [System.Drawing.Imaging.ImageFormat]::Png)

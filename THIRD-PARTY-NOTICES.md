@@ -93,3 +93,9 @@ is turned on, from the address given.
 
 Geist and Geist Mono (Vercel), Playpen Sans (TypeTogether) and Departure Mono (Helena Zhang) are used under the
 SIL Open Font License 1.1; the license texts are beside the font files.
+
+## The icon
+
+The meerkat in the icon is from the photograph "Meerkat portrait looking sunset" by Joselodos, on Wikimedia
+Commons, which its author placed in the public domain (CC0 1.0):
+https://commons.wikimedia.org/wiki/File:Meerkat_portrait_looking_sunset.jpg
