@@ -8,6 +8,7 @@
 //!   glint-helper model            download the model files (progress as JSON lines)
 //!   glint-helper status           what's in the index
 
+mod faces;
 mod model;
 mod serve;
 mod speed;
@@ -150,6 +151,11 @@ fn index(arguments: &Arguments) -> Result<()> {
         "cloud_only": found.cloud_only, "datasets": found.datasets,
     }));
     glint_core::insight::backfill_tones(&mut store, &stop)?;
+    if config.faces && glint_faces::Faces::ready(&config::models_folder()) {
+        if let Err(error) = faces::scan(&mut store, &stop) {
+            emit(&json!({"event": "note", "note": format!("faces: {error:#}")}));
+        }
+    }
     let counts = store.counts()?;
     if counts.pending == 0 && counts.partial == 0 {
         emit(&json!({"event": "finished", "indexed": 0, "failed": 0, "seconds": 0.0, "stopped": false}));
@@ -332,6 +338,11 @@ fn main() {
         "estimate" => estimate(&rest),
         "model" => model::download(&config::models_folder()),
         "status" => status(&rest),
+        // `faces --scan`: reads the faces of the photos in the index now, without a crawl.
+        "faces" if rest.get("scan").is_some() => Store::open(&rest.database())
+            .and_then(|mut store| faces::scan(&mut store, &AtomicBool::new(false)))
+            .map(|read| emit(&json!({"event": "finished", "read": read}))),
+        "faces" => faces::check(&rest.bare),
         "ocr" => ocr(&rest),
         _ => {
             println!(

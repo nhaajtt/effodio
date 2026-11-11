@@ -56,6 +56,7 @@ export interface Root {
 }
 
 export interface Config {
+  faces?: boolean;
   roots: Root[];
   rules: { skip_folders: string[]; skip_extensions: string[]; skip_kinds: Kind[] };
   ocr: boolean;
@@ -137,6 +138,7 @@ export const search = (q: string, options: { typing?: boolean; limit?: number } 
   ask<SearchResult>({ op: "search", q, typing: options.typing ?? false, limit: options.limit ?? 30 });
 export const similar = (file: number, q = "", limit = 30) => ask<SearchResult>({ op: "similar", file, q, limit });
 export const byExample = (path: string, q = "", limit = 30) => ask<SearchResult>({ op: "example", path, q, limit });
+export const byFace = (path: string, limit = 30) => ask<SearchResult>({ op: "face_example", path, limit });
 export const moments = (file: number, q: string) => ask<{ moments: Moment[] }>({ op: "moments", file, q });
 export const segmentText = (segment: number) => ask<{ text: string | null }>({ op: "text", segment });
 export const pageImage = (path: string, page: number, side = 1400) =>

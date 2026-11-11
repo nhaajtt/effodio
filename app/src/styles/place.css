@@ -97,6 +97,29 @@
 .belongs b { color: var(--ink); font-weight: 600; }
 .nav-item .fresh { margin-left: auto; min-width: 18px; padding: 1px 6px; border-radius: 99px; font: 500 10px var(--mono); text-align: center; color: #1a1305; background: var(--accent); }
 
+/* People. */
+.face { display: block; border-radius: 50%; object-fit: cover; background: var(--glass-faint); box-shadow: 0 0 0 1px var(--line), 0 0 0 2px rgba(255, 255, 255, 0.06); flex: none; }
+.people-bar { display: flex; align-items: center; gap: 8px; }
+.people-bar .grow { flex: 1; }
+.people { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.person { position: relative; display: grid; justify-items: center; gap: 6px; padding: 14px 10px; border-radius: 14px; text-align: center; background: var(--glass-faint); box-shadow: inset 0 0 0 1px var(--line); transition: transform 220ms var(--spring), background 140ms var(--ease); }
+button.person:hover { transform: translateY(-2px); background: var(--glass); }
+.person .faces { display: flex; }
+.person .faces .face + .face { margin-left: -14px; }
+.person b { font-size: 14px; }
+.person > span { font: 10.5px var(--mono); color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.person .remove { position: absolute; right: 6px; top: 6px; width: 22px; height: 22px; opacity: 0; }
+.person:hover .remove { opacity: 1; }
+.name-box { display: flex; gap: 6px; width: 100%; }
+.name-box input { flex: 1; min-width: 0; height: 30px; padding: 0 9px; border-radius: 9px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); user-select: text; }
+.name-box input:focus { outline: none; box-shadow: inset 0 0 0 1px var(--accent); }
+.name-box .button { height: 30px; padding: 0 10px; font-size: 12px; }
+.faces-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.faces-row:empty { display: none; }
+.face-chip { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 12px 0 4px; border-radius: 99px; font-size: 12px; color: var(--ink-2); }
+.face-chip:hover { color: var(--ink); }
+.empty p.small { font-size: 13px; color: var(--ink-3); max-width: 46ch; }
+
 /* The drawing pad. */
 .searchbox .draw { width: 28px; height: 28px; flex: none; color: var(--ink-3); }
 .searchbox .draw:hover { color: var(--accent); }

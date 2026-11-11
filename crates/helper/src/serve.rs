@@ -96,6 +96,7 @@ impl Session {
         store.claim_vector_source(&vector_source())?;
         // Saved searches remember the newest file they had been shown.
         let _ = store.db.execute("ALTER TABLE collections ADD COLUMN mark INTEGER NOT NULL DEFAULT 0", []);
+        crate::faces::prepare(&store.db)?;
         let searcher = Searcher::new(store, false)?;
         Ok(Session { searcher, config, text: None, full: None, remembered: HashMap::new(), data_version: -1 })
     }
@@ -223,11 +224,22 @@ impl Session {
     pub fn handle(&mut self, request: &Value) -> Result<Value> {
         self.release_idle();
         let op = request["op"].as_str().unwrap_or_default();
+        if let Some(answer) = crate::faces::handle(&self.searcher.store, request) {
+            // Names may have changed: `person:` filters read them.
+            self.searcher.reload_people();
+            return answer;
+        }
         match op {
             "search" => {
                 self.refresh()?;
                 let started = Instant::now();
-                let query = query::parse(request["q"].as_str().unwrap_or_default(), now());
+                let mut query = query::parse(request["q"].as_str().unwrap_or_default(), now());
+                // A name someone gave a face, typed among the words, asks for that person's photos.
+                let (rest, people) = self.searcher.names_in(&query.text);
+                if !people.is_empty() {
+                    query.text = rest;
+                    query.people.extend(people);
+                }
                 let vector = if query.text.trim().is_empty() { None } else { Some(self.embed_query(&query.text)?) };
                 let embed_ms = started.elapsed().as_secs_f64() * 1000.0;
                 let mut result = self.hits(request, &query, vector, None)?;

@@ -34,6 +34,8 @@ export class Finder {
   selected = -1;
   /** A picture, recording or video searched by, instead of words. */
   example: string | null = null;
+  /** The example is a face to look for, not a picture to find look-alikes of. */
+  faces = false;
   /** A result whose likes are shown. */
   likeness: Hit | null = null;
   private elements: HTMLElement[] = [];
@@ -117,7 +119,9 @@ export class Finder {
     this.parts.searchbox.classList.add("busy");
     try {
       const result = this.example
-        ? await api.byExample(this.example, words, this.parts.limit)
+        ? this.faces
+          ? await api.byFace(this.example, this.parts.limit)
+          : await api.byExample(this.example, words, this.parts.limit)
         : this.likeness
           ? await api.similar(this.likeness.file, words, this.parts.limit)
           : await api.search(words, { typing, limit: this.parts.limit });
@@ -190,7 +194,8 @@ export class Finder {
   }
 
   /** Searches by a picture, a recording or a video. */
-  searchBy(path: string): void {
+  searchBy(path: string, faces = false): void {
+    this.faces = faces;
     this.likeness = null;
     this.example = path;
     this.setChip(fileName(path), path);

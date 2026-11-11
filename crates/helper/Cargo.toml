@@ -12,6 +12,7 @@ path = "src/main.rs"
 [dependencies]
 glint-core = { path = "../core" }
 glint-embed = { path = "../embed" }
+glint-faces = { path = "../faces" }
 anyhow.workspace = true
 serde.workspace = true
 serde_json.workspace = true

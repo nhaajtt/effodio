@@ -410,7 +410,7 @@ fn apply(app: &AppHandle, settings: &Config, before: Option<&Config>) -> Result<
 /// A request to the search helper: `{"op": "search", "q": "…"}` and the others it knows.
 #[tauri::command(async)]
 fn ask(app: AppHandle, request: Value) -> Result<Value, String> {
-    let slow = matches!(request["op"].as_str(), Some("example" | "duplicates" | "map" | "page" | "frame"));
+    let slow = matches!(request["op"].as_str(), Some("example" | "duplicates" | "map" | "page" | "frame" | "tidy" | "albums" | "thread" | "collections" | "people" | "faces_enable" | "face_example" | "faces_of" | "face_name" | "ask_files" | "transcribe"));
     state(&app).serve.ask(request, Duration::from_secs(if slow { 180 } else { 60 })).map_err(text)
 }
 

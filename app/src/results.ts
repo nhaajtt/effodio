@@ -166,6 +166,8 @@ function momentStrip(hit: Hit, found: Moment[], media: HTMLMediaElement | null):
 export interface PreviewActions {
   similar(hit: Hit): void;
   thread?(hit: Hit): void;
+  /** Something more to show under the buttons (the faces in a photo). */
+  more?(hit: Hit): HTMLElement | null;
   opened?(): void;
 }
 
@@ -271,6 +273,7 @@ export class Preview {
       facts(hit),
       quote,
       actions,
+      this.actions.more?.(hit) ?? "",
     );
     this.container.scrollTop = 0;
   }

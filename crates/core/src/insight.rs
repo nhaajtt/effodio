@@ -360,6 +360,36 @@ impl Searcher {
         Ok(out)
     }
 
+    /// Reads again who is in which files (after a face was named).
+    pub fn reload_people(&mut self) {
+        self.people = people(&self.store).unwrap_or_default();
+    }
+
+    /// Takes the names of known people out of a query's words: what's left, and the names (folded). A whole query
+    /// that is a name counts ("lan anh"), and so does each word that is one.
+    pub fn names_in(&self, text: &str) -> (String, Vec<String>) {
+        if self.people.is_empty() {
+            return (text.to_string(), Vec::new());
+        }
+        let whole = fold(text.trim());
+        if self.people.contains_key(&whole) {
+            return (String::new(), vec![whole]);
+        }
+        let mut names = Vec::new();
+        let rest: Vec<&str> = text
+            .split_whitespace()
+            .filter(|word| {
+                let folded = fold(word);
+                let known = self.people.contains_key(&folded);
+                if known {
+                    names.push(folded);
+                }
+                !known
+            })
+            .collect();
+        (rest.join(" "), names)
+    }
+
     /// The files nearest a vector, each with the cosine of its nearest segment, the nearest first.
     pub fn nearest(&mut self, vector: &[f32], limit: usize) -> Result<Vec<(i64, f32)>> {
         if !self.loaded {

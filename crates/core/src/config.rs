@@ -122,6 +122,9 @@ pub struct Config {
     /// The first-launch setup is done.
     #[serde(default)]
     pub setup_done: bool,
+    /// Find the faces in photos, so people can be searched for by name. Off until someone turns it on.
+    #[serde(default)]
+    pub faces: bool,
     #[serde(default)]
     pub door: Door,
 }

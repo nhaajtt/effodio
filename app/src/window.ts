@@ -9,6 +9,7 @@ import { Finder } from "./finder";
 import { t } from "./i18n";
 import { languageButton } from "./fx";
 import { idleView, statusLine } from "./panel";
+import { facesOf, mountPeople } from "./people";
 import { card, Lens, Preview, report } from "./results";
 import { belongs, mountAlbums, mountThread, mountTidy, sketchPad, timeline } from "./more";
 import { mountSettings } from "./settings";
@@ -33,6 +34,7 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
   let finder: Finder | null = null;
   let pendingQuery: string | null = null;
   let threadFrom: api.Hit | null = null;
+  let facesOn = !!settings.faces;
   const appWindow = getCurrentWindow();
 
   // The title bar: drag it to move the window, double-click to fill the screen.
@@ -83,6 +85,7 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
     navButton("search", "search", t("nav.search")),
     navButton("map", "map", t("nav.map")),
     navButton("albums", "album", t("nav.albums")),
+    navButton("people", "people", t("nav.people")),
     navButton("tidy", "tidy", t("nav.tidy")),
     navButton("duplicates", "copies", t("nav.duplicates")),
     h("div.group", t("nav.collections")),
@@ -181,6 +184,7 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
         threadFrom = hit;
         go("thread");
       },
+      more: facesOf,
     });
     const insight = h("div.insight");
     const main = h("div.view", { style: { gridTemplateRows: "auto auto auto minmax(0, 1fr)" } }, h("div.toolbar", pills, h("span.grow"), meta, save), filters, insight, grid);
@@ -207,8 +211,14 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
             const words = (finder?.query ?? "").replace(/\b(after|before|since|sau|truoc):\S+/gi, "").trim();
             finder?.setQuery(`${words} after:${after} before:${before}`.trim());
           });
-          const home = finder?.example ? belongs(result) : null;
-          insight.replaceChildren(...[home, months].filter((part): part is HTMLElement => !!part));
+          const home = finder?.example && !finder.faces ? belongs(result) : null;
+          // A picture to search by can be read two ways: what it looks like, or whose face is in it.
+          const sample = finder?.example;
+          const turn =
+            sample && facesOn
+              ? h("button.belongs.glass", { onclick: () => finder?.searchBy(sample, !finder.faces) }, icon(finder?.faces ? "similar" : "people", 15), h("b", t(finder?.faces ? "face.looks" : "face.find")))
+              : null;
+          insight.replaceChildren(...[turn, home, months].filter((part): part is HTMLElement => !!part));
         }
       },
     });
@@ -247,6 +257,17 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
         break;
       case "duplicates":
         void mountDuplicates(content);
+        break;
+      case "people":
+        void mountPeople(content, {
+          search,
+          byFace: (path) => {
+            facesOn = true;
+            pendingQuery = "";
+            go("search");
+            finder?.searchBy(path, true);
+          },
+        });
         break;
       case "tidy":
         void mountTidy(content);
@@ -309,6 +330,7 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
   });
   api.on<api.Config>("config", (next) => {
     hasFolders = next.roots.length > 0;
+    facesOn = !!next.faces;
   });
   api.on<{ view: View | null; query: string | null }>("navigate", (target) => {
     if (target.query !== null && target.query !== undefined) search(target.query);
