@@ -1,6 +1,6 @@
 # Third-party notices
 
-Magpie includes or builds on the work below.
+Effodio includes or builds on the work below.
 
 ## DigUp
 

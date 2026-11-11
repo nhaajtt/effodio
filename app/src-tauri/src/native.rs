@@ -131,10 +131,10 @@ pub fn default_program(extension: &str) -> Option<PathBuf> {
     }
 }
 
-/// Opens a page of Magpie's website in the browser. Only that site: `rest` is what follows its address.
+/// Opens a page of Effodio's website in the browser. Only that site: `rest` is what follows its address.
 pub fn open_site(rest: &str) -> Result<()> {
     let rest: String = rest.chars().filter(|c| c.is_ascii_alphanumeric() || "?#=&.-_/".contains(*c)).take(120).collect();
-    shell_open(&format!("https://magpie.nhaajt.com/{}", rest.trim_start_matches('/')), None)
+    shell_open(&format!("https://effodio.nhaajt.com/{}", rest.trim_start_matches('/')), None)
 }
 
 fn shell_open(target: &str, parameters: Option<&str>) -> Result<()> {

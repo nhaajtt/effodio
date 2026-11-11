@@ -1,5 +1,6 @@
-# Draws the app icon (a magpie with the bright thing it found in its beak, on deep blue glass) at 1024 px, then makes every size from it.
-# The small sizes (48 px and under) get a drawing of their own: the bird closer, without the stars, which are lost there.
+# Draws the app icon (an E laid down in layers, with the bright thing dug out of the middle one, on deep blue glass)
+# at 1024 px, then makes every size from it. The small sizes (48 px and under) get a drawing of their own: the letter
+# closer, without the far star, which is lost there.
 #   pwsh scripts\make-icon.ps1
 Add-Type -AssemblyName System.Drawing
 $root = Split-Path $PSScriptRoot -Parent
@@ -71,8 +72,8 @@ $edge = New-Object System.Drawing.Drawing2D.LinearGradientBrush $from, $to, (Arg
 $pen = New-Object System.Drawing.Pen $edge, 10
 $g.DrawPath($pen, (RoundRect 77 77 870 870 205))
 
-# The magpie, folded from paper: flat facets with straight creases, each a shade apart from the next. Black and
-# white, a blue wing, a long tail; and at the tip of its beak the small bright thing it found.
+# The letter, folded from paper and laid down like layers of ground: a white spine and three bars, each a lit facet
+# over a shaded one. The middle bar stops short, dug away, and where it ends lies the bright thing that was found.
 function Facet($color, [float[]]$xy, $shadow) {
   $points = for ($i = 0; $i -lt $xy.Length; $i += 2) { Point $xy[$i] $xy[$i + 1] }
   if ($shadow) { $color = $shadow }
@@ -81,60 +82,36 @@ function Facet($color, [float[]]$xy, $shadow) {
   # A hair of the same colour along the edges, so no seam shows between two facets.
   if (-not $shadow) { $g.DrawPolygon((New-Object System.Drawing.Pen $color, 1.6), [System.Drawing.PointF[]]$points) }
 }
-function Bird($shadow) {
-  # tail: two long facets and a blue fold between them
-  Facet (Argb 255 30 35 54) @(372,512, 452,668, 118,884) $shadow
-  Facet (Argb 255 50 60 92) @(372,512, 118,884, 96,772) $shadow
-  Facet (Argb 255 52 110 220) @(372,512, 96,772, 150,700) $shadow
-  # back and nape
-  Facet (Argb 255 44 52 80) @(650,286, 612,404, 372,512, 486,348) $shadow
-  Facet (Argb 255 26 31 48) @(612,404, 566,612, 372,512) $shadow
-  # wing: three blue facets
-  Facet (Argb 255 86 150 255) @(500,392, 566,612, 300,588) $shadow
-  Facet (Argb 255 46 100 220) @(500,392, 300,588, 318,452) $shadow
-  Facet (Argb 255 54 204 196) @(566,612, 300,588, 452,668) $shadow
-  # white shoulder, breast and belly
-  Facet (Argb 255 255 255 255) @(612,404, 500,392, 566,612) $shadow
-  Facet (Argb 255 246 248 253) @(612,404, 716,430, 700,580, 566,612) $shadow
-  Facet (Argb 255 214 221 236) @(566,612, 700,580, 628,712, 452,668) $shadow
-  # leg
-  Facet (Argb 255 58 62 82) @(560,694, 606,706, 590,786) $shadow
-  # head: two facets, and the beak
-  Facet (Argb 255 36 42 66) @(650,286, 776,322, 716,430, 612,404) $shadow
-  Facet (Argb 255 58 68 104) @(650,286, 776,322, 704,300) $shadow
-  Facet (Argb 255 120 130 160) @(776,322, 892,368, 750,368) $shadow
-  Facet (Argb 255 84 92 120) @(750,368, 892,368, 742,398) $shadow
-  if (-not $shadow) { Facet (Argb 255 255 255 255) @(694,336, 714,348, 696,362, 678,348) $null }
+function Bar([float]$y, [float]$right, $light, $dark, $shadow) {
+  # The far end is cut on a slant, the way a spade leaves it.
+  Facet $light @(392, $y, ($right + 46), $y, $right, ($y + 66), 392, ($y + 66)) $shadow
+  Facet $dark @(392, ($y + 66), $right, ($y + 66), ($right - 46), ($y + 132), 392, ($y + 132)) $shadow
+}
+function Letter($shadow) {
+  Bar 246 730 (Argb 255 168 140 255) (Argb 255 112 86 222) $shadow
+  Bar 446 566 (Argb 255 96 160 255) (Argb 255 46 100 220) $shadow
+  Bar 646 730 (Argb 255 64 214 204) (Argb 255 30 150 162) $shadow
+  Facet (Argb 255 255 255 255) @(264,246, 330,246, 330,778, 264,778) $shadow
+  Facet (Argb 255 214 221 236) @(330,246, 396,246, 396,778, 330,778) $shadow
 }
 $state = $g.Save()
-if ($close) {
-  # Head, breast and wing fill the tile; the tail runs off its corner.
-  $g.SetClip((RoundRect 77 77 870 870 205))
-  $g.TranslateTransform(512, 512)
-  $g.ScaleTransform(1.42, 1.42)
-  $g.TranslateTransform(-590, -478)
-} else {
-  $g.TranslateTransform(512, 522)
-  $g.ScaleTransform(0.9, 0.9)
-  $g.TranslateTransform(-521, -585)
-}
-$g.TranslateTransform(12, 22)
-Bird (Argb 80 2 4 12)
-$g.TranslateTransform(-12, -22)
-Bird $null
-if (-not $close) {
-# What it found.
-$goldFrom = Point 850 320
-$goldTo = Point 940 420
+$g.TranslateTransform(512, 512)
+if ($close) { $g.ScaleTransform(1.2, 1.2) }
+$g.TranslateTransform(-512, -512)
+$g.TranslateTransform(14, 24)
+Letter (Argb 90 2 4 12)
+$g.TranslateTransform(-14, -24)
+Letter $null
+# What was dug out.
+$goldFrom = Point 620 430
+$goldTo = Point 800 600
 $gold = New-Object System.Drawing.Drawing2D.LinearGradientBrush $goldFrom, $goldTo, (Argb 255 255 240 190), (Argb 255 222 164 48)
-$g.FillPath((New-Object System.Drawing.SolidBrush (Argb 60 255 214 120)), (Star 896 368 70 22))
-$g.FillPath($gold, (Star 896 368 50 12))
-$g.FillPath((New-Object System.Drawing.SolidBrush (Argb 235 255 255 255)), (Star 896 368 20 5))
-}
+Glow 560 362 300 300 (Argb 110 255 206 110)
+$g.FillPath($gold, (Star 710 512 104 26))
+$g.FillPath((New-Object System.Drawing.SolidBrush (Argb 235 255 255 255)), (Star 710 512 40 10))
 $g.Restore($state)
-$g.ResetClip()
 $small = New-Object System.Drawing.SolidBrush (Argb 190 255 240 196)
-if (-not $close) { $g.FillPath($small, (Star 300 232 34 8)) }
+if (-not $close) { $g.FillPath($small, (Star 838 206 30 7)) }
 
 $g.Dispose()
 $bmp.Save($(if ($close) { $near } else { $out }), [System.Drawing.Imaging.ImageFormat]::Png)

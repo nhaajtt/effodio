@@ -12,11 +12,11 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::Duration;
 
-/// `magpie-helper.exe` beside the app.
+/// `effodio-helper.exe` beside the app.
 pub fn helper_path() -> Result<PathBuf> {
     let exe = std::env::current_exe()?;
     let folder = exe.parent().ok_or_else(|| anyhow!("the app has no folder"))?;
-    let name = format!("magpie-helper{}", std::env::consts::EXE_SUFFIX);
+    let name = format!("effodio-helper{}", std::env::consts::EXE_SUFFIX);
     let beside = folder.join(&name);
     if beside.exists() {
         return Ok(beside);

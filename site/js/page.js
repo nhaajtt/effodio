@@ -1,4 +1,4 @@
-// The parts of the page that are Magpie's own: the screen, the private band, the install section.
+// The parts of the page that are Effodio's own: the screen, the private band, the install section.
 import { TEXT, COMMAND, INSTALLER } from "./site-data.js";
 
 const $ = (id) => document.getElementById(id);

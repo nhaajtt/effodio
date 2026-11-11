@@ -1132,6 +1132,81 @@ dependencies = [
 ]
 
 [[package]]
+name = "effodio"
+version = "0.3.2"
+dependencies = [
+ "anyhow",
+ "blake3",
+ "effodio-core",
+ "getrandom 0.2.17",
+ "image",
+ "notify",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-autostart",
+ "tauri-plugin-dialog",
+ "tauri-plugin-global-shortcut",
+ "tauri-plugin-single-instance",
+ "windows 0.58.0",
+]
+
+[[package]]
+name = "effodio-core"
+version = "0.3.2"
+dependencies = [
+ "anyhow",
+ "blake3",
+ "half",
+ "image",
+ "kamadak-exif",
+ "pdf-extract",
+ "quick-xml 0.36.2",
+ "rayon",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "unicode-normalization",
+ "walkdir",
+ "windows 0.58.0",
+ "zip",
+]
+
+[[package]]
+name = "effodio-embed"
+version = "0.3.2"
+dependencies = [
+ "anyhow",
+ "cc",
+ "serde_json",
+]
+
+[[package]]
+name = "effodio-faces"
+version = "0.3.2"
+dependencies = [
+ "anyhow",
+ "tract-onnx",
+]
+
+[[package]]
+name = "effodio-helper"
+version = "0.3.2"
+dependencies = [
+ "anyhow",
+ "effodio-core",
+ "effodio-embed",
+ "effodio-faces",
+ "serde",
+ "serde_json",
+ "sha2",
+ "ureq",
+ "zip",
+]
+
+[[package]]
 name = "either"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2644,81 +2719,6 @@ dependencies = [
  "stringprep",
  "thiserror 2.0.21",
  "weezl",
-]
-
-[[package]]
-name = "magpie"
-version = "0.3.2"
-dependencies = [
- "anyhow",
- "blake3",
- "getrandom 0.2.17",
- "image",
- "magpie-core",
- "notify",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-autostart",
- "tauri-plugin-dialog",
- "tauri-plugin-global-shortcut",
- "tauri-plugin-single-instance",
- "windows 0.58.0",
-]
-
-[[package]]
-name = "magpie-core"
-version = "0.3.2"
-dependencies = [
- "anyhow",
- "blake3",
- "half",
- "image",
- "kamadak-exif",
- "pdf-extract",
- "quick-xml 0.36.2",
- "rayon",
- "rusqlite",
- "serde",
- "serde_json",
- "tempfile",
- "unicode-normalization",
- "walkdir",
- "windows 0.58.0",
- "zip",
-]
-
-[[package]]
-name = "magpie-embed"
-version = "0.3.2"
-dependencies = [
- "anyhow",
- "cc",
- "serde_json",
-]
-
-[[package]]
-name = "magpie-faces"
-version = "0.3.2"
-dependencies = [
- "anyhow",
- "tract-onnx",
-]
-
-[[package]]
-name = "magpie-helper"
-version = "0.3.2"
-dependencies = [
- "anyhow",
- "magpie-core",
- "magpie-embed",
- "magpie-faces",
- "serde",
- "serde_json",
- "sha2",
- "ureq",
- "zip",
 ]
 
 [[package]]

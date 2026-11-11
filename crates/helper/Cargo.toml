@@ -1,18 +1,18 @@
 [package]
-name = "magpie-helper"
+name = "effodio-helper"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Magpie's helper process: it runs the model, builds the index and answers searches"
+description = "Effodio's helper process: it runs the model, builds the index and answers searches"
 
 [[bin]]
-name = "magpie-helper"
+name = "effodio-helper"
 path = "src/main.rs"
 
 [dependencies]
-magpie-core = { path = "../core" }
-magpie-embed = { path = "../embed" }
-magpie-faces = { path = "../faces" }
+effodio-core = { path = "../core" }
+effodio-embed = { path = "../embed" }
+effodio-faces = { path = "../faces" }
 anyhow.workspace = true
 serde.workspace = true
 serde_json.workspace = true

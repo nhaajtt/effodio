@@ -1,14 +1,14 @@
-//! Two things Magpie can do with a download more, each run as a program of its own on this computer:
+//! Two things Effodio can do with a download more, each run as a program of its own on this computer:
 //! the words spoken in recordings and videos (whisper.cpp), and answers written from the files (llama.cpp with a
 //! small language model). Neither is fetched until someone asks for it.
 
 use crate::emit;
 use anyhow::{anyhow, bail, Context, Result};
-use magpie_core::config;
-use magpie_core::query;
-use magpie_core::search::{Searcher, Settings};
-use magpie_core::store::Store;
-use magpie_core::text;
+use effodio_core::config;
+use effodio_core::query;
+use effodio_core::search::{Searcher, Settings};
+use effodio_core::store::Store;
+use effodio_core::text;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::io::{Read, Seek, SeekFrom, Write};
@@ -90,7 +90,7 @@ const MEDIA: Kit = Kit {
 
 /// Fetches FFmpeg if this computer has none.
 pub fn get_media() -> Result<()> {
-    if magpie_core::readers::media::ffmpeg().is_some() {
+    if effodio_core::readers::media::ffmpeg().is_some() {
         return Ok(());
     }
     get(&MEDIA)
@@ -177,7 +177,7 @@ fn fetch(part: &Part, target: &Path, before: u64, kit: &Kit) -> Result<()> {
     }
     if have < part.bytes {
         let response = ureq::get(part.url)
-            .set("User-Agent", "magpie")
+            .set("User-Agent", "effodio")
             .set("Range", &format!("bytes={have}-"))
             .call()
             .with_context(|| format!("can't download {}", part.name))?;
@@ -274,7 +274,7 @@ pub fn prepare(store: &Store) -> Result<()> {
 
 /// What was said in a recording: (from, to, words), in seconds.
 fn listen(kit: &Kit, path: &Path) -> Result<Vec<(f64, f64, String)>> {
-    let ffmpeg = magpie_core::readers::media::ffmpeg().ok_or_else(|| anyhow!("FFmpeg isn't installed"))?;
+    let ffmpeg = effodio_core::readers::media::ffmpeg().ok_or_else(|| anyhow!("FFmpeg isn't installed"))?;
     let folder = config::cache_folder().join("speech");
     std::fs::create_dir_all(&folder)?;
     let wave = folder.join(format!("{}.wav", std::process::id()));
@@ -339,7 +339,7 @@ pub fn listen_all(store: &mut Store, stop: &AtomicBool) -> Result<usize> {
                AND (speech_scans.file IS NULL OR speech_scans.mtime != files.mtime) ORDER BY files.id",
         )?;
         let rows = select.query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?;
-        rows.collect::<magpie_core::rusqlite::Result<_>>()?
+        rows.collect::<effodio_core::rusqlite::Result<_>>()?
     };
     if waiting.is_empty() {
         return Ok(0);
@@ -474,14 +474,14 @@ pub fn handle(request: &Value) -> Option<Result<Value>> {
         "kits" => {
             let mut media = status_of(&MEDIA);
             // FFmpeg from anywhere will do: installed on the computer, or the copy fetched here.
-            media["ready"] = json!(magpie_core::readers::media::ffmpeg().is_some());
+            media["ready"] = json!(effodio_core::readers::media::ffmpeg().is_some());
             Some(Ok(json!({"speech": status_of(&SPEECH), "answers": status_of(&ANSWERS), "media": media})))
         }
-        // Is there a newer Magpie? Asks the website for its version number, and sends nothing.
+        // Is there a newer Effodio? Asks the website for its version number, and sends nothing.
         "update_check" => Some((|| {
             let current = env!("CARGO_PKG_VERSION");
-            let reply = ureq::get("https://magpie.nhaajt.com/version.json")
-                .set("User-Agent", "magpie")
+            let reply = ureq::get("https://effodio.nhaajt.com/version.json")
+                .set("User-Agent", "effodio")
                 .timeout(std::time::Duration::from_secs(8))
                 .call()?;
             let mut body = String::new();

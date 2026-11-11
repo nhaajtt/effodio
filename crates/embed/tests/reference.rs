@@ -1,7 +1,7 @@
 //! The vectors this build makes for fixed inputs, against stored reference vectors made by the reference pipeline
 //! (tests/reference/vectors.json, vector version 1). Needs the model files; skipped without them.
 
-use magpie_embed::{cosine, models_folder, prompts, Decoded, Device, Embedder, Options};
+use effodio_embed::{cosine, models_folder, prompts, Decoded, Device, Embedder, Options};
 use std::{collections::BTreeMap, fs, path::PathBuf};
 
 /// Runtimes that agree measure at least this; less is a change people would see in their results.
@@ -60,11 +60,11 @@ fn made(device: Device) -> Option<BTreeMap<String, Vec<f32>>> {
 
 #[test]
 fn vectors_match_the_reference() {
-    let device = if std::env::var("MAGPIE_TEST_DEVICE").as_deref() == Ok("gpu") { Device::Gpu } else { Device::Cpu };
+    let device = if std::env::var("EFFODIO_TEST_DEVICE").as_deref() == Ok("gpu") { Device::Gpu } else { Device::Cpu };
     let Some(made) = made(device) else { return };
     let stored: serde_json::Value =
         serde_json::from_slice(&fs::read(folder().join("vectors.json")).unwrap()).unwrap();
-    assert_eq!(stored["vector_version"], magpie_embed::VECTOR_VERSION);
+    assert_eq!(stored["vector_version"], effodio_embed::VECTOR_VERSION);
     let reference = stored["vectors"].as_object().unwrap();
     assert_eq!(made.len(), reference.len(), "the same inputs as the reference");
     let mut worst = (String::new(), 1f32);

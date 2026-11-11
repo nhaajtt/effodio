@@ -152,7 +152,7 @@ unsafe impl Send for Embedder {}
 impl Embedder {
     /// Every logical processor up to 8: more makes the slow cores of a hybrid processor hold the fast ones back.
     pub fn default_threads() -> usize {
-        std::env::var("MAGPIE_THREADS").ok().and_then(|v| v.parse().ok()).unwrap_or_else(|| {
+        std::env::var("EFFODIO_THREADS").ok().and_then(|v| v.parse().ok()).unwrap_or_else(|| {
             std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).min(8)
         })
     }
@@ -160,7 +160,7 @@ impl Embedder {
     /// Loads ggml's backends once for the process. Returns whether a GPU backend found a device.
     pub fn init_backends(folder: Option<&Path>, cpu_only: bool) -> bool {
         let folder = folder.map(Path::to_path_buf).or_else(|| {
-            std::env::var_os("MAGPIE_BACKENDS").map(PathBuf::from).or_else(|| {
+            std::env::var_os("EFFODIO_BACKENDS").map(PathBuf::from).or_else(|| {
                 std::env::current_exe().ok().and_then(|exe| exe.parent().map(Path::to_path_buf))
             })
         });
@@ -328,16 +328,16 @@ pub fn cosine(a: &[f32], b: &[f32]) -> f32 {
     a.iter().zip(b).map(|(x, y)| x * y).sum()
 }
 
-/// Where the app keeps the model: `%LOCALAPPDATA%\app.magpie.search\Models`, or `$MAGPIE_MODELS`.
+/// Where the app keeps the model: `%LOCALAPPDATA%\app.effodio.search\Models`, or `$EFFODIO_MODELS`.
 pub fn models_folder() -> PathBuf {
-    if let Some(chosen) = std::env::var_os("MAGPIE_MODELS") {
+    if let Some(chosen) = std::env::var_os("EFFODIO_MODELS") {
         return PathBuf::from(chosen);
     }
     let base = std::env::var_os("LOCALAPPDATA")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".local/share"));
-    match std::env::var_os("MAGPIE_HOME") {
+    match std::env::var_os("EFFODIO_HOME") {
         Some(home) => PathBuf::from(home).join("Models"),
-        None => base.join("app.magpie.search").join("Models"),
+        None => base.join("app.effodio.search").join("Models"),
     }
 }

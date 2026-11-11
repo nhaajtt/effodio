@@ -1,12 +1,12 @@
 # Puts the website together in site\dist: the pages, the install script and the installer, with the installer's
 # version and SHA-256 written into both. Build the installer first (scripts\package.ps1).
 #   pwsh scripts\site.ps1            builds site\dist
-#   pwsh scripts\site.ps1 -Deploy    and publishes it (Cloudflare, at magpie.nhaajt.com)
+#   pwsh scripts\site.ps1 -Deploy    and publishes it (Cloudflare, at effodio.nhaajt.com)
 param([switch]$Deploy)
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
 $version = (Get-Content "$root\app\src-tauri\tauri.conf.json" -Raw | ConvertFrom-Json).version
-$installer = "$root\target\release\bundle\nsis\Magpie_${version}_x64-setup.exe"
+$installer = "$root\target\release\bundle\nsis\Effodio_${version}_x64-setup.exe"
 if (-not (Test-Path $installer)) { throw "There's no installer for $version yet: run scripts\package.ps1" }
 $sha256 = (Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant()
 
@@ -25,7 +25,7 @@ Get-ChildItem $site -File -Recurse | Where-Object { $_.FullName -notlike "$out\*
   }
 }
 Copy-Item $installer "$out\download"
-"site\dist is ready: Magpie $version, SHA-256 $sha256"
+"site\dist is ready: Effodio $version, SHA-256 $sha256"
 
 if ($Deploy) {
   Push-Location "$root\site"

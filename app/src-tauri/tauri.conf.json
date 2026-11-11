@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Magpie",
+  "productName": "Effodio",
   "version": "0.3.2",
-  "identifier": "app.magpie.search",
+  "identifier": "app.effodio.search",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -38,12 +38,12 @@
       }
     },
     "externalBin": [
-      "binaries/magpie-helper"
+      "binaries/effodio-helper"
     ],
     "resources": {
       "libraries/": "./"
     },
-    "publisher": "Magpie",
+    "publisher": "Effodio",
     "copyright": "MIT License"
   }
 }

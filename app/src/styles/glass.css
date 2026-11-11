@@ -1,4 +1,4 @@
-/* Magpie's look: glass over whatever is behind the window. Windows blurs the desktop (acrylic and mica); these
+/* Effodio's look: glass over whatever is behind the window. Windows blurs the desktop (acrylic and mica); these
    layers add the tint, the edge light, the lens that bends what's under it, and the light that follows the pointer. */
 
 :root {

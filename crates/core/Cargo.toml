@@ -1,9 +1,9 @@
 [package]
-name = "magpie-core"
+name = "effodio-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Magpie's engine: crawling, readers, the index and hybrid search"
+description = "Effodio's engine: crawling, readers, the index and hybrid search"
 
 [dependencies]
 anyhow.workspace = true

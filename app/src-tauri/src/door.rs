@@ -4,7 +4,7 @@
 
 use crate::App;
 use anyhow::Result;
-use magpie_core::config;
+use effodio_core::config;
 use serde_json::{json, Value};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream};

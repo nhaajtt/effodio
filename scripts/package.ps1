@@ -11,8 +11,8 @@ if (-not (Test-Path "$llama\bin\llama.dll")) {
 
 Push-Location $root
 try {
-  $env:MAGPIE_LLAMA_DIR = $llama
-  cargo build --release -p magpie-helper
+  $env:EFFODIO_LLAMA_DIR = $llama
+  cargo build --release -p effodio-helper
   if ($LASTEXITCODE -ne 0) { throw "the helper didn't build" }
 
   # Tauri names a bundled program by the system it's for.
@@ -20,7 +20,7 @@ try {
   $libraries = Join-Path $root "app\src-tauri\libraries"
   New-Item -ItemType Directory -Force $binaries, $libraries | Out-Null
   Remove-Item "$libraries\*" -Force -ErrorAction SilentlyContinue
-  Copy-Item "target\release\magpie-helper.exe" "$binaries\magpie-helper-x86_64-pc-windows-msvc.exe" -Force
+  Copy-Item "target\release\effodio-helper.exe" "$binaries\effodio-helper-x86_64-pc-windows-msvc.exe" -Force
   Copy-Item "$llama\bin\*.dll" $libraries -Force
   # The CPU libraries always go in: searches run on the processor whatever the indexing runs on.
   if ($Flavor -ne "cpu" -and (Test-Path "$root\vendor\llama-cpu\bin")) {

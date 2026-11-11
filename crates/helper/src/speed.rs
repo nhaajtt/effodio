@@ -3,8 +3,8 @@
 
 use crate::{emit, open_model};
 use anyhow::Result;
-use magpie_core::config::{self, Speed};
-use magpie_embed::{cosine, Device, Embedder};
+use effodio_core::config::{self, Speed};
+use effodio_embed::{cosine, Device, Embedder};
 use serde_json::json;
 use std::time::Instant;
 
@@ -37,14 +37,14 @@ fn measure(device: Device, quick: bool) -> Result<Measured> {
     let mut model = open_model(false, device)?;
     let rounds = if quick { 1 } else { 3 };
     let photo = picture(1024, 768);
-    let passage = magpie_embed::prompts::document(
+    let passage = effodio_embed::prompts::document(
         Some("Trip notes"),
         &"We took the morning ferry across the bay and walked up to the old lighthouse before the fog came in. "
             .repeat(18),
     );
-    let sound: Vec<f32> = (0..magpie_embed::AUDIO_RATE * 30)
+    let sound: Vec<f32> = (0..effodio_embed::AUDIO_RATE * 30)
         .map(|i| {
-            let t = i as f32 / magpie_embed::AUDIO_RATE as f32;
+            let t = i as f32 / effodio_embed::AUDIO_RATE as f32;
             0.2 * (t * 220.0 * std::f32::consts::TAU).sin() * (0.5 + 0.5 * (t * 3.0).sin())
         })
         .collect();
@@ -86,7 +86,7 @@ pub fn run(quick: bool) -> Result<()> {
     };
     // Backends are loaded once per process, and the processor run left the graphics card's out: the card is measured
     // in a process of its own.
-    if std::env::var_os("MAGPIE_SPEED_CHILD").is_none() {
+    if std::env::var_os("EFFODIO_SPEED_CHILD").is_none() {
         if let Some(gpu) = measure_gpu_in_child(quick) {
             let agreement = cpu.vectors.iter().zip(&gpu.vectors).map(|(a, b)| cosine(a, b) as f64).fold(1.0, f64::min);
             speed.agreement = Some(agreement);
@@ -113,7 +113,7 @@ fn gpu_name() -> Option<String> {
     backends.split(", ").find(|name| !name.to_lowercase().starts_with("cpu")).map(str::to_string)
 }
 
-/// `magpie-helper speed-gpu`: prints the graphics card's timings and vectors as one JSON line, or nothing.
+/// `effodio-helper speed-gpu`: prints the graphics card's timings and vectors as one JSON line, or nothing.
 pub fn gpu_child(quick: bool) -> Result<()> {
     if !Embedder::init_backends(None, false) {
         return Ok(());
@@ -132,7 +132,7 @@ pub fn gpu_child(quick: bool) -> Result<()> {
 fn measure_gpu_in_child(quick: bool) -> Option<Measured> {
     let exe = std::env::current_exe().ok()?;
     let mut command = std::process::Command::new(exe);
-    command.arg("speed-gpu").env("MAGPIE_SPEED_CHILD", "1").stdin(std::process::Stdio::null());
+    command.arg("speed-gpu").env("EFFODIO_SPEED_CHILD", "1").stdin(std::process::Stdio::null());
     if quick {
         command.arg("--quick");
     }

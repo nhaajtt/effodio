@@ -3,13 +3,13 @@ import { LANG } from './site-data.js';
 
 const TEXT = {
   en: {
-    kicker: 'FEEDBACK', title: 'Something wrong, or an idea?', text: 'What happened, or what would you like Magpie to do?',
+    kicker: 'FEEDBACK', title: 'Something wrong, or an idea?', text: 'What happened, or what would you like Effodio to do?',
     contact: 'How to reach you, if you want an answer (optional)', send: 'Send', sending: 'Sending…',
     note: 'Only what you write here is sent, with the version number.', thanks: 'Sent. Thank you.',
     failed: "That didn't go through. Try again in a while.", many: 'That is enough for today. Thank you.',
   },
   vi: {
-    kicker: 'GÓP Ý', title: 'Gặp lỗi, hay có ý tưởng?', text: 'Chuyện gì đã xảy ra, hoặc bạn muốn Magpie làm được gì?',
+    kicker: 'GÓP Ý', title: 'Gặp lỗi, hay có ý tưởng?', text: 'Chuyện gì đã xảy ra, hoặc bạn muốn Effodio làm được gì?',
     contact: 'Cách liên lạc với bạn, nếu bạn muốn được trả lời (không bắt buộc)', send: 'Gửi', sending: 'Đang gửi…',
     note: 'Chỉ những gì bạn viết ở đây được gửi đi, kèm số phiên bản.', thanks: 'Đã gửi. Cảm ơn bạn.',
     failed: 'Chưa gửi được. Bạn thử lại sau nhé.', many: 'Hôm nay như vậy là đủ rồi. Cảm ơn bạn.',

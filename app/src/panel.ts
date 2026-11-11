@@ -34,7 +34,7 @@ export function idleView(onTry: (query: string) => void, hasFolders: boolean): H
   );
   return h(
     "div.empty",
-    h("div.orb.glass", { "data-light": "" }, icon("magpie", 30)),
+    h("div.orb.glass", { "data-light": "" }, icon("effodio", 30)),
     h("h2", t("search.empty.title")),
     h("p", t("search.empty.body")),
     h("div.tries", ...tries),

@@ -1,8 +1,8 @@
-"""Runs a list of searches through `magpie-helper serve` and reports how often the expected file comes first.
+"""Runs a list of searches through `effodio-helper serve` and reports how often the expected file comes first.
 
-    python scripts/eval.py evals/testbed.json [path-to-magpie-helper]
+    python scripts/eval.py evals/testbed.json [path-to-effodio-helper]
 
-The index and settings are the ones MAGPIE_HOME points at.
+The index and settings are the ones EFFODIO_HOME points at.
 """
 import json
 import subprocess
@@ -12,7 +12,7 @@ import sys
 
 def main():
     cases = json.load(open(sys.argv[1], encoding="utf-8"))
-    helper = os.path.abspath(sys.argv[2] if len(sys.argv) > 2 else "target/release/magpie-helper.exe")
+    helper = os.path.abspath(sys.argv[2] if len(sys.argv) > 2 else "target/release/effodio-helper.exe")
     process = subprocess.Popen([helper, "serve"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                stderr=subprocess.DEVNULL, encoding="utf-8")
     assert json.loads(process.stdout.readline())["event"] == "ready"

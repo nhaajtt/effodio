@@ -1,13 +1,13 @@
-# Magpie
+# Effodio
 
-**Describe it. Find it.** Magpie searches the files on your computer by what's in them: a photo by what it shows, a
+**Describe it. Find it.** Effodio searches the files on your computer by what's in them: a photo by what it shows, a
 PDF by what a page says, a recording or a video by the moment. Everything runs on your computer.
 
 It's for Windows 10 and 11 (64-bit). A Mac version is planned.
 
-[![Magpie finding a photo of a lighthouse from the words "a lighthouse at dusk"](site/demo.jpg)](https://magpie.nhaajt.com)
+[![Effodio finding a photo of a lighthouse from the words "a lighthouse at dusk"](site/demo.jpg)](https://effodio.nhaajt.com)
 
-The pictures, the clip and the papers in the tour on [magpie.nhaajt.com](https://magpie.nhaajt.com) were made for it.
+The pictures, the clip and the papers in the tour on [effodio.nhaajt.com](https://effodio.nhaajt.com) were made for it.
 
 ```
 "a lighthouse at dusk"                        the photo
@@ -36,10 +36,10 @@ The pictures, the clip and the papers in the tour on [magpie.nhaajt.com](https:/
 ## Install
 
 ```powershell
-powershell -c "irm https://magpie.nhaajt.com/install.ps1 | iex"
+powershell -c "irm https://effodio.nhaajt.com/install.ps1 | iex"
 ```
 
-That downloads the installer from [magpie.nhaajt.com](https://magpie.nhaajt.com), checks its SHA-256 and installs it for
+That downloads the installer from [effodio.nhaajt.com](https://effodio.nhaajt.com), checks its SHA-256 and installs it for
 the current user. Run it again to update. The installer can also be downloaded from the site and run by hand.
 
 Press **Ctrl+Shift+Space** in any app for the search panel.
@@ -57,7 +57,7 @@ Press **Ctrl+Shift+Space** in any app for the search panel.
 
 ## Private
 
-Nothing you index leaves your computer. Magpie goes online once, to download the model from Hugging Face. There's
+Nothing you index leaves your computer. Effodio goes online once, to download the model from Hugging Face. There's
 no account and no telemetry. It only reads your files; it never changes, moves or uploads them.
 
 It never reads keys, certificates or password files, hidden and system folders, apps or caches. Inside a code project
@@ -100,9 +100,9 @@ pwsh scripts\package.ps1
 The installer lands in `target\release\bundle\nsis`. It installs for the current user, with no administrator
 rights. It isn't signed, so Windows asks before running it: More info, then Run anyway.
 
-To work on it: `cargo build -p magpie-helper`, then `cd app && npx tauri dev`.
+To work on it: `cargo build -p effodio-helper`, then `cd app && npx tauri dev`.
 
-**FFmpeg.** Recordings and videos need `ffmpeg` and `ffprobe` on the PATH or beside `magpie.exe`
+**FFmpeg.** Recordings and videos need `ffmpeg` and `ffprobe` on the PATH or beside `effodio.exe`
 (`winget install Gyan.FFmpeg`). Without them everything else still works, and Settings says so.
 
 **Graphics card.** The app runs the model on the processor unless a GPU build of llama.cpp is beside it and the speed
@@ -130,7 +130,7 @@ python scripts/eval.py evals/testbed.json   # how often the right file comes fir
 python scripts/smoke.py                  # everything the app asks of the helper
 ```
 
-`MAGPIE_HOME` points all three (and the app) at another data folder, so a test index never touches yours.
+`EFFODIO_HOME` points all three (and the app) at another data folder, so a test index never touches yours.
 
 ## Where things are
 
@@ -143,23 +143,23 @@ python scripts/smoke.py                  # everything the app asks of the helper
 | `app/src` | The interface |
 | `site` | The website and the install script (`pwsh scripts\site.ps1 -Deploy` publishes them with the installer) |
 
-Your data is in `%LOCALAPPDATA%\app.magpie.search`: the model, the index, the settings and a cache of thumbnails.
+Your data is in `%LOCALAPPDATA%\app.effodio.search`: the model, the index, the settings and a cache of thumbnails.
 Uninstalling with "Delete the application data" ticked removes it.
 
 ## Privacy
 
-Magpie works on your computer and keeps what it learns there.
+Effodio works on your computer and keeps what it learns there.
 
 - **Your files stay put.** Reading, indexing and searching all happen on your machine. Nothing you index is
   uploaded, and there is no account and no telemetry.
-- **Faces are off until you turn them on.** With People on, Magpie finds the faces in your photos and keeps a
+- **Faces are off until you turn them on.** With People on, Effodio finds the faces in your photos and keeps a
   short description of each in the index beside the files, on this computer only, so that a name you give once
   finds that person again. "Forget every face" in People deletes all of it, names included. If you share your
   computer or your index, the people in your photos are in it too: turn it on only where that's fine.
 - **Answers and spoken words run locally.** The language model and the speech model are downloads you ask for;
   after that, questions, answers and transcripts never leave the machine.
 - **When it does go online.** To download the models and tools you ask for (from Hugging Face and GitHub), and
-  once at start to ask magpie.nhaajt.com for the latest version number, which sends nothing about you and can be
+  once at start to ask effodio.nhaajt.com for the latest version number, which sends nothing about you and can be
   switched off in Settings. The local door for other tools is off by default, listens on this computer only and
   needs a token.
 - **Feedback is yours to send.** The form on the website sends only what you type into it.
@@ -168,7 +168,7 @@ It's built on [EmbeddingGemma 2](https://huggingface.co/google/embeddinggemma-2)
 [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT), [Tauri](https://tauri.app) (MIT or Apache 2.0) and
 [SQLite](https://sqlite.org). Their notices are in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
-Magpie isn't affiliated with Google or Microsoft.
+Effodio isn't affiliated with Google or Microsoft.
 
 ## License
 

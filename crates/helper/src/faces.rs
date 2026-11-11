@@ -4,11 +4,11 @@
 
 use crate::emit;
 use anyhow::{anyhow, bail, Context, Result};
-use magpie_core::config;
-use magpie_core::readers::{images, Picture};
-use magpie_core::rusqlite::Connection;
-use magpie_core::store::Store;
-use magpie_faces::{cosine, files, Faces, DIMENSION, SAME};
+use effodio_core::config;
+use effodio_core::readers::{images, Picture};
+use effodio_core::rusqlite::Connection;
+use effodio_core::store::Store;
+use effodio_faces::{cosine, files, Faces, DIMENSION, SAME};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
@@ -66,7 +66,7 @@ pub fn download(folder: &Path) -> Result<()> {
             continue;
         }
         let response =
-            ureq::get(&file.url()).set("User-Agent", "magpie").call().with_context(|| format!("can't download {}", file.name))?;
+            ureq::get(&file.url()).set("User-Agent", "effodio").call().with_context(|| format!("can't download {}", file.name))?;
         let mut bytes = Vec::with_capacity(file.bytes as usize);
         response.into_reader().take(file.bytes + 1).read_to_end(&mut bytes)?;
         let digest: String = Sha256::digest(&bytes).iter().map(|byte| format!("{byte:02x}")).collect();
@@ -132,7 +132,7 @@ pub fn scan(store: &mut Store, stop: &AtomicBool) -> Result<usize> {
             "SELECT id, path FROM files WHERE kind = 'image' AND id NOT IN (SELECT file FROM face_scans) ORDER BY id",
         )?;
         let rows = select.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?;
-        rows.collect::<magpie_core::rusqlite::Result<_>>()?
+        rows.collect::<effodio_core::rusqlite::Result<_>>()?
     };
     if waiting.is_empty() {
         return Ok(0);
@@ -144,7 +144,7 @@ pub fn scan(store: &mut Store, stop: &AtomicBool) -> Result<usize> {
         if stop.load(Ordering::Relaxed) {
             break;
         }
-        let found: Vec<(i64, Vec<magpie_faces::Face>)> = std::thread::scope(|scope| {
+        let found: Vec<(i64, Vec<effodio_faces::Face>)> = std::thread::scope(|scope| {
             let workers: Vec<_> = batch
                 .chunks(batch.len().div_ceil(8).max(1))
                 .map(|part| {
@@ -456,7 +456,7 @@ fn answer(store: &Store, op: &str, request: &Value) -> Result<Value> {
     }
 }
 
-/// `magpie-helper faces <picture>...`: how many faces each has, and how close the first face of each is to the
+/// `effodio-helper faces <picture>...`: how many faces each has, and how close the first face of each is to the
 /// others' (to check the models on pictures whose people are known).
 pub fn check(paths: &[String]) -> Result<()> {
     let faces = Faces::open(&config::models_folder())?;

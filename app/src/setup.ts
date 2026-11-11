@@ -1,4 +1,4 @@
-// The first launch: what Magpie is, the model download, which folders to read (with how long that takes on this
+// The first launch: what Effodio is, the model download, which folders to read (with how long that takes on this
 // computer), and off it goes.
 
 import * as api from "./api";
@@ -100,7 +100,7 @@ export async function mountSetup(container: HTMLElement, onDone: () => void): Pr
         h(
           "div.step.glass",
           { "data-light": "" },
-          h("div.orb.glass", icon("magpie", 34)),
+          h("div.orb.glass", icon("effodio", 34)),
           h("h1", t("setup.welcome")),
           h("p", t("setup.welcome.body")),
           h("div.buttons", dots(), h("button.button.primary.large", { onclick: () => go(1) }, t("setup.start"))),

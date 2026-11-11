@@ -1,4 +1,4 @@
-const SITE_URL = "https://magpie.nhaajt.com";
+const SITE_URL = "https://effodio.nhaajt.com";
 import { TEXT, LANG, INSTALLER, COMMAND } from "./site-data.js";
 import { onFrame, kick, pauseOffscreen } from "./frame.js";
 
@@ -156,7 +156,7 @@ const copyText = (text, said) => async () => {
 };
 const GROUPS = [
   {
-    heading: "Magpie",
+    heading: "Effodio",
     items: [
       { v: "Demo video recorded tour app screen", label: "The recorded tour", ico: "layers", hint: "↓", run: jumpTo("#desk-stage") },
       { v: "Timeline plan roadmap macos gpu signed", label: "The plan", ico: "wave", hint: "↓", run: jumpTo(".lab-timeline") },
@@ -522,7 +522,7 @@ function mountIntro() {
   if (!root) return;
   if (root.querySelector(".lab-intro-lede")) return hydrateIntro(root);
   const main = el("div", { class: "lab-intro-main" });
-  main.append(el("h1", { class: "lab-intro-sr", id: "lab-intro-heading" }, "Magpie: describe it, find it"));
+  main.append(el("h1", { class: "lab-intro-sr", id: "lab-intro-heading" }, "Effodio: describe it, find it"));
   root.setAttribute("aria-labelledby", "lab-intro-heading");
   const lede = el("p", { class: "lab-intro-lede" });
   const note = el("p", { class: "lab-intro-note" });
@@ -530,7 +530,7 @@ function mountIntro() {
   revealWords(note, NOTE, Math.max(300, end * 0.45));
   main.append(lede, note);
 
-  const aside = el("aside", { class: "lab-intro-readout", "aria-label": "Magpie" });
+  const aside = el("aside", { class: "lab-intro-readout", "aria-label": "Effodio" });
   const meta = el("p", { class: "lab-intro-meta" });
   meta.innerHTML = '<span class="intro-stamp-placeholder" aria-hidden="true">···</span>';
   startClock(meta);
