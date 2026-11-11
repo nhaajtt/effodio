@@ -1708,81 +1708,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "glint"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "blake3",
- "getrandom 0.2.17",
- "glint-core",
- "image",
- "notify",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-autostart",
- "tauri-plugin-dialog",
- "tauri-plugin-global-shortcut",
- "tauri-plugin-single-instance",
- "windows 0.58.0",
-]
-
-[[package]]
-name = "glint-core"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "blake3",
- "half",
- "image",
- "kamadak-exif",
- "pdf-extract",
- "quick-xml 0.36.2",
- "rayon",
- "rusqlite",
- "serde",
- "serde_json",
- "tempfile",
- "unicode-normalization",
- "walkdir",
- "windows 0.58.0",
- "zip",
-]
-
-[[package]]
-name = "glint-embed"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "cc",
- "serde_json",
-]
-
-[[package]]
-name = "glint-faces"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "tract-onnx",
-]
-
-[[package]]
-name = "glint-helper"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "glint-core",
- "glint-embed",
- "glint-faces",
- "serde",
- "serde_json",
- "sha2",
- "ureq",
- "zip",
-]
-
-[[package]]
 name = "glob"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2719,6 +2644,81 @@ dependencies = [
  "stringprep",
  "thiserror 2.0.21",
  "weezl",
+]
+
+[[package]]
+name = "magpie"
+version = "0.3.0"
+dependencies = [
+ "anyhow",
+ "blake3",
+ "getrandom 0.2.17",
+ "image",
+ "magpie-core",
+ "notify",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-autostart",
+ "tauri-plugin-dialog",
+ "tauri-plugin-global-shortcut",
+ "tauri-plugin-single-instance",
+ "windows 0.58.0",
+]
+
+[[package]]
+name = "magpie-core"
+version = "0.3.0"
+dependencies = [
+ "anyhow",
+ "blake3",
+ "half",
+ "image",
+ "kamadak-exif",
+ "pdf-extract",
+ "quick-xml 0.36.2",
+ "rayon",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "unicode-normalization",
+ "walkdir",
+ "windows 0.58.0",
+ "zip",
+]
+
+[[package]]
+name = "magpie-embed"
+version = "0.3.0"
+dependencies = [
+ "anyhow",
+ "cc",
+ "serde_json",
+]
+
+[[package]]
+name = "magpie-faces"
+version = "0.3.0"
+dependencies = [
+ "anyhow",
+ "tract-onnx",
+]
+
+[[package]]
+name = "magpie-helper"
+version = "0.3.0"
+dependencies = [
+ "anyhow",
+ "magpie-core",
+ "magpie-embed",
+ "magpie-faces",
+ "serde",
+ "serde_json",
+ "sha2",
+ "ureq",
+ "zip",
 ]
 
 [[package]]

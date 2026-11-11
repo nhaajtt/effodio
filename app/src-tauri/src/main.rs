@@ -1,4 +1,4 @@
-//! Glint for Windows: the tray icon, the hotkey, the search panel and the window, over Glint's helper.
+//! Magpie for Windows: the tray icon, the hotkey, the search panel and the window, over Magpie's helper.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -6,7 +6,7 @@ mod door;
 mod helpers;
 mod native;
 
-use glint_core::config::{self, Config};
+use magpie_core::config::{self, Config};
 use helpers::{Serve, Task};
 use native::Job;
 use serde::Serialize;
@@ -89,11 +89,11 @@ fn publish(app: &AppHandle) {
     let _ = app.emit("index", &current);
     if let Some(tray) = app.tray_by_id("main") {
         let tip = if current.running && current.total > 0 {
-            format!("Glint — reading {} of {}", current.done.min(current.total), current.total)
+            format!("Magpie — reading {} of {}", current.done.min(current.total), current.total)
         } else if current.paused {
-            "Glint — paused".to_string()
+            "Magpie — paused".to_string()
         } else {
-            "Glint".to_string()
+            "Magpie".to_string()
         };
         let _ = tray.set_tooltip(Some(&tip));
     }
@@ -275,7 +275,7 @@ fn panel(app: &AppHandle) -> Option<WebviewWindow> {
 
 fn build_panel(app: &AppHandle) -> tauri::Result<WebviewWindow> {
     WebviewWindowBuilder::new(app, "panel", WebviewUrl::App("index.html#panel".into()))
-        .title("Glint Search")
+        .title("Magpie Search")
         .inner_size(820.0, 560.0)
         .decorations(false)
         .transparent(true)
@@ -290,7 +290,7 @@ fn build_panel(app: &AppHandle) -> tauri::Result<WebviewWindow> {
 
 fn build_main(app: &AppHandle) -> tauri::Result<WebviewWindow> {
     WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html#main".into()))
-        .title("Glint")
+        .title("Magpie")
         .inner_size(1220.0, 780.0)
         .min_inner_size(860.0, 560.0)
         .decorations(false)
@@ -371,7 +371,7 @@ fn register_hotkey(app: &AppHandle, wanted: &str) -> Result<(), String> {
             if !current.is_empty() {
                 let _ = shortcuts.register(current.as_str());
             }
-            Err(format!("Windows wouldn't give Glint that shortcut ({error}). Another app may hold it."))
+            Err(format!("Windows wouldn't give Magpie that shortcut ({error}). Another app may hold it."))
         }
     }
 }
@@ -481,7 +481,7 @@ fn index_now(app: AppHandle) {
 /// Failed files get another go, then a full pass.
 #[tauri::command(async)]
 fn index_retry(app: AppHandle) -> Result<(), String> {
-    let store = glint_core::store::Store::open(&config::index_file()).map_err(text)?;
+    let store = magpie_core::store::Store::open(&config::index_file()).map_err(text)?;
     store.retry_failed().map_err(text)?;
     start_index(&app, None);
     Ok(())
@@ -610,7 +610,7 @@ fn save_example(bytes: Vec<u8>, extension: String) -> Result<String, String> {
 /// The languages Windows can read text in on this computer.
 #[tauri::command(async)]
 fn ocr_languages() -> Vec<String> {
-    glint_core::readers::winrt::ocr_languages()
+    magpie_core::readers::winrt::ocr_languages()
 }
 
 #[tauri::command(async)]
@@ -692,10 +692,10 @@ fn shutdown(app: &AppHandle) {
 
 fn tray(app: &AppHandle) -> tauri::Result<()> {
     let search = MenuItem::with_id(app, "search", "Search…", true, None::<&str>)?;
-    let window = MenuItem::with_id(app, "window", "Open Glint", true, None::<&str>)?;
+    let window = MenuItem::with_id(app, "window", "Open Magpie", true, None::<&str>)?;
     let pause = MenuItem::with_id(app, "pause", "Pause indexing", true, None::<&str>)?;
     let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
-    let quit = MenuItem::with_id(app, "quit", "Quit Glint", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "Quit Magpie", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[
         &search,
         &window,
@@ -706,7 +706,7 @@ fn tray(app: &AppHandle) -> tauri::Result<()> {
         &quit,
     ])?;
     *state(app).pause_item.lock().unwrap() = Some(pause);
-    let mut builder = TrayIconBuilder::with_id("main").menu(&menu).show_menu_on_left_click(false).tooltip("Glint");
+    let mut builder = TrayIconBuilder::with_id("main").menu(&menu).show_menu_on_left_click(false).tooltip("Magpie");
     if let Some(icon) = app.default_window_icon() {
         builder = builder.icon(icon.clone());
     }
@@ -735,13 +735,14 @@ fn tray(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
-/// `glint --search "dog on the beach"` opens the window on that search.
+/// `magpie --search "dog on the beach"` opens the window on that search.
 fn search_argument(arguments: &[String]) -> Option<String> {
     let at = arguments.iter().position(|argument| argument == "--search")?;
     arguments.get(at + 1).cloned()
 }
 
 fn main() {
+    magpie_core::config::adopt_earlier_home();
     let wanted = search_argument(&std::env::args().collect::<Vec<_>>());
     let hidden = std::env::args().any(|argument| argument == "--hidden");
     let job = Arc::new(Job::new());
@@ -813,7 +814,7 @@ fn main() {
                     let _ = window.hide();
                 }
             }
-            // Closing the window leaves Glint in the tray.
+            // Closing the window leaves Magpie in the tray.
             WindowEvent::CloseRequested { api, .. } if window.label() == "main" => {
                 api.prevent_close();
                 let _ = window.hide();
@@ -821,5 +822,5 @@ fn main() {
             _ => {}
         })
         .run(tauri::generate_context!())
-        .expect("Glint couldn't start");
+        .expect("Magpie couldn't start");
 }

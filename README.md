@@ -1,6 +1,6 @@
-# Glint
+# Magpie
 
-**Describe it. Find it.** Glint searches the files on your computer by what's in them: a photo by what it shows, a
+**Describe it. Find it.** Magpie searches the files on your computer by what's in them: a photo by what it shows, a
 PDF by what a page says, a recording or a video by the moment. Everything runs on your computer.
 
 It's for Windows 10 and 11 (64-bit). A Mac version is planned.
@@ -32,10 +32,10 @@ It's for Windows 10 and 11 (64-bit). A Mac version is planned.
 ## Install
 
 ```powershell
-powershell -c "irm https://glint.nhaajt.com/install.ps1 | iex"
+powershell -c "irm https://magpie.nhaajt.com/install.ps1 | iex"
 ```
 
-That downloads the installer from [glint.nhaajt.com](https://glint.nhaajt.com), checks its SHA-256 and installs it for
+That downloads the installer from [magpie.nhaajt.com](https://magpie.nhaajt.com), checks its SHA-256 and installs it for
 the current user. Run it again to update. The installer can also be downloaded from the site and run by hand.
 
 Press **Ctrl+Shift+Space** in any app for the search panel.
@@ -53,7 +53,7 @@ Press **Ctrl+Shift+Space** in any app for the search panel.
 
 ## Private
 
-Nothing you index leaves your computer. Glint goes online once, to download the model from Hugging Face. There's
+Nothing you index leaves your computer. Magpie goes online once, to download the model from Hugging Face. There's
 no account and no telemetry. It only reads your files; it never changes, moves or uploads them.
 
 It never reads keys, certificates or password files, hidden and system folders, apps or caches. Inside a code project
@@ -96,9 +96,9 @@ pwsh scripts\package.ps1
 The installer lands in `target\release\bundle\nsis`. It installs for the current user, with no administrator
 rights. It isn't signed, so Windows asks before running it: More info, then Run anyway.
 
-To work on it: `cargo build -p glint-helper`, then `cd app && npx tauri dev`.
+To work on it: `cargo build -p magpie-helper`, then `cd app && npx tauri dev`.
 
-**FFmpeg.** Recordings and videos need `ffmpeg` and `ffprobe` on the PATH or beside `glint.exe`
+**FFmpeg.** Recordings and videos need `ffmpeg` and `ffprobe` on the PATH or beside `magpie.exe`
 (`winget install Gyan.FFmpeg`). Without them everything else still works, and Settings says so.
 
 **Graphics card.** The app runs the model on the processor unless a GPU build of llama.cpp is beside it and the speed
@@ -126,7 +126,7 @@ python scripts/eval.py evals/testbed.json   # how often the right file comes fir
 python scripts/smoke.py                  # everything the app asks of the helper
 ```
 
-`GLINT_HOME` points all three (and the app) at another data folder, so a test index never touches yours.
+`MAGPIE_HOME` points all three (and the app) at another data folder, so a test index never touches yours.
 
 ## Where things are
 
@@ -139,12 +139,12 @@ python scripts/smoke.py                  # everything the app asks of the helper
 | `app/src` | The interface |
 | `site` | The website and the install script (`pwsh scripts\site.ps1 -Deploy` publishes them with the installer) |
 
-Your data is in `%LOCALAPPDATA%\app.glint.search`: the model, the index, the settings and a cache of thumbnails.
+Your data is in `%LOCALAPPDATA%\app.magpie.search`: the model, the index, the settings and a cache of thumbnails.
 Uninstalling with "Delete the application data" ticked removes it.
 
 ## Thanks
 
-Glint learned from [DigUp](https://github.com/ARahim3/DigUp) by Abdur Rahim (MIT), which showed how well
+Magpie learned from [DigUp](https://github.com/ARahim3/DigUp) by Abdur Rahim (MIT), which showed how well
 EmbeddingGemma 2 searches a computer: the way pictures are sized for the model, the pinned llama.cpp build and its
 one-line patch, and the ranking that puts meaning and words on one scale started there.
 
@@ -152,7 +152,7 @@ It's built on [EmbeddingGemma 2](https://huggingface.co/google/embeddinggemma-2)
 [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT), [Tauri](https://tauri.app) (MIT or Apache 2.0) and
 [SQLite](https://sqlite.org). Their notices are in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
-Glint isn't affiliated with Google or Microsoft.
+Magpie isn't affiliated with Google or Microsoft.
 
 ## License
 

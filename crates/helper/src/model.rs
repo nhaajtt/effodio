@@ -3,7 +3,7 @@
 
 use crate::emit;
 use anyhow::{bail, Context, Result};
-use glint_embed::files;
+use magpie_embed::files;
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::io::{Read, Seek, SeekFrom, Write};
@@ -40,7 +40,7 @@ pub fn download(folder: &Path) -> Result<()> {
             have = 0;
         }
         if have < file.bytes {
-            let request = ureq::get(&file.url()).set("User-Agent", "glint").set("Range", &format!("bytes={have}-"));
+            let request = ureq::get(&file.url()).set("User-Agent", "magpie").set("Range", &format!("bytes={have}-"));
             let response = request.call().with_context(|| format!("can't download {}", file.name))?;
             // A server that ignores the range sends the whole file again.
             let resumed = response.status() == 206;

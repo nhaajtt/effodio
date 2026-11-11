@@ -1,18 +1,18 @@
 [package]
-name = "glint-helper"
+name = "magpie-helper"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Glint's helper process: it runs the model, builds the index and answers searches"
+description = "Magpie's helper process: it runs the model, builds the index and answers searches"
 
 [[bin]]
-name = "glint-helper"
+name = "magpie-helper"
 path = "src/main.rs"
 
 [dependencies]
-glint-core = { path = "../core" }
-glint-embed = { path = "../embed" }
-glint-faces = { path = "../faces" }
+magpie-core = { path = "../core" }
+magpie-embed = { path = "../embed" }
+magpie-faces = { path = "../faces" }
 anyhow.workspace = true
 serde.workspace = true
 serde_json.workspace = true

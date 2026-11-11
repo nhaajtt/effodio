@@ -1,4 +1,4 @@
-# Draws the app icon (a gold spade and the glint it turned up, on deep blue glass) at 1024 px, then makes every size from it.
+# Draws the app icon (a magpie with the bright thing it found in its beak, on deep blue glass) at 1024 px, then makes every size from it.
 #   pwsh scripts\make-icon.ps1
 Add-Type -AssemblyName System.Drawing
 $root = Split-Path $PSScriptRoot -Parent
@@ -68,52 +68,54 @@ $edge = New-Object System.Drawing.Drawing2D.LinearGradientBrush $from, $to, (Arg
 $pen = New-Object System.Drawing.Pen $edge, 10
 $g.DrawPath($pen, (RoundRect 77 77 870 870 205))
 
-# The spade (it digs things up): a grip, a shaft and a pointed blade in gold, leaning, with its shadow under it.
-function Spade($brush, $penBrush) {
-  $grip = New-Object System.Drawing.Pen $penBrush, 46
-  $grip.LineJoin = 'Round'
-  $g.DrawPath($grip, (RoundRect 432 176 160 118 44))
-  $g.FillPath($brush, (RoundRect 489 286 46 330 20))
-  $blade = New-Object System.Drawing.Drawing2D.GraphicsPath
-  $blade.AddLine((Point 366 610), (Point 658 610))
-  $blade.AddLine((Point 658 610), (Point 658 712))
-  $blade.AddBezier((Point 658 712), (Point 658 800), (Point 566 852), (Point 512 884))
-  $blade.AddBezier((Point 512 884), (Point 458 852), (Point 366 800), (Point 366 712))
-  $blade.CloseFigure()
-  $g.FillPath($brush, $blade)
-  $round = New-Object System.Drawing.Pen $penBrush, 26
-  $round.LineJoin = 'Round'
-  $g.DrawPath($round, $blade)
+# The magpie: black and white with a blue wing and a long tail, and in its beak the bright thing it found.
+function Oval($brush, [float]$cx, [float]$cy, [float]$rx, [float]$ry, [float]$angle) {
+  $state = $g.Save()
+  $g.TranslateTransform($cx, $cy)
+  $g.RotateTransform($angle)
+  $g.FillEllipse($brush, -$rx, -$ry, 2 * $rx, 2 * $ry)
+  $g.Restore($state)
 }
-$state = $g.Save()
-$g.TranslateTransform(512, 512)
-$g.RotateTransform(36)
-$g.ScaleTransform(0.86, 0.86)
-$g.TranslateTransform(-512, -530)
+function Shape($brush, $points) {
+  $path = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $path.AddClosedCurve([System.Drawing.PointF[]]$points, 0.35)
+  $g.FillPath($brush, $path)
+}
+$ink = New-Object System.Drawing.SolidBrush (Argb 255 16 18 30)
+$shade = New-Object System.Drawing.SolidBrush (Argb 90 2 4 12)
+$white = New-Object System.Drawing.SolidBrush (Argb 255 246 247 252)
+$blueFrom = Point 300 420
+$blueTo = Point 620 660
+$blue = New-Object System.Drawing.Drawing2D.LinearGradientBrush $blueFrom, $blueTo, (Argb 255 70 130 255), (Argb 255 40 200 190)
 
-$g.TranslateTransform(14, 26)
-$shade = New-Object System.Drawing.SolidBrush (Argb 95 4 6 16)
-Spade $shade $shade
-$g.TranslateTransform(-14, -26)
+# Its shadow on the glass.
+Oval $shade 500 590 215 150 -24
+Shape $shade @((Point 420 640), (Point 170 900), (Point 250 915), (Point 520 690))
+# The tail, the body, the white of the belly and the shoulder, the wing.
+Shape $ink @((Point 400 590), (Point 150 850), (Point 232 878), (Point 500 660))
+$tailShine = New-Object System.Drawing.Pen (Argb 200 60 150 235), 16
+$tailShine.StartCap = 'Round'; $tailShine.EndCap = 'Round'
+$g.DrawLine($tailShine, (Point 410 640), (Point 232 822))
+Oval $ink 490 545 215 150 -24
+Oval $white 545 615 150 88 -24
+Oval $blue 440 545 165 74 -30
+Oval $white 505 455 74 40 -30
+# The head, the eye, the beak.
+Oval $ink 672 392 112 108 0
+Oval $white 706 368 21 21 0
+Oval $ink 711 368 10 10 0
+$beak = New-Object System.Drawing.SolidBrush (Argb 255 52 56 74)
+Shape $beak @((Point 762 352), (Point 868 398), (Point 764 432))
 
-$goldFrom = Point 360 170
-$goldTo = Point 660 890
-$gold = New-Object System.Drawing.Drawing2D.LinearGradientBrush $goldFrom, $goldTo, (Argb 255 255 242 200), (Argb 255 210 154 46)
-Spade $gold $gold
-# The ridge down the blade, and the light along the shaft.
-$ridge = New-Object System.Drawing.Pen (Argb 120 255 250 225), 14
-$ridge.StartCap = 'Round'; $ridge.EndCap = 'Round'
-$g.DrawLine($ridge, (Point 512 640), (Point 512 800))
-$shine = New-Object System.Drawing.Pen (Argb 150 255 255 255), 9
-$shine.StartCap = 'Round'; $shine.EndCap = 'Round'
-$g.DrawLine($shine, (Point 500 304), (Point 500 590))
-$g.Restore($state)
-
-# The glint it turned up.
-$white = New-Object System.Drawing.SolidBrush (Argb 240 255 255 255)
-$g.FillPath($white, (Star 300 760 96 22))
+# What it found: a gold glint in its beak, and a smaller one behind.
+$goldFrom = Point 800 300
+$goldTo = Point 960 500
+$gold = New-Object System.Drawing.Drawing2D.LinearGradientBrush $goldFrom, $goldTo, (Argb 255 255 240 190), (Argb 255 222 164 48)
+$g.FillPath((New-Object System.Drawing.SolidBrush (Argb 70 255 214 120)), (Star 846 400 122 38))
+$g.FillPath($gold, (Star 846 400 92 22))
+$g.FillPath((New-Object System.Drawing.SolidBrush (Argb 235 255 255 255)), (Star 846 400 38 8))
 $small = New-Object System.Drawing.SolidBrush (Argb 215 255 240 196)
-$g.FillPath($small, (Star 742 262 62 15))
+$g.FillPath($small, (Star 300 250 58 14))
 
 $g.Dispose()
 $bmp.Save($out, [System.Drawing.Imaging.ImageFormat]::Png)

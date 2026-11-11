@@ -4,7 +4,7 @@ use std::{env, fs, path::PathBuf};
 /// built executables so `cargo run` and `cargo test` find them.
 fn main() {
     let manifest = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-    let llama = env::var("GLINT_LLAMA_DIR")
+    let llama = env::var("MAGPIE_LLAMA_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| manifest.join("../../vendor/llama-cpu"));
     let llama = llama.canonicalize().unwrap_or_else(|_| {
@@ -14,7 +14,7 @@ fn main() {
     let llama = PathBuf::from(llama.to_string_lossy().trim_start_matches(r"\\?\"));
 
     println!("cargo:rerun-if-changed=shim/shim.cpp");
-    println!("cargo:rerun-if-env-changed=GLINT_LLAMA_DIR");
+    println!("cargo:rerun-if-env-changed=MAGPIE_LLAMA_DIR");
 
     cc::Build::new()
         .cpp(true)
@@ -22,7 +22,7 @@ fn main() {
         .file("shim/shim.cpp")
         .include(llama.join("include"))
         .warnings(false)
-        .compile("glint_shim");
+        .compile("magpie_shim");
 
     println!("cargo:rustc-link-search=native={}", llama.join("lib").display());
     for library in ["llama", "mtmd", "ggml", "ggml-base"] {

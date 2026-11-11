@@ -1,8 +1,8 @@
 """Asks a running index everything the app asks of it, and says what came back.
 
-    python scripts/smoke.py [path-to-glint-helper]
+    python scripts/smoke.py [path-to-magpie-helper]
 
-The index and settings are the ones GLINT_HOME points at. Exits with 1 when an answer is missing or wrong.
+The index and settings are the ones MAGPIE_HOME points at. Exits with 1 when an answer is missing or wrong.
 """
 import json
 import os
@@ -33,7 +33,7 @@ def name(path):
 
 
 def main():
-    helper = Helper(os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "target/release/glint-helper.exe"))
+    helper = Helper(os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "target/release/magpie-helper.exe"))
     failures = []
 
     def check(label, ok, detail=""):

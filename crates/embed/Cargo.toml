@@ -1,5 +1,5 @@
 [package]
-name = "glint-embed"
+name = "magpie-embed"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

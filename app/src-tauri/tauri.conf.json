@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Glint",
-  "version": "0.2.0",
-  "identifier": "app.glint.search",
+  "productName": "Magpie",
+  "version": "0.3.0",
+  "identifier": "app.magpie.search",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -38,12 +38,12 @@
       }
     },
     "externalBin": [
-      "binaries/glint-helper"
+      "binaries/magpie-helper"
     ],
     "resources": {
       "libraries/": "./"
     },
-    "publisher": "Glint",
+    "publisher": "Magpie",
     "copyright": "MIT License"
   }
 }

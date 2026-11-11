@@ -6,14 +6,14 @@
 
 use crate::{device, emit, open_model, vector_source};
 use anyhow::{anyhow, bail, Result};
-use glint_core::config::{self, Config};
-use glint_core::indexer::query_prompt;
-use glint_core::kinds::FileKind;
-use glint_core::query::{self, Query};
-use glint_core::readers::{images, media, Picture};
-use glint_core::search::{Searcher, Settings};
-use glint_core::store::Store;
-use glint_embed::{Device, Embedder};
+use magpie_core::config::{self, Config};
+use magpie_core::indexer::query_prompt;
+use magpie_core::kinds::FileKind;
+use magpie_core::query::{self, Query};
+use magpie_core::readers::{images, media, Picture};
+use magpie_core::search::{Searcher, Settings};
+use magpie_core::store::Store;
+use magpie_embed::{Device, Embedder};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::io::BufRead;
@@ -145,17 +145,17 @@ impl Session {
 
     /// The vector of a picture or a recording to search by.
     fn embed_file(&mut self, path: &Path) -> Result<Vec<f32>> {
-        match glint_core::kinds::kind_of(path) {
-            Some(glint_core::kinds::FileKind::Image | glint_core::kinds::FileKind::Screenshot) => {
+        match magpie_core::kinds::kind_of(path) {
+            Some(magpie_core::kinds::FileKind::Image | magpie_core::kinds::FileKind::Screenshot) => {
                 let picture = images::load(path)?;
                 self.full_model()?.embed_image(&picture.rgb, picture.width, picture.height, 140)
             }
-            Some(glint_core::kinds::FileKind::Audio) => {
+            Some(magpie_core::kinds::FileKind::Audio) => {
                 let (_, samples) =
                     media::windows(path, 0.0)?.next().ok_or_else(|| anyhow!("the recording is silent"))?;
                 self.full_model()?.embed_audio(&samples)
             }
-            Some(glint_core::kinds::FileKind::Video) => {
+            Some(magpie_core::kinds::FileKind::Video) => {
                 let picture: Picture = media::frame_at(path, 1.0, 448)?;
                 self.full_model()?.embed_image(&picture.rgb, picture.width, picture.height, 140)
             }
@@ -332,7 +332,7 @@ impl Session {
                         .prepare("SELECT id, name, query, created, mark FROM collections ORDER BY created")?;
                     let rows = select
                         .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)))?;
-                    rows.collect::<glint_core::rusqlite::Result<_>>()?
+                    rows.collect::<magpie_core::rusqlite::Result<_>>()?
                 };
                 // With `fresh`, each comes with how many files it finds that it hasn't shown yet.
                 let count = request["fresh"].as_bool().unwrap_or(false);
@@ -372,7 +372,7 @@ impl Session {
                          ORDER BY json_extract(info, '$.sharp') LIMIT 60",
                     )?;
                     let rows = select.query_map([request["soft"].as_f64().unwrap_or(100.0)], |row| row.get(0))?;
-                    rows.collect::<glint_core::rusqlite::Result<_>>()?
+                    rows.collect::<magpie_core::rusqlite::Result<_>>()?
                 };
                 if !soft.is_empty() {
                     heaps.insert(0, json!({"name": "blurry", "files": self.members(&soft)?}));
@@ -382,7 +382,7 @@ impl Session {
                         "SELECT id FROM files WHERE kind = 'screenshot' AND mtime < ? ORDER BY mtime LIMIT 60",
                     )?;
                     let rows = select.query_map([now() - 365.0 * 86400.0], |row| row.get(0))?;
-                    rows.collect::<glint_core::rusqlite::Result<_>>()?
+                    rows.collect::<magpie_core::rusqlite::Result<_>>()?
                 };
                 if !old.is_empty() {
                     heaps.push(json!({"name": "screens", "files": self.members(&old)?}));
@@ -521,7 +521,7 @@ fn digest_hex(text: &str) -> String {
 
 #[cfg(windows)]
 fn render_page(path: &Path, index: usize, side: u32) -> Result<Picture> {
-    glint_core::readers::winrt::PdfFile::open(path)?.render(index, side)
+    magpie_core::readers::winrt::PdfFile::open(path)?.render(index, side)
 }
 
 #[cfg(not(windows))]

@@ -53,7 +53,7 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
   const titlebar = h(
     "div.titlebar",
     { "data-tauri-drag-region": "" },
-    h("div.brand", { "data-tauri-drag-region": "" }, icon("spade", 18), "Glint"),
+    h("div.brand", { "data-tauri-drag-region": "" }, icon("magpie", 18), "Magpie"),
     h("div", { "data-tauri-drag-region": "", style: { display: "grid" } }, searchbox),
     controls,
   );

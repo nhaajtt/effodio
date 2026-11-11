@@ -280,7 +280,7 @@ void main() {
 }
 `;
 
-const GLINT_VS = HEAD + COMMON + `
+const MAGPIE_VS = HEAD + COMMON + `
 uniform vec4 uGl;   // first lane, lanes, slots per lane, lane pitch (world)
 uniform vec4 uGl2;  // range start, range length, flow offset, occupancy
 uniform vec4 uGl3;  // hairline sigma (CSS px), gain, cyan share, violet share
@@ -372,7 +372,7 @@ void main() {
 }
 `;
 
-const GLINT_FS = HEAD + `
+const MAGPIE_FS = HEAD + `
 in vec4 vA;
 in float vSc;
 in vec3 vCore;
@@ -864,7 +864,7 @@ class Threads {
       const mk = (vs, fs) => new Program(gl, compileProgram(gl, vs, fs));
       this.progs = {
         thread: mk(THREAD_VS, THREAD_FS),
-        glint: mk(GLINT_VS, GLINT_FS),
+        glint: mk(MAGPIE_VS, MAGPIE_FS),
         dust: mk(DUST_VS, POINT_FS),
         spark: mk(SPARK_VS, POINT_FS),
         haze: mk(FULL_VS, HAZE_FS),

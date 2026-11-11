@@ -1,6 +1,6 @@
 # Third-party notices
 
-Glint includes or builds on the work below.
+Magpie includes or builds on the work below.
 
 ## DigUp
 

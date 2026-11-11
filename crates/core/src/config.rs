@@ -1,4 +1,4 @@
-//! Where Glint keeps its things, and the settings the app and its helpers share.
+//! Where Magpie keeps its things, and the settings the app and its helpers share.
 
 use crate::crawler::Root;
 use crate::rules::Custom;
@@ -8,11 +8,11 @@ use std::path::{Path, PathBuf};
 
 /// The app's identifier: its data folder is named by it, which is also where the uninstaller looks when asked to
 /// delete the application data.
-pub const IDENTIFIER: &str = "app.glint.search";
+pub const IDENTIFIER: &str = "app.magpie.search";
 
-/// `%LOCALAPPDATA%\app.glint.search` (or `$GLINT_HOME`): the index, the model, the settings, the thumbnails.
+/// `%LOCALAPPDATA%\app.magpie.search` (or `$MAGPIE_HOME`): the index, the model, the settings, the thumbnails.
 pub fn home() -> PathBuf {
-    if let Some(chosen) = std::env::var_os("GLINT_HOME") {
+    if let Some(chosen) = std::env::var_os("MAGPIE_HOME") {
         return PathBuf::from(chosen);
     }
     let base = std::env::var_os("LOCALAPPDATA")
@@ -22,12 +22,25 @@ pub fn home() -> PathBuf {
     base.join(IDENTIFIER)
 }
 
+/// Before it was called Magpie the app kept its data in another folder: if that one is there and this one isn't yet,
+/// it is renamed, so the index, the models and the settings come along. To be called before anything opens them.
+pub fn adopt_earlier_home() {
+    if std::env::var_os("MAGPIE_HOME").is_some() {
+        return;
+    }
+    let now = home();
+    let Some(before) = now.parent().map(|base| base.join("app.glint.search")) else { return };
+    if before.is_dir() && !now.exists() {
+        let _ = std::fs::rename(&before, &now);
+    }
+}
+
 pub fn index_file() -> PathBuf {
     home().join("index.db")
 }
 
 pub fn models_folder() -> PathBuf {
-    std::env::var_os("GLINT_MODELS").map(PathBuf::from).unwrap_or_else(|| home().join("Models"))
+    std::env::var_os("MAGPIE_MODELS").map(PathBuf::from).unwrap_or_else(|| home().join("Models"))
 }
 
 pub fn config_file() -> PathBuf {

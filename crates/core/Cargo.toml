@@ -1,9 +1,9 @@
 [package]
-name = "glint-core"
+name = "magpie-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Glint's engine: crawling, readers, the index and hybrid search"
+description = "Magpie's engine: crawling, readers, the index and hybrid search"
 
 [dependencies]
 anyhow.workspace = true

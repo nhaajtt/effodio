@@ -1,12 +1,12 @@
-//! Glint's helper process. It runs the model, so the app itself stays small and a broken file can't take it down.
+//! Magpie's helper process. It runs the model, so the app itself stays small and a broken file can't take it down.
 //!
-//!   glint-helper index            read the chosen folders into the index (events as JSON lines on stdout)
-//!   glint-helper serve            answer searches: JSON lines in on stdin, JSON lines out on stdout
-//!   glint-helper search <words>   one search, printed
-//!   glint-helper speed            measure this computer, choose processor or graphics card
-//!   glint-helper estimate         how many files the chosen folders hold, and how long reading them takes
-//!   glint-helper model            download the model files (progress as JSON lines)
-//!   glint-helper status           what's in the index
+//!   magpie-helper index            read the chosen folders into the index (events as JSON lines on stdout)
+//!   magpie-helper serve            answer searches: JSON lines in on stdin, JSON lines out on stdout
+//!   magpie-helper search <words>   one search, printed
+//!   magpie-helper speed            measure this computer, choose processor or graphics card
+//!   magpie-helper estimate         how many files the chosen folders hold, and how long reading them takes
+//!   magpie-helper model            download the model files (progress as JSON lines)
+//!   magpie-helper status           what's in the index
 
 mod faces;
 mod kits;
@@ -15,13 +15,13 @@ mod serve;
 mod speed;
 
 use anyhow::{bail, Result};
-use glint_core::config::{self, Config, Speed};
-use glint_core::crawler::crawl;
-use glint_core::indexer::{Embed, Event, Indexer, Options};
-use glint_core::kinds::FileKind;
-use glint_core::readers::Picture;
-use glint_core::store::Store;
-use glint_embed::{Device, Embedder};
+use magpie_core::config::{self, Config, Speed};
+use magpie_core::crawler::crawl;
+use magpie_core::indexer::{Embed, Event, Indexer, Options};
+use magpie_core::kinds::FileKind;
+use magpie_core::readers::Picture;
+use magpie_core::store::Store;
+use magpie_embed::{Device, Embedder};
 use serde_json::json;
 use std::io::{BufRead, Write};
 use std::path::PathBuf;
@@ -47,7 +47,7 @@ impl Embed for Model {
 
 /// What every vector in an index must have come from.
 pub fn vector_source() -> String {
-    format!("embeddinggemma-2@{}/q8_0/v{}", &glint_embed::files::REVISION[..12], glint_embed::VECTOR_VERSION)
+    format!("embeddinggemma-2@{}/q8_0/v{}", &magpie_embed::files::REVISION[..12], magpie_embed::VECTOR_VERSION)
 }
 
 /// The device to run on: what the settings say, or what the speed check found faster.
@@ -63,7 +63,7 @@ pub fn device(config: &Config) -> Device {
 }
 
 pub fn open_model(text_only: bool, device: Device) -> Result<Embedder> {
-    Embedder::open(&glint_embed::Options::in_folder(&config::models_folder(), text_only, device))
+    Embedder::open(&magpie_embed::Options::in_folder(&config::models_folder(), text_only, device))
 }
 
 /// One JSON value per line on stdout, flushed: the app reads them as they come.
@@ -151,8 +151,8 @@ fn index(arguments: &Arguments) -> Result<()> {
         "event": "crawled", "files": found.files.len(), "added": added, "changed": changed, "removed": removed,
         "cloud_only": found.cloud_only, "datasets": found.datasets,
     }));
-    glint_core::insight::backfill_tones(&mut store, &stop)?;
-    if config.faces && glint_faces::Faces::ready(&config::models_folder()) {
+    magpie_core::insight::backfill_tones(&mut store, &stop)?;
+    if config.faces && magpie_faces::Faces::ready(&config::models_folder()) {
         if let Err(error) = faces::scan(&mut store, &stop) {
             emit(&json!({"event": "note", "note": format!("faces: {error:#}")}));
         }
@@ -178,7 +178,7 @@ fn index(arguments: &Arguments) -> Result<()> {
 
 /// Reads single files the watcher saw change (paths on the command line), without a crawl.
 fn touch(arguments: &Arguments) -> Result<()> {
-    use glint_core::crawler::{change, Change};
+    use magpie_core::crawler::{change, Change};
     let config = arguments.config();
     let mut store = Store::open(&arguments.database())?;
     store.claim_vector_source(&vector_source())?;
@@ -228,7 +228,7 @@ fn estimate(arguments: &Arguments) -> Result<()> {
         let bytes: u64 = files.iter().map(|file| file.size).sum();
         // Rough sizes: a PDF page is about 100 KB and a passage 2 KB of text; a minute of sound about 1 MB and of
         // video 10 MB. Each file's first pass is capped, as the indexer caps it.
-        let each = |file: &&glint_core::store::Seen| -> f64 {
+        let each = |file: &&magpie_core::store::Seen| -> f64 {
             match kind {
                 FileKind::Image => speed.image,
                 FileKind::Screenshot => speed.screenshot,
@@ -256,7 +256,7 @@ fn status(arguments: &Arguments) -> Result<()> {
     let database = arguments.database();
     let counts = if database.exists() { Store::open(&database)?.counts()? } else { Default::default() };
     let models = config::models_folder();
-    let missing: Vec<&str> = glint_embed::files::ALL
+    let missing: Vec<&str> = magpie_embed::files::ALL
         .iter()
         .filter(|file| !models.join(file.name).exists())
         .map(|file| file.name)
@@ -267,7 +267,7 @@ fn status(arguments: &Arguments) -> Result<()> {
         "index_bytes": std::fs::metadata(&database).map(|m| m.len()).unwrap_or(0),
         "model_ready": missing.is_empty(),
         "model_missing": missing,
-        "ffmpeg": glint_core::readers::media::ffmpeg(),
+        "ffmpeg": magpie_core::readers::media::ffmpeg(),
         "speed": Speed::load(),
         "vector_source": vector_source(),
     }));
@@ -277,7 +277,7 @@ fn status(arguments: &Arguments) -> Result<()> {
 fn search(arguments: &Arguments) -> Result<()> {
     let words = arguments.bare.join(" ");
     if words.trim().is_empty() {
-        bail!("say what to look for: glint-helper search <words>");
+        bail!("say what to look for: magpie-helper search <words>");
     }
     let mut session = serve::Session::open(&arguments.database(), arguments.config())?;
     let limit = arguments.get("limit").and_then(|value| value.parse().ok()).unwrap_or(10);
@@ -315,7 +315,7 @@ fn search(arguments: &Arguments) -> Result<()> {
 fn ocr(arguments: &Arguments) -> Result<()> {
     #[cfg(windows)]
     {
-        use glint_core::readers::{images, winrt};
+        use magpie_core::readers::{images, winrt};
         emit(&json!({"languages": winrt::ocr_languages()}));
         for path in &arguments.bare {
             let picture = images::load(std::path::Path::new(path))?;
@@ -351,7 +351,7 @@ fn main() {
         "faces" => faces::check(&rest.bare),
         // `looks`: works out how the pictures in the index look (colours, sharpness, subject), without a crawl.
         "looks" => Store::open(&rest.database())
-            .and_then(|mut store| glint_core::insight::backfill_tones(&mut store, &AtomicBool::new(false)))
+            .and_then(|mut store| magpie_core::insight::backfill_tones(&mut store, &AtomicBool::new(false)))
             .map(|done| emit(&json!({"event": "finished", "done": done}))),
         // `speech`: listens to the recordings in the index now, without a crawl.
         "speech" => Store::open(&rest.database())
@@ -360,7 +360,7 @@ fn main() {
         "ocr" => ocr(&rest),
         _ => {
             println!(
-                "glint-helper <index|touch|serve|search|speed|estimate|model|status> [--db file] [--config file]"
+                "magpie-helper <index|touch|serve|search|speed|estimate|model|status> [--db file] [--config file]"
             );
             Ok(())
         }

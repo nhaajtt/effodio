@@ -32,7 +32,7 @@ fn tool(name: &str, variable: &str) -> Option<PathBuf> {
         .or_else(|| find(&crate::config::models_folder().join("Tools").join("media"), &file, 0))
 }
 
-/// A program somewhere under a folder (the copy of FFmpeg Glint fetched for itself).
+/// A program somewhere under a folder (the copy of FFmpeg Magpie fetched for itself).
 fn find(folder: &Path, file: &str, depth: usize) -> Option<PathBuf> {
     for entry in std::fs::read_dir(folder).ok()?.flatten() {
         let path = entry.path();
@@ -49,13 +49,13 @@ fn find(folder: &Path, file: &str, depth: usize) -> Option<PathBuf> {
     None
 }
 
-/// FFmpeg: `$GLINT_FFMPEG`, beside this executable, on the PATH, or the copy Glint fetched for itself.
+/// FFmpeg: `$MAGPIE_FFMPEG`, beside this executable, on the PATH, or the copy Magpie fetched for itself.
 pub fn ffmpeg() -> Option<PathBuf> {
-    tool("ffmpeg", "GLINT_FFMPEG")
+    tool("ffmpeg", "MAGPIE_FFMPEG")
 }
 
 pub fn ffprobe() -> Option<PathBuf> {
-    tool("ffprobe", "GLINT_FFPROBE").or_else(|| {
+    tool("ffprobe", "MAGPIE_FFPROBE").or_else(|| {
         ffmpeg().and_then(|path| {
             let beside = path.with_file_name(format!("ffprobe{}", std::env::consts::EXE_SUFFIX));
             beside.is_file().then_some(beside)
