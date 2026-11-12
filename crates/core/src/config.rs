@@ -22,22 +22,6 @@ pub fn home() -> PathBuf {
     base.join(IDENTIFIER)
 }
 
-/// Under its earlier names the app kept its data in other folders: if one of those is there and this one isn't yet,
-/// it is renamed, so the index, the models and the settings come along. To be called before anything opens them.
-pub fn adopt_earlier_home() {
-    if std::env::var_os("EFFODIO_HOME").is_some() {
-        return;
-    }
-    let now = home();
-    let Some(base) = now.parent() else { return };
-    for earlier in ["app.magpie.search", "app.glint.search"] {
-        let before = base.join(earlier);
-        if before.is_dir() && !now.exists() {
-            let _ = std::fs::rename(&before, &now);
-        }
-    }
-}
-
 pub fn index_file() -> PathBuf {
     home().join("index.db")
 }

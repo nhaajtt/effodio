@@ -742,7 +742,6 @@ fn search_argument(arguments: &[String]) -> Option<String> {
 }
 
 fn main() {
-    effodio_core::config::adopt_earlier_home();
     let wanted = search_argument(&std::env::args().collect::<Vec<_>>());
     let hidden = std::env::args().any(|argument| argument == "--hidden");
     let job = Arc::new(Job::new());
