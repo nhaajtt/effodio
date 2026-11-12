@@ -1133,7 +1133,7 @@ dependencies = [
 
 [[package]]
 name = "effodio"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "anyhow",
  "blake3",
@@ -1154,7 +1154,7 @@ dependencies = [
 
 [[package]]
 name = "effodio-core"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "anyhow",
  "blake3",
@@ -1176,7 +1176,7 @@ dependencies = [
 
 [[package]]
 name = "effodio-embed"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "anyhow",
  "cc",
@@ -1185,7 +1185,7 @@ dependencies = [
 
 [[package]]
 name = "effodio-faces"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "anyhow",
  "tract-onnx",
@@ -1193,7 +1193,7 @@ dependencies = [
 
 [[package]]
 name = "effodio-helper"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "anyhow",
  "effodio-core",
