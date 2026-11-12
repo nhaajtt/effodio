@@ -1,5 +1,5 @@
-# Draws the app icon (a meerkat looking up at the bright thing it found, on deep blue glass) at 1024 px, then makes
-# every size from it. The small sizes (48 px and under) get a drawing of their own: the face alone, without the stars.
+# Draws the app icon (a meerkat on deep blue glass, nothing else) at 1024 px, then makes every size from it.
+# The small sizes (48 px and under) get a drawing of their own: the face alone.
 #   pwsh scripts\make-icon.ps1
 Add-Type -AssemblyName System.Drawing
 $root = Split-Path $PSScriptRoot -Parent
@@ -36,27 +36,6 @@ function Glow([float]$x, [float]$y, [float]$w, [float]$h, $color) {
   $g.FillPath($brush, $path)
 }
 
-# A four-pointed star whose sides curve inward.
-function Star([float]$cx, [float]$cy, [float]$r, [float]$waist) {
-  $p = New-Object System.Drawing.Drawing2D.GraphicsPath
-  $pts = @()
-  for ($i = 0; $i -lt 4; $i++) {
-    $a = [math]::PI / 2 * $i - [math]::PI / 2
-    $b = $a + [math]::PI / 4
-    $pts += Point ($cx + $r * [math]::Cos($a)) ($cy + $r * [math]::Sin($a))
-    $pts += Point ($cx + $waist * [math]::Cos($b)) ($cy + $waist * [math]::Sin($b))
-  }
-  for ($i = 0; $i -lt 8; $i += 2) {
-    $tip = $pts[$i]; $mid = $pts[$i + 1]; $next = $pts[($i + 2) % 8]
-    $c1 = Point (($tip.X + $cx * 2) / 3 + ($mid.X - $cx) * 0.35) (($tip.Y + $cy * 2) / 3 + ($mid.Y - $cy) * 0.35)
-    $c2 = Point (($next.X + $cx * 2) / 3 + ($mid.X - $cx) * 0.35) (($next.Y + $cy * 2) / 3 + ($mid.Y - $cy) * 0.35)
-    $p.AddBezier($tip, $c1, $c1, $mid)
-    $p.AddBezier($mid, $c2, $c2, $next)
-  }
-  $p.CloseFigure()
-  return $p
-}
-
 # The tile: deep blue glass, lit from the upper left, warm in the lower right.
 $tile = RoundRect 72 72 880 880 210
 $from = Point 72 72
@@ -72,7 +51,7 @@ $pen = New-Object System.Drawing.Pen $edge, 10
 $g.DrawPath($pen, (RoundRect 77 77 870 870 205))
 
 # The meerkat: it digs for what it wants and stands up to look for it. A photograph with its backdrop taken away
-# (icons\mascot.png), set into the tile so the shoulders run off the bottom, looking up at the bright thing it found.
+# (icons\mascot.png), set into the tile so the shoulders run off the bottom.
 $mascot = [System.Drawing.Image]::FromFile((Join-Path $root 'app\src-tauri\icons\mascot.png'))
 $state = $g.Save()
 $g.SetClip((RoundRect 77 77 870 870 205))
@@ -88,15 +67,6 @@ if ($close) {
 }
 $g.Restore($state)
 $mascot.Dispose()
-if (-not $close) {
-  # What it found.
-  $goldFrom = Point 760 130
-  $goldTo = Point 900 290
-  $gold = New-Object System.Drawing.Drawing2D.LinearGradientBrush $goldFrom, $goldTo, (Argb 255 255 240 190), (Argb 255 222 164 48)
-  $g.FillPath($gold, (Star 826 214 84 20))
-  $g.FillPath((New-Object System.Drawing.SolidBrush (Argb 235 255 255 255)), (Star 826 214 32 8))
-  $g.FillPath((New-Object System.Drawing.SolidBrush (Argb 190 255 240 196)), (Star 212 250 28 7))
-}
 
 $g.Dispose()
 $bmp.Save($(if ($close) { $near } else { $out }), [System.Drawing.Imaging.ImageFormat]::Png)

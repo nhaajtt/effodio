@@ -33,7 +33,7 @@ const ITEMS = [
   {
     id: "effodio", row: 0, logo: "flag", label: T.now[0], sub: T.now[1], start: 2026.6, end: now, range: "(2026)", current: true,
     next: { logo: "cloud", label: T.now[2], sub: T.now[3] },
-    preview: { title: "Effodio 0.3", lines: ["$ effodio --version", "0.3.1, Windows 10 and 11", "$ effodio status", "runs offline, on your PC"] },
+    preview: { title: "Effodio 0.3", lines: ["$ effodio --version", "__VERSION__, Windows 10 and 11", "$ effodio status", "runs offline, on your PC"] },
   },
   { id: "signed", row: 1, logo: "cert", label: T.signed[0], sub: T.signed[1], start: 2027, end: 2028, range: "", future: true },
   { id: "gpu", row: 2, logo: "rack", label: T.gpu[0], sub: T.gpu[1], start: 2026.9, end: 2027.9, range: "", future: true },

@@ -191,7 +191,7 @@ impl Iterator for Windows {
                 }
                 self.fresh += filled / 4;
                 self.buffer.extend(
-                    bytes[..filled - filled % 4].chunks_exact(4).map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]])),
+                    bytes[..filled - filled % 4].as_chunks::<4>().0.iter().map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]])),
                 );
             }
             // Less than two new seconds at the end add nothing the window before didn't hear.

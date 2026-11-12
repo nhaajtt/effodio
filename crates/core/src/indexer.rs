@@ -584,7 +584,7 @@ impl Embed for FakeEmbed {
 
     fn image(&mut self, picture: &Picture, _budget: usize) -> Result<Vec<f32>> {
         let mut sums = [0f64; 3];
-        for pixel in picture.rgb.chunks_exact(3) {
+        for pixel in picture.rgb.as_chunks::<3>().0 {
             for channel in 0..3 {
                 sums[channel] += pixel[channel] as f64;
             }

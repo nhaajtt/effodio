@@ -19,7 +19,7 @@ pub fn to_half(vector: &[f32]) -> Vec<u8> {
 }
 
 pub fn from_half(bytes: &[u8]) -> Vec<f32> {
-    bytes.chunks_exact(2).map(|pair| half::f16::from_le_bytes([pair[0], pair[1]]).to_f32()).collect()
+    bytes.as_chunks::<2>().0.iter().map(|pair| half::f16::from_le_bytes([pair[0], pair[1]]).to_f32()).collect()
 }
 
 /// A file as the crawler saw it.
@@ -221,7 +221,7 @@ impl Store {
             // time (an unplugged drive) keeps its files.
             let crawled: Vec<String> = roots.iter().map(|r| r.to_string_lossy().into_owned()).collect();
             for (_, (id, _, _, root)) in known {
-                let folder_still_chosen = crawled.iter().any(|r| *r == root);
+                let folder_still_chosen = crawled.contains(&root);
                 let root_exists = Path::new(&root).exists();
                 if folder_still_chosen && !root_exists {
                     continue;

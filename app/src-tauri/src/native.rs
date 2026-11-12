@@ -75,8 +75,8 @@ unsafe fn bitmap_pixels(bitmap: HBITMAP) -> Result<(u32, u32, Vec<u8>)> {
         bail!("can't copy the thumbnail");
     }
     // BGRA, premultiplied when it has alpha; some thumbnails come with the alpha channel all zero.
-    let opaque = pixels.chunks_exact(4).all(|pixel| pixel[3] == 0);
-    for pixel in pixels.chunks_exact_mut(4) {
+    let opaque = pixels.as_chunks::<4>().0.iter().all(|pixel| pixel[3] == 0);
+    for pixel in pixels.as_chunks_mut::<4>().0 {
         pixel.swap(0, 2);
         if opaque {
             pixel[3] = 255;

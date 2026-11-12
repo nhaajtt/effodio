@@ -38,7 +38,7 @@ pub fn tone_named(word: &str) -> Option<&'static str> {
 pub fn tones(picture: &Picture) -> Vec<&'static str> {
     let small = picture.fit(64);
     let mut counts = [0usize; 12];
-    for pixel in small.rgb.chunks_exact(3) {
+    for pixel in small.rgb.as_chunks::<3>().0 {
         let (r, g, b) = (pixel[0] as f32 / 255.0, pixel[1] as f32 / 255.0, pixel[2] as f32 / 255.0);
         let (max, min) = (r.max(g).max(b), r.min(g).min(b));
         let spread = max - min;
@@ -92,7 +92,7 @@ pub fn sharpness(picture: &Picture) -> f64 {
         return 0.0;
     }
     let gray: Vec<f32> =
-        small.rgb.chunks_exact(3).map(|p| 0.299 * p[0] as f32 + 0.587 * p[1] as f32 + 0.114 * p[2] as f32).collect();
+        small.rgb.as_chunks::<3>().0.iter().map(|p| 0.299 * p[0] as f32 + 0.587 * p[1] as f32 + 0.114 * p[2] as f32).collect();
     let (mut sum, mut squares, mut count) = (0f64, 0f64, 0f64);
     for y in 1..height - 1 {
         for x in 1..width - 1 {
@@ -465,7 +465,7 @@ impl Searcher {
         if run.len() > 1 {
             out.push(run);
         }
-        out.sort_by(|a, b| b.len().cmp(&a.len()));
+        out.sort_by_key(|a| std::cmp::Reverse(a.len()));
         out.truncate(limit);
         Ok(out)
     }

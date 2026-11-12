@@ -308,7 +308,7 @@ impl Embedder {
         }
         let raw = unsafe { std::slice::from_raw_parts(data, len) };
         let decoded = if is_audio != 0 {
-            let samples = raw.chunks_exact(4).map(|c| f32::from_ne_bytes([c[0], c[1], c[2], c[3]])).collect();
+            let samples = raw.as_chunks::<4>().0.iter().map(|c| f32::from_ne_bytes([c[0], c[1], c[2], c[3]])).collect();
             Decoded::Audio { samples }
         } else {
             Decoded::Image { width: width as usize, height: height as usize, rgb: raw.to_vec() }

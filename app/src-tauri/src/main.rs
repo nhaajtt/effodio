@@ -383,14 +383,14 @@ fn apply(app: &AppHandle, settings: &Config, before: Option<&Config>) -> Result<
     for root in &settings.roots {
         let _ = scope.allow_directory(&root.path, true);
     }
-    if before.map_or(true, |old| old.autostart != settings.autostart) {
+    if before.is_none_or(|old| old.autostart != settings.autostart) {
         let auto = app.autolaunch();
         let _ = if settings.autostart { auto.enable() } else { auto.disable() };
     }
-    if before.map_or(true, |old| old.roots != settings.roots) {
+    if before.is_none_or(|old| old.roots != settings.roots) {
         watch(app);
     }
-    if before.map_or(true, |old| old.door != settings.door) {
+    if before.is_none_or(|old| old.door != settings.door) {
         let shared = state(app);
         let mut slot = shared.door.lock().unwrap();
         *slot = None; // the old one stops listening when dropped
@@ -398,7 +398,7 @@ fn apply(app: &AppHandle, settings: &Config, before: Option<&Config>) -> Result<
             *slot = door::Door::open(app.clone(), &settings.door).ok();
         }
     }
-    if before.map_or(true, |old| old.hotkey != settings.hotkey) {
+    if before.is_none_or(|old| old.hotkey != settings.hotkey) {
         register_hotkey(app, &settings.hotkey)?;
     }
     Ok(())

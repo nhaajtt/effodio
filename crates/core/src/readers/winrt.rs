@@ -64,7 +64,7 @@ fn pixels(decoder: &BitmapDecoder, side: u32) -> Result<Picture> {
         bail!("the picture came back short");
     }
     let mut rgb = Vec::with_capacity(out_width * out_height * 3);
-    for pixel in bgra.chunks_exact(4).take(out_width * out_height) {
+    for pixel in bgra.as_chunks::<4>().0.iter().take(out_width * out_height) {
         // Premultiplied over white.
         let rest = 255 - pixel[3] as u16;
         rgb.push((pixel[2] as u16 + rest).min(255) as u8);
@@ -105,7 +105,7 @@ pub fn ocr(picture: &Picture) -> Result<String> {
         return Ok(String::new());
     }
     let mut bgra = Vec::with_capacity(picture.width * picture.height * 4);
-    for pixel in picture.rgb.chunks_exact(3) {
+    for pixel in picture.rgb.as_chunks::<3>().0 {
         bgra.extend_from_slice(&[pixel[2], pixel[1], pixel[0], 255]);
     }
     let writer = DataWriter::new()?;

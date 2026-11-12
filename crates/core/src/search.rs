@@ -172,7 +172,7 @@ pub fn is_lookup(terms: &[String]) -> bool {
 
 pub(crate) fn dot(a: &[f32], b: &[f32]) -> f32 {
     let mut sums = [0f32; 8];
-    for (x, y) in a.chunks_exact(8).zip(b.chunks_exact(8)) {
+    for (x, y) in a.as_chunks::<8>().0.iter().zip(b.as_chunks::<8>().0) {
         for lane in 0..8 {
             sums[lane] += x[lane] * y[lane];
         }
@@ -298,7 +298,7 @@ impl Searcher {
                 if blob.len() != DIMENSION * 2 {
                     continue;
                 }
-                halves.extend(blob.chunks_exact(2).map(|pair| half::f16::from_le_bytes([pair[0], pair[1]])));
+                halves.extend(blob.as_chunks::<2>().0.iter().map(|pair| half::f16::from_le_bytes([pair[0], pair[1]])));
                 self.row_segment.push(row.get(0)?);
                 self.row_file.push(row.get(1)?);
                 self.row_modality.push(Modality::parse(&row.get::<_, String>(2)?));
@@ -319,7 +319,7 @@ impl Searcher {
             .flat_map_iter(|block| {
                 let mut floats = vec![0f32; block.len()];
                 block.convert_to_f32_slice(&mut floats);
-                floats.chunks_exact(DIMENSION).map(|row| dot(row, query)).collect::<Vec<f32>>()
+                floats.as_chunks::<DIMENSION>().0.iter().map(|row| dot(row, query)).collect::<Vec<f32>>()
             })
             .collect()
     }
@@ -329,8 +329,8 @@ impl Searcher {
         (query.kinds.is_empty() || query.kinds.contains(&meta.kind))
             && query.folders.iter().all(|folder| meta.path.contains(folder.as_str()))
             && (query.extensions.is_empty() || query.extensions.contains(&meta.extension))
-            && query.after.map_or(true, |after| meta.modified >= after)
-            && query.before.map_or(true, |before| meta.modified <= before)
+            && query.after.is_none_or(|after| meta.modified >= after)
+            && query.before.is_none_or(|before| meta.modified <= before)
             && query.colors.iter().all(|color| meta.tones.iter().any(|tone| tone == color))
             && query.sides.iter().all(|side| &meta.focus == side)
             && query.people.iter().all(|name| self.people.get(name).is_some_and(|files| files.contains(&file)))
@@ -388,7 +388,7 @@ impl Searcher {
                 if Some(file) == exclude_file || !self.allowed(file, query) {
                     continue;
                 }
-                if best.get(&file).map_or(true, |&(known, _, _)| z[row] > known) {
+                if best.get(&file).is_none_or(|&(known, _, _)| z[row] > known) {
                     best.insert(file, (z[row], scores[row] as f64, row));
                 }
             }
@@ -635,14 +635,14 @@ impl Searcher {
         let z = meaning(&scores, &self.row_modality, &self.row_sets_scale);
         let mut out = Vec::new();
         let mut select = self.store.db.prepare("SELECT kind, loc, loc_end FROM segments WHERE id = ?")?;
-        for row in 0..scores.len() {
+        for (row, &z) in z.iter().enumerate() {
             if self.row_file[row] != file {
                 continue;
             }
             let (kind, loc, loc_end): (String, Option<f64>, Option<f64>) =
                 select.query_row(params![self.row_segment[row]], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
             if let Some(loc) = loc {
-                out.push(Moment { segment: self.row_segment[row], kind: SegmentKind::parse(&kind), loc, loc_end, z: z[row] });
+                out.push(Moment { segment: self.row_segment[row], kind: SegmentKind::parse(&kind), loc, loc_end, z });
             }
         }
         out.sort_by(|a, b| a.loc.partial_cmp(&b.loc).unwrap_or(std::cmp::Ordering::Equal));
@@ -906,7 +906,7 @@ mod tests {
         }
         scores[5] = 0.50;
         scores[25] = 0.30;
-        let z = meaning(&scores, &modality, &vec![true; 40]);
+        let z = meaning(&scores, &modality, &[true; 40]);
         // Both stand out from their own kind by the same amount, though one cosine is far higher.
         assert!((z[5] - z[25]).abs() < 0.5, "{} {}", z[5], z[25]);
         assert!(z[5] > 3.0);

@@ -49,7 +49,7 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "the installer didn't build" }
   Pop-Location
 
-  Get-ChildItem "target\release\bundle\nsis\*.exe" | ForEach-Object {
+  Get-ChildItem "target\release\bundle\nsis\*.exe" | Sort-Object LastWriteTime | Select-Object -Last 1 | ForEach-Object {
     "{0}  {1:N1} MB" -f $_.FullName, ($_.Length / 1MB)
   }
 } finally {

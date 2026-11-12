@@ -132,18 +132,17 @@ fn program(kit: &Kit) -> Option<PathBuf> {
 }
 
 fn ready(kit: &Kit) -> bool {
-    tools(kit).join(".whole").exists() && model(kit).map_or(true, |file| file.exists()) && program(kit).is_some()
+    tools(kit).join(".whole").exists() && model(kit).is_none_or(|file| file.exists()) && program(kit).is_some()
 }
 
 #[derive(Clone, Default)]
 struct Progress {
     getting: bool,
     done: u64,
-    total: u64,
     error: Option<String>,
 }
 
-const IDLE: Progress = Progress { getting: false, done: 0, total: 0, error: None };
+const IDLE: Progress = Progress { getting: false, done: 0, error: None };
 static PROGRESS: Mutex<[Progress; 3]> = Mutex::new([IDLE, IDLE, IDLE]);
 
 fn slot(kit: &Kit) -> usize {
@@ -498,7 +497,7 @@ pub fn handle(request: &Value) -> Option<Result<Value>> {
                 if all[slot(kit)].getting {
                     return Ok(json!({}));
                 }
-                all[slot(kit)] = Progress { getting: true, done: 0, total: 0, error: None };
+                all[slot(kit)] = Progress { getting: true, done: 0, error: None };
             }
             std::thread::spawn(move || {
                 let result = get(kit);

@@ -34,7 +34,7 @@ pub fn fold_with_offsets(text: &str) -> (String, Vec<usize>) {
     for (at, c) in text.char_indices() {
         let before = out.len();
         fold_char(c, &mut out);
-        offsets.extend(std::iter::repeat(at).take(out.len() - before));
+        offsets.extend(std::iter::repeat_n(at, out.len() - before));
     }
     offsets.push(text.len());
     (out, offsets)

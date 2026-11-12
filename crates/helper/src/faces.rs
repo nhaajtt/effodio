@@ -50,7 +50,7 @@ fn blob(vector: &[f32]) -> Vec<u8> {
 }
 
 fn floats(bytes: &[u8]) -> Vec<f32> {
-    bytes.chunks_exact(4).map(|four| f32::from_le_bytes([four[0], four[1], four[2], four[3]])).collect()
+    bytes.as_chunks::<4>().0.iter().map(|four| f32::from_le_bytes([four[0], four[1], four[2], four[3]])).collect()
 }
 
 fn now() -> f64 {
@@ -395,7 +395,7 @@ fn answer(store: &Store, op: &str, request: &Value) -> Result<Value> {
                     _ => groups.push((face.vector.clone(), vec![face])),
                 }
             }
-            groups.sort_by(|a, b| b.1.len().cmp(&a.1.len()));
+            groups.sort_by_key(|a| std::cmp::Reverse(a.1.len()));
             let unnamed: Vec<Value> = groups
                 .iter()
                 .take(40)
