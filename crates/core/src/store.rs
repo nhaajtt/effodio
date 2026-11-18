@@ -222,12 +222,12 @@ impl Store {
                     }
                 }
             }
-            // What's left wasn't seen: gone, or its folder isn't searched any more. A root that wasn't crawled this
-            // time (an unplugged drive) keeps its files.
+            // What's left wasn't seen: gone, or its folder isn't searched any more. A root that couldn't be crawled
+            // this time (an unplugged drive, a share that's offline, a folder that can't be listed) keeps its files.
             let crawled: Vec<String> = roots.iter().map(|r| r.to_string_lossy().into_owned()).collect();
             for (_, (id, _, _, root)) in known {
                 let folder_still_chosen = crawled.contains(&root);
-                let root_exists = Path::new(&root).exists();
+                let root_exists = std::fs::read_dir(&root).is_ok();
                 if folder_still_chosen && !root_exists {
                     continue;
                 }
@@ -507,6 +507,21 @@ mod tests {
         let matches: i64 =
             store.db.query_row("SELECT COUNT(*) FROM fts WHERE fts MATCH 'lease'", [], |r| r.get(0)).unwrap();
         assert_eq!(matches, 0);
+    }
+
+    #[test]
+    fn a_folder_that_cant_be_listed_keeps_its_files() {
+        let folder = tempfile::tempdir().unwrap();
+        let mut store = Store::open(&folder.path().join("index.db")).unwrap();
+        // A path that's there but can't be listed as a folder, as a share does when it drops for a moment.
+        let root = folder.path().join("root");
+        std::fs::write(&root, b"").unwrap();
+        let roots = vec![root.clone()];
+        let inside = root.join("a.txt").to_string_lossy().into_owned();
+        let file = Seen { root: root.clone(), ..seen(&inside, 10) };
+        assert_eq!(store.reconcile(&roots, &[file]).unwrap(), (1, 0, 0));
+        assert_eq!(store.reconcile(&roots, &[]).unwrap(), (0, 0, 0));
+        assert!(store.file_by_path(&inside).unwrap().is_some());
     }
 
     #[test]

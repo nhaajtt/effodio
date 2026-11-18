@@ -2,7 +2,7 @@
 
 use crate::crawler::Root;
 use crate::rules::Custom;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -145,8 +145,28 @@ impl Default for Config {
 }
 
 impl Config {
+    /// The settings in `file`: the defaults when there's no file yet, an error when there is one that can't be read.
+    pub fn read_from(file: &Path) -> Result<Config> {
+        match std::fs::read(file) {
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(Config::default()),
+            Err(error) => Err(error).with_context(|| format!("can't read {}", file.display())),
+            Ok(bytes) => serde_json::from_slice(&bytes).with_context(|| format!("{} is damaged", file.display())),
+        }
+    }
+
+    /// The settings, or the defaults if they can't be read, so the app still starts. A damaged file is kept beside
+    /// it (`config.json.unreadable`) before anything can save over it.
     pub fn load_from(file: &Path) -> Config {
-        std::fs::read(file).ok().and_then(|bytes| serde_json::from_slice(&bytes).ok()).unwrap_or_default()
+        Config::read_from(file).unwrap_or_else(|_| {
+            let _ = std::fs::copy(file, file.with_extension("json.unreadable"));
+            Config::default()
+        })
+    }
+
+    /// As `read_from`, for the settings file. Whatever forgets files that aren't chosen any more must use this: the
+    /// defaults choose no folders, and acting on them would empty the index.
+    pub fn read() -> Result<Config> {
+        Config::read_from(&config_file())
     }
 
     pub fn load() -> Config {
@@ -231,8 +251,12 @@ mod tests {
         config.rules.skip_folders.push("Private".into());
         config.save_to(&file).unwrap();
         assert_eq!(Config::load_from(&file), config);
-        // A broken file falls back to the defaults rather than stopping the app.
+        // A broken file falls back to the defaults rather than stopping the app, and is kept; reading it strictly
+        // says it's broken, so nothing acts on the defaults' empty list of folders.
         std::fs::write(&file, "{ not json").unwrap();
+        assert!(Config::read_from(&file).is_err());
         assert_eq!(Config::load_from(&file), Config::default());
+        assert_eq!(std::fs::read_to_string(file.with_extension("json.unreadable")).unwrap(), "{ not json");
+        assert_eq!(Config::read_from(&folder.path().join("none.json")).unwrap(), Config::default());
     }
 }

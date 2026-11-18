@@ -111,6 +111,15 @@ impl Arguments {
             None => Config::load(),
         }
     }
+
+    /// The settings, strictly: a run that forgets files of folders no longer chosen stops when they can't be read,
+    /// rather than take the defaults' empty list for the person's choice and empty the index.
+    fn settings(&self) -> Result<Config> {
+        match self.get("config") {
+            Some(file) => Config::read_from(std::path::Path::new(file)),
+            None => Config::read(),
+        }
+    }
 }
 
 /// Lines on stdin steer a run: `pause`, `resume`, `stop`. The app closing the pipe stops it too.
@@ -130,7 +139,7 @@ fn listen(stop: Arc<AtomicBool>, pause: Arc<AtomicBool>) {
 }
 
 fn index(arguments: &Arguments) -> Result<()> {
-    let config = arguments.config();
+    let config = arguments.settings()?;
     let stop = Arc::new(AtomicBool::new(false));
     let pause = Arc::new(AtomicBool::new(false));
     if arguments.get("detached").is_none() {
@@ -179,7 +188,7 @@ fn index(arguments: &Arguments) -> Result<()> {
 /// Reads single files the watcher saw change (paths on the command line), without a crawl.
 fn touch(arguments: &Arguments) -> Result<()> {
     use effodio_core::crawler::{change, Change};
-    let config = arguments.config();
+    let config = arguments.settings()?;
     let mut store = Store::open(&arguments.database())?;
     store.claim_vector_source(&vector_source())?;
     let stop = AtomicBool::new(false);
