@@ -8,18 +8,47 @@ async function hash(text) {
   return [...new Uint8Array(bytes)].slice(0, 12).map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+// The body, but never more than `limit` bytes of it: a sender that leaves out the length (or lies about it) is cut
+// off rather than read whole.
+async function capped(request, limit) {
+  if (!request.body) return '';
+  const reader = request.body.getReader();
+  const chunks = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > limit) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const all = new Uint8Array(size);
+  let at = 0;
+  for (const chunk of chunks) {
+    all.set(chunk, at);
+    at += chunk.byteLength;
+  }
+  return new TextDecoder().decode(all);
+}
+
 async function feedback(request, env) {
   if (request.method !== 'POST') return new Response('POST only', { status: 405 });
   // Only the site's own page posts here.
   const origin = request.headers.get('origin');
   if (origin && origin !== new URL(request.url).origin) return new Response('no', { status: 403 });
   if (Number(request.headers.get('content-length') || 0) > 6000) return new Response('too long', { status: 413 });
+  const raw = await capped(request, 6000);
+  if (raw === null) return new Response('too long', { status: 413 });
   let body;
   try {
-    body = JSON.parse((await request.text()).slice(0, 6000));
+    body = JSON.parse(raw);
   } catch {
     return new Response('not JSON', { status: 400 });
   }
+  if (!body || typeof body !== 'object') return new Response('not JSON', { status: 400 });
   const text = String(body.text || '').trim().slice(0, 4000);
   if (text.length < 3) return new Response('empty', { status: 400 });
   const today = new Date().toISOString().slice(0, 10);
