@@ -19,6 +19,8 @@ pub struct Part {
 /// More than this is a data dump: the start is enough to find it by.
 const MAX_CHARS: usize = 4_000_000;
 const MAX_ENTRY_BYTES: u64 = 200 << 20;
+/// All the parts of one file together, unpacked: a small file that unpacks to gigabytes is a trap, not a document.
+const MAX_ARCHIVE_BYTES: u64 = 512 << 20;
 
 pub fn read(path: &Path) -> Result<Vec<Part>> {
     let extension = crate::kinds::extension(path);
@@ -85,18 +87,37 @@ pub fn decode(bytes: &[u8]) -> String {
     }
 }
 
-fn entry(archive: &mut zip::ZipArchive<std::fs::File>, name: &str) -> Result<String> {
-    let file = archive.by_name(name).map_err(|_| anyhow!("no {name} in the file"))?;
+/// An Office, OpenDocument or e-book file opened, with how much more of it may still be unpacked.
+struct Archive {
+    zip: zip::ZipArchive<std::fs::File>,
+    left: u64,
+}
+
+impl std::ops::Deref for Archive {
+    type Target = zip::ZipArchive<std::fs::File>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.zip
+    }
+}
+
+fn entry(archive: &mut Archive, name: &str) -> Result<String> {
+    if archive.left == 0 {
+        bail!("the file unpacks to more than can be read");
+    }
+    let file = archive.zip.by_name(name).map_err(|_| anyhow!("no {name} in the file"))?;
     if file.size() > MAX_ENTRY_BYTES {
         bail!("{name} is too large");
     }
     let mut bytes = Vec::new();
-    file.take(MAX_ENTRY_BYTES).read_to_end(&mut bytes)?;
+    // The size an entry claims can be a lie: what's read is counted, not what's claimed.
+    file.take(MAX_ENTRY_BYTES.min(archive.left)).read_to_end(&mut bytes)?;
+    archive.left -= bytes.len() as u64;
     Ok(String::from_utf8_lossy(&bytes).into_owned())
 }
 
-fn open(path: &Path) -> Result<zip::ZipArchive<std::fs::File>> {
-    Ok(zip::ZipArchive::new(std::fs::File::open(path)?)?)
+fn open(path: &Path) -> Result<Archive> {
+    Ok(Archive { zip: zip::ZipArchive::new(std::fs::File::open(path)?)?, left: MAX_ARCHIVE_BYTES })
 }
 
 fn local(name: &[u8]) -> &[u8] {
@@ -405,7 +426,8 @@ fn entities(text: &str) -> String {
     while let Some(at) = rest.find('&') {
         out.push_str(&rest[..at]);
         let tail = &rest[at + 1..];
-        let end = tail.find(';').filter(|&end| end <= 10);
+        // An entity's name is short: look for its `;` nearby only, or a page of bare `&`s takes forever.
+        let end = tail.bytes().take(11).position(|byte| byte == b';');
         let replaced = end.and_then(|end| {
             let name = &tail[..end];
             let c = match name {
@@ -528,7 +550,8 @@ pub fn rtf(source: &str) -> String {
                             i += 1;
                         }
                         if word.is_empty() {
-                            i = i.max(start + 1);
+                            // A backslash before something that isn't a control word: step over that whole character.
+                            i = i.max(start + source[start..].chars().next().map_or(1, char::len_utf8));
                             continue;
                         }
                         if SKIPPED.contains(&word) {
@@ -553,6 +576,8 @@ pub fn rtf(source: &str) -> String {
                 }
             }
             b'\r' | b'\n' => i += 1,
+            // Inside a character (after a malformed \' escape): on to the next one.
+            _ if !source.is_char_boundary(i) => i += 1,
             _ => {
                 let c = source[i..].chars().next().unwrap();
                 if pending_skip > 0 {
@@ -646,6 +671,43 @@ mod tests {
         assert_eq!(tidy(&html(page)), "Title\n\nFish & chips é");
         let document = r"{\rtf1\ansi{\fonttbl{\f0 Arial;}}\f0 Hello \b world\b0\par caf\'e9 \u272?{\*\generator x;}}";
         assert_eq!(tidy(&rtf(document)), "Hello world\ncafé Đ");
+    }
+
+    #[test]
+    fn rtf_with_odd_bytes_after_a_backslash() {
+        // A backslash before a letter outside ASCII, or a \' with too few hex digits before one, is malformed but
+        // must not stop the reading.
+        assert_eq!(tidy(&rtf(r"{\rtf1 caf\é au lait}")), "caf au lait");
+        assert_eq!(tidy(&rtf(r"{\rtf1 a\'4é b}")), "a b");
+        assert_eq!(tidy(&rtf(r"{\rtf1 x\")), "x");
+    }
+
+    #[test]
+    fn pages_full_of_ampersands_read_quickly() {
+        let page = "&".repeat(2_000_000);
+        let started = std::time::Instant::now();
+        assert_eq!(html(&page).len(), page.len());
+        assert!(started.elapsed().as_secs() < 2, "took {:?}", started.elapsed());
+        assert_eq!(html("a &amp;&lt; &#x41;&#66; &bogus; &"), "a &< AB &bogus; &");
+    }
+
+    #[test]
+    fn an_archive_that_unpacks_to_too_much() {
+        let folder = tempfile::tempdir().unwrap();
+        let path = folder.path().join("a.pptx");
+        // Ten slides of 60 MB each squeeze to almost nothing; together they're more than one file may unpack to.
+        let big = format!("<p:sld><a:p><a:r><a:t>Slide</a:t></a:r></a:p>{}</p:sld>", " ".repeat(60 << 20));
+        let names: Vec<String> = (1..=10).map(|n| format!("ppt/slides/slide{n}.xml")).collect();
+        let entries: Vec<(&str, &str)> = names.iter().map(|name| (name.as_str(), big.as_str())).collect();
+        archive(&path, &entries);
+        assert!(std::fs::metadata(&path).unwrap().len() < 10 << 20);
+        let mut opened = open(&path).unwrap();
+        let mut read = 0u64;
+        for name in &names {
+            read += entry(&mut opened, name).map_or(0, |text| text.len() as u64);
+        }
+        assert!(read <= MAX_ARCHIVE_BYTES, "{read}");
+        assert!(read > 0);
     }
 
     #[test]
