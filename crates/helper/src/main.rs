@@ -13,6 +13,7 @@ mod kits;
 mod model;
 mod serve;
 mod speed;
+mod web;
 
 use anyhow::{bail, Result};
 use effodio_core::config::{self, Config, Speed};

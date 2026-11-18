@@ -65,7 +65,7 @@ pub fn download(folder: &Path) -> Result<()> {
         if target.exists() {
             continue;
         }
-        let response = ureq::get(&file.url())
+        let response = crate::web::get(&file.url())
             .set("User-Agent", "effodio")
             .call()
             .with_context(|| format!("can't download {}", file.name))?;

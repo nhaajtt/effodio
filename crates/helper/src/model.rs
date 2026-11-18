@@ -40,7 +40,8 @@ pub fn download(folder: &Path) -> Result<()> {
             have = 0;
         }
         if have < file.bytes {
-            let request = ureq::get(&file.url()).set("User-Agent", "effodio").set("Range", &format!("bytes={have}-"));
+            let request =
+                crate::web::get(&file.url()).set("User-Agent", "effodio").set("Range", &format!("bytes={have}-"));
             let response = request.call().with_context(|| format!("can't download {}", file.name))?;
             // A server that ignores the range sends the whole file again.
             let resumed = response.status() == 206;
@@ -51,7 +52,8 @@ pub fn download(folder: &Path) -> Result<()> {
                 output.set_len(0)?;
                 have = 0;
             }
-            let mut reader = response.into_reader();
+            // Never more than the file is known to be: a server that keeps sending can't fill the disk.
+            let mut reader = response.into_reader().take(file.bytes - have);
             let mut buffer = vec![0u8; 1 << 20];
             let mut last = std::time::Instant::now();
             loop {

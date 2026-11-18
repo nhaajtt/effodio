@@ -175,7 +175,7 @@ fn fetch(part: &Part, target: &Path, before: u64, kit: &Kit) -> Result<()> {
         have = 0;
     }
     if have < part.bytes {
-        let response = ureq::get(part.url)
+        let response = crate::web::get(part.url)
             .set("User-Agent", "effodio")
             .set("Range", &format!("bytes={have}-"))
             .call()
@@ -188,7 +188,8 @@ fn fetch(part: &Part, target: &Path, before: u64, kit: &Kit) -> Result<()> {
             output.set_len(0)?;
             have = 0;
         }
-        let mut reader = response.into_reader();
+        // Never more than the part is known to be: a server that keeps sending can't fill the disk.
+        let mut reader = response.into_reader().take(part.bytes - have);
         let mut buffer = vec![0u8; 1 << 20];
         loop {
             let read = reader.read(&mut buffer)?;
@@ -278,7 +279,7 @@ fn listen(kit: &Kit, path: &Path) -> Result<Vec<(f64, f64, String)>> {
     std::fs::create_dir_all(&folder)?;
     let wave = folder.join(format!("{}.wav", std::process::id()));
     let made = quiet(&ffmpeg)
-        .args(["-v", "error", "-nostdin", "-y", "-i"])
+        .args(["-v", "error", "-nostdin", "-y", "-protocol_whitelist", effodio_core::readers::media::LOCAL_ONLY, "-i"])
         .arg(path)
         .args(["-vn", "-ac", "1", "-ar", "16000", "-t", &LISTEN.to_string()])
         .arg(&wave)
@@ -505,7 +506,7 @@ pub fn handle(request: &Value) -> Option<Result<Value>> {
         // Is there a newer Effodio? Asks the website for its version number, and sends nothing.
         "update_check" => Some((|| {
             let current = env!("CARGO_PKG_VERSION");
-            let reply = ureq::get("https://effodio.nhaajt.com/version.json")
+            let reply = crate::web::get("https://effodio.nhaajt.com/version.json")
                 .set("User-Agent", "effodio")
                 .timeout(std::time::Duration::from_secs(8))
                 .call()?;

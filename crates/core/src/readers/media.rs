@@ -63,6 +63,10 @@ pub fn ffprobe() -> Option<PathBuf> {
     })
 }
 
+/// What ffmpeg may open while reading a file: the file itself and what it points to on this computer, never the
+/// network (a playlist saved as `.mp4` names its pieces, and those could be web addresses).
+pub const LOCAL_ONLY: &str = "file,pipe,crypto,data";
+
 fn command(program: &Path) -> Command {
     let mut command = Command::new(program);
     command.stdin(Stdio::null());
@@ -89,7 +93,16 @@ pub struct Probe {
 pub fn probe(path: &Path) -> Result<Probe> {
     let ffprobe = ffprobe().ok_or_else(|| anyhow!("FFmpeg isn't installed (no ffprobe)"))?;
     let output = command(&ffprobe)
-        .args(["-v", "error", "-print_format", "json", "-show_format", "-show_streams"])
+        .args([
+            "-v",
+            "error",
+            "-protocol_whitelist",
+            LOCAL_ONLY,
+            "-print_format",
+            "json",
+            "-show_format",
+            "-show_streams",
+        ])
         .arg(path)
         .stderr(Stdio::null())
         .output()
@@ -154,7 +167,7 @@ pub struct Windows {
 pub fn windows(path: &Path, from_second: f64) -> Result<Windows> {
     let ffmpeg = ffmpeg().ok_or_else(|| anyhow!("FFmpeg isn't installed"))?;
     let mut run = command(&ffmpeg);
-    run.args(["-v", "error", "-nostdin"]);
+    run.args(["-v", "error", "-nostdin", "-protocol_whitelist", LOCAL_ONLY]);
     if from_second > 0.0 {
         run.args(["-ss", &format!("{from_second:.3}")]);
     }
@@ -244,7 +257,7 @@ pub struct Frames {
 pub fn frames(path: &Path, from_second: f64) -> Result<Frames> {
     let ffmpeg = ffmpeg().ok_or_else(|| anyhow!("FFmpeg isn't installed"))?;
     let mut run = command(&ffmpeg);
-    run.args(["-v", "error", "-nostdin"]);
+    run.args(["-v", "error", "-nostdin", "-protocol_whitelist", LOCAL_ONLY]);
     if from_second > 0.0 {
         run.args(["-ss", &format!("{from_second:.3}")]);
     }
@@ -278,7 +291,7 @@ pub fn frame_at(path: &Path, second: f64, side: u32) -> Result<Picture> {
     let ffmpeg = ffmpeg().ok_or_else(|| anyhow!("FFmpeg isn't installed"))?;
     let filter = format!("scale={side}:{side}:force_original_aspect_ratio=decrease:force_divisible_by=2");
     let mut child = command(&ffmpeg)
-        .args(["-v", "error", "-nostdin", "-ss", &format!("{:.3}", second.max(0.0))])
+        .args(["-v", "error", "-nostdin", "-protocol_whitelist", LOCAL_ONLY, "-ss", &format!("{:.3}", second.max(0.0))])
         .arg("-i")
         .arg(path)
         .args(["-an", "-frames:v", "1", "-vf", &filter, "-f", "image2pipe", "-c:v", "ppm", "-"])
