@@ -177,6 +177,7 @@ files, only return what a search returns (paths, excerpts, places).
 ## Checking it
 
 ```sh
+pwsh scripts\check.ps1                   # all of it at once: formatting, lints, tests, the interface's types and build
 cargo test --release                     # the engine, and the vectors against their reference
 python scripts/eval.py evals/testbed.json   # how often the right file comes first
 python scripts/smoke.py                  # everything the app asks of the helper
@@ -192,7 +193,7 @@ python scripts/smoke.py                  # everything the app asks of the helper
 | `crates/core` | Rules, readers, the index, the search |
 | `crates/faces` | Finding faces in photos and telling them apart |
 | `crates/helper` | The helper process: indexing, searching, the speed check, the model download |
-| `app/src-tauri` | The app: tray, shortcut, windows, the folder watcher, the local door |
+| `app/src-tauri` | The app: tray, shortcut, windows (`windows.rs`), indexing runs and the folder watcher (`indexing.rs`), what the interface may ask (`commands.rs`, with the paths it may use in `paths.rs`), the local door (`door.rs`) |
 | `app/src` | The interface |
 | `docs` | The pictures in this file |
 | `site` | The website and the install script (`pwsh scripts\site.ps1 -Deploy` publishes them with the installer) |
