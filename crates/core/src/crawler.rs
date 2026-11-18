@@ -47,13 +47,16 @@ pub fn see(path: &Path, roots: &[Root], custom: &Custom) -> Option<Seen> {
     if let Some(parent) = relative.parent() {
         for part in parent.components() {
             folder.push(part);
-            if rules::skip_folder(&folder, custom) {
+            // As the walk does: never through a link or a junction (it may lead out of the root), nor into a
+            // hidden folder.
+            let link = std::fs::symlink_metadata(&folder).ok()?;
+            if link.file_type().is_symlink() || rules::is_hidden(&link) || rules::skip_folder(&folder, custom) {
                 return None;
             }
             in_project = in_project || is_project_folder(&folder);
         }
     }
-    let metadata = std::fs::metadata(path).ok()?;
+    let metadata = std::fs::symlink_metadata(path).ok()?;
     if !metadata.is_file() || rules::is_hidden(&metadata) || rules::is_cloud_only(&metadata) {
         return None;
     }
@@ -223,5 +226,36 @@ mod tests {
         assert!(matches!(change(&base.join("trip/beach.jpg"), &roots, &custom), Change::Read(_)));
         assert_eq!(change(&base.join("id_rsa"), &roots, &custom), Change::LeftOut);
         assert_eq!(change(&base.join("trip/deleted.jpg"), &roots, &custom), Change::Gone);
+    }
+
+    /// The watcher reports any path under a root; a file reached through a link or a hidden folder is one the walk
+    /// would never have found, so it isn't read either.
+    #[cfg(windows)]
+    #[test]
+    fn the_watcher_stays_where_the_walk_goes() {
+        let folder = tempfile::tempdir().unwrap();
+        let (root, outside) = (folder.path().join("root"), folder.path().join("outside"));
+        write(&outside.join("private.txt"), 100);
+        write(&root.join("kept/visible.txt"), 100);
+        write(&root.join("tucked/away.txt"), 100);
+        let hidden = std::process::Command::new("attrib").arg("+h").arg(root.join("tucked")).status().unwrap();
+        assert!(hidden.success());
+        // A junction needs no special rights, unlike a symbolic link.
+        let linked = std::process::Command::new("cmd")
+            .args(["/C", "mklink", "/J"])
+            .arg(root.join("link"))
+            .arg(&outside)
+            .output()
+            .unwrap();
+        assert!(linked.status.success());
+        let roots = vec![Root { path: root.clone(), exclude: vec![] }];
+        let custom = Custom::default();
+        let walked: Vec<PathBuf> =
+            crawl(&roots, &custom, &AtomicBool::new(false)).files.into_iter().map(|f| f.path).collect();
+        assert_eq!(walked, vec![root.join("kept/visible.txt")]);
+        assert!(see(&root.join("kept/visible.txt"), &roots, &custom).is_some());
+        assert!(see(&root.join("link/private.txt"), &roots, &custom).is_none());
+        assert!(see(&root.join("tucked/away.txt"), &roots, &custom).is_none());
+        assert_eq!(change(&root.join("link/private.txt"), &roots, &custom), Change::LeftOut);
     }
 }
