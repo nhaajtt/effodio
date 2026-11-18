@@ -15,11 +15,29 @@ use tauri::{AppHandle, Manager};
 
 pub struct Door {
     stop: Arc<AtomicBool>,
+    listening: Option<std::thread::JoinHandle<()>>,
 }
 
 impl Drop for Door {
+    /// Waits for the listener to let go of the port, so a door opened again right after (new token, same port)
+    /// can have it.
     fn drop(&mut self) {
         self.stop.store(true, Ordering::Relaxed);
+        if let Some(listening) = self.listening.take() {
+            let _ = listening.join();
+        }
+    }
+}
+
+/// Requests answered at once; more than this from other programs wait for the next turn instead of each getting a
+/// thread.
+const AT_ONCE: usize = 8;
+
+struct Done(Arc<std::sync::atomic::AtomicUsize>);
+
+impl Drop for Done {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::Relaxed);
     }
 }
 
@@ -141,16 +159,24 @@ impl Door {
         listener.set_nonblocking(true)?;
         let stop = Arc::new(AtomicBool::new(false));
         let (token, port, stopped) = (settings.token.clone(), settings.port, stop.clone());
-        std::thread::spawn(move || {
+        let busy = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let listening = std::thread::spawn(move || {
             while !stopped.load(Ordering::Relaxed) {
+                if busy.load(Ordering::Relaxed) >= AT_ONCE {
+                    std::thread::sleep(Duration::from_millis(20));
+                    continue;
+                }
                 match listener.accept() {
                     Ok((mut stream, address)) => {
                         if !address.ip().is_loopback() {
                             continue;
                         }
                         let _ = stream.set_nonblocking(false);
-                        let (app, token) = (app.clone(), token.clone());
+                        let (app, token, busy) = (app.clone(), token.clone(), busy.clone());
+                        busy.fetch_add(1, Ordering::Relaxed);
                         std::thread::spawn(move || {
+                            // Counted out however the request ends, a panic included.
+                            let _done = Done(busy);
                             handle(&app, &mut stream, &token, port);
                             let _ = stream.flush();
                             let mut rest = [0u8; 64];
@@ -162,13 +188,32 @@ impl Door {
                 }
             }
         });
-        Ok(Door { stop })
+        Ok(Door { stop, listening: Some(listening) })
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// What closing a door and opening it again on the same port does, without the app around it.
+    #[test]
+    fn the_port_is_free_once_the_door_is_closed() {
+        let listener = TcpListener::bind(SocketAddr::from((Ipv4Addr::LOCALHOST, 0))).unwrap();
+        let port = listener.local_addr().unwrap().port();
+        listener.set_nonblocking(true).unwrap();
+        let stop = Arc::new(AtomicBool::new(false));
+        let stopped = stop.clone();
+        let listening = std::thread::spawn(move || {
+            while !stopped.load(Ordering::Relaxed) {
+                if listener.accept().is_err() {
+                    std::thread::sleep(Duration::from_millis(150));
+                }
+            }
+        });
+        drop(Door { stop, listening: Some(listening) });
+        assert!(TcpListener::bind(SocketAddr::from((Ipv4Addr::LOCALHOST, port))).is_ok());
+    }
 
     #[test]
     fn tokens_and_decoding() {
