@@ -21,33 +21,124 @@ pub struct Custom {
 
 /// Folders that hold programs, caches or other machinery, by name (lowercase).
 const SKIP_FOLDERS: &[&str] = &[
-    "node_modules", "__pycache__", "site-packages", "venv", ".venv", "env", "target", "build", "dist", "out", "bin",
-    "obj", "vendor", "cache", "caches", "tmp", "temp", "logs", "$recycle.bin", "system volume information", "windows",
-    "program files", "program files (x86)", "programdata", "appdata", "application data", "msocache", "recovery",
-    "perflogs", "intel", "nvidia", "steamapps", "steamlibrary", "epic games", "riot games", "thumbnails",
-    "cachestorage", "code cache", "gpucache", "service worker", "indexeddb", "local storage", "session storage",
-    "onedrivetemp", "winsxs", "installer", "packages", "lib", "libs", "include", "pods", "deriveddata",
+    "node_modules",
+    "__pycache__",
+    "site-packages",
+    "venv",
+    ".venv",
+    "env",
+    "target",
+    "build",
+    "dist",
+    "out",
+    "bin",
+    "obj",
+    "vendor",
+    "cache",
+    "caches",
+    "tmp",
+    "temp",
+    "logs",
+    "$recycle.bin",
+    "system volume information",
+    "windows",
+    "program files",
+    "program files (x86)",
+    "programdata",
+    "appdata",
+    "application data",
+    "msocache",
+    "recovery",
+    "perflogs",
+    "intel",
+    "nvidia",
+    "steamapps",
+    "steamlibrary",
+    "epic games",
+    "riot games",
+    "thumbnails",
+    "cachestorage",
+    "code cache",
+    "gpucache",
+    "service worker",
+    "indexeddb",
+    "local storage",
+    "session storage",
+    "onedrivetemp",
+    "winsxs",
+    "installer",
+    "packages",
+    "lib",
+    "libs",
+    "include",
+    "pods",
+    "deriveddata",
 ];
 
 /// Names that say a folder is a code project: inside one, only screenshots are read.
 const PROJECT_MARKERS: &[&str] = &[
-    ".git", "package.json", "cargo.toml", "pyproject.toml", "go.mod", "pom.xml", "build.gradle", "cmakelists.txt",
-    "makefile", "gemfile", "composer.json", "package.swift", ".hg", ".svn", "requirements.txt", "setup.py",
+    ".git",
+    "package.json",
+    "cargo.toml",
+    "pyproject.toml",
+    "go.mod",
+    "pom.xml",
+    "build.gradle",
+    "cmakelists.txt",
+    "makefile",
+    "gemfile",
+    "composer.json",
+    "package.swift",
+    ".hg",
+    ".svn",
+    "requirements.txt",
+    "setup.py",
 ];
 
 /// File names and extensions that hold keys or passwords.
 const SECRET_EXTENSIONS: &[&str] = &[
-    "pem", "key", "p12", "pfx", "kdbx", "kdb", "keystore", "jks", "ppk", "gpg", "asc", "crt", "cer", "der",
-    "wallet", "ovpn", "rdp",
+    "pem", "key", "p12", "pfx", "kdbx", "kdb", "keystore", "jks", "ppk", "gpg", "asc", "crt", "cer", "der", "wallet",
+    "ovpn", "rdp",
 ];
 const SECRET_NAMES: &[&str] = &[
-    "id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", ".env", ".netrc", ".npmrc", ".pypirc", "credentials",
-    "credentials.json", "secrets.json", "secrets.yaml", "secrets.yml", "passwords.txt", "password.txt",
-    "wallet.dat", "known_hosts", "authorized_keys", "htpasswd", ".htpasswd",
+    "id_rsa",
+    "id_dsa",
+    "id_ecdsa",
+    "id_ed25519",
+    ".env",
+    ".netrc",
+    ".npmrc",
+    ".pypirc",
+    "credentials",
+    "credentials.json",
+    "secrets.json",
+    "secrets.yaml",
+    "secrets.yml",
+    "passwords.txt",
+    "password.txt",
+    "wallet.dat",
+    "known_hosts",
+    "authorized_keys",
+    "htpasswd",
+    ".htpasswd",
 ];
-const SECRET_WORDS: &[&str] = &["password", "passwd", "secret", "private_key", "privatekey", "recovery-code",
-    "recovery code", "seed phrase", "seedphrase", "mnemonic", "2fa", "backup-codes", "backup codes", "mật khẩu",
-    "mat khau"];
+const SECRET_WORDS: &[&str] = &[
+    "password",
+    "passwd",
+    "secret",
+    "private_key",
+    "privatekey",
+    "recovery-code",
+    "recovery code",
+    "seed phrase",
+    "seedphrase",
+    "mnemonic",
+    "2fa",
+    "backup-codes",
+    "backup codes",
+    "mật khẩu",
+    "mat khau",
+];
 
 /// The largest file of each kind worth reading.
 pub fn size_limit(kind: FileKind) -> u64 {
@@ -92,7 +183,9 @@ pub fn skip_folder(path: &Path, custom: &Custom) -> bool {
 pub fn is_project(entries: &[String]) -> bool {
     entries.iter().any(|entry| {
         let entry = entry.to_lowercase();
-        PROJECT_MARKERS.contains(&entry.as_str()) || entry.ends_with(".sln") || entry.ends_with(".csproj")
+        PROJECT_MARKERS.contains(&entry.as_str())
+            || entry.ends_with(".sln")
+            || entry.ends_with(".csproj")
             || entry.ends_with(".xcodeproj")
     })
 }
@@ -116,7 +209,10 @@ pub fn looks_like_dataset(names: &[String]) -> bool {
 /// The kind a file is read as, or None when the rules leave it out. `in_project`: under a code project's folder.
 pub fn accept(path: &Path, size: u64, in_project: bool, custom: &Custom) -> Option<FileKind> {
     let name = path.file_name()?.to_string_lossy();
-    if name.starts_with('.') || name.starts_with("~$") || name.ends_with(".tmp") || name.ends_with(".crdownload")
+    if name.starts_with('.')
+        || name.starts_with("~$")
+        || name.ends_with(".tmp")
+        || name.ends_with(".crdownload")
         || name.ends_with(".part")
     {
         return None;
@@ -177,8 +273,16 @@ mod tests {
 
     #[test]
     fn secrets_are_never_read() {
-        for name in ["id_rsa", ".env", ".env.local", "server.pem", "vault.kdbx", "My Passwords.docx",
-                     "recovery-codes.txt", "mật khẩu wifi.txt"] {
+        for name in [
+            "id_rsa",
+            ".env",
+            ".env.local",
+            "server.pem",
+            "vault.kdbx",
+            "My Passwords.docx",
+            "recovery-codes.txt",
+            "mật khẩu wifi.txt",
+        ] {
             assert!(is_secret(Path::new(name)), "{name}");
             assert_eq!(accept(Path::new(name), 5000, false, &Custom::default()), None, "{name}");
         }
@@ -215,7 +319,8 @@ mod tests {
 
     #[test]
     fn custom_rules_and_sizes() {
-        let custom = Custom { skip_extensions: vec![".gif".into()], skip_kinds: vec![FileKind::Video], ..Default::default() };
+        let custom =
+            Custom { skip_extensions: vec![".gif".into()], skip_kinds: vec![FileKind::Video], ..Default::default() };
         assert_eq!(accept(Path::new("a.gif"), 50_000, false, &custom), None);
         assert_eq!(accept(Path::new("a.mp4"), 50_000, false, &custom), None);
         assert_eq!(accept(Path::new("icon.png"), 900, false, &custom), None);

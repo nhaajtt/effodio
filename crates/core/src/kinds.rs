@@ -126,8 +126,21 @@ pub fn extension(path: &Path) -> String {
 
 /// The words Windows, the Snipping Tool, browsers and phones put in a screenshot's name, in several languages.
 const SCREENSHOT_WORDS: &[&str] = &[
-    "screenshot", "screen shot", "screen_shot", "screen-shot", "screencap", "screen capture", "snip", "capture",
-    "ảnh chụp màn hình", "anh chup man hinh", "captura", "bildschirmfoto", "スクリーンショット", "截图", "截屏",
+    "screenshot",
+    "screen shot",
+    "screen_shot",
+    "screen-shot",
+    "screencap",
+    "screen capture",
+    "snip",
+    "capture",
+    "ảnh chụp màn hình",
+    "anh chup man hinh",
+    "captura",
+    "bildschirmfoto",
+    "スクリーンショット",
+    "截图",
+    "截屏",
     "снимок экрана",
 ];
 

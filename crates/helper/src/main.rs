@@ -304,7 +304,10 @@ fn search(arguments: &Arguments) -> Result<()> {
             if hit["strong"].as_bool() == Some(true) { " " } else { "~" },
             hit["path"].as_str().unwrap_or_default(),
             place,
-            hit["excerpt"].as_str().map(|e| format!("\n         {}", e.chars().take(140).collect::<String>())).unwrap_or_default(),
+            hit["excerpt"]
+                .as_str()
+                .map(|e| format!("\n         {}", e.chars().take(140).collect::<String>()))
+                .unwrap_or_default(),
         );
     }
     println!("({} ms)", result["ms"].as_f64().unwrap_or(0.0).round());
@@ -320,7 +323,9 @@ fn ocr(arguments: &Arguments) -> Result<()> {
         for path in &arguments.bare {
             let picture = images::load(std::path::Path::new(path))?;
             match winrt::ocr(&picture) {
-                Ok(text) => emit(&json!({"path": path, "width": picture.width, "height": picture.height, "text": text})),
+                Ok(text) => {
+                    emit(&json!({"path": path, "width": picture.width, "height": picture.height, "text": text}))
+                }
                 Err(error) => emit(&json!({"path": path, "error": format!("{error:#}")})),
             }
         }

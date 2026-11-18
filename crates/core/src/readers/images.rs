@@ -66,7 +66,11 @@ pub fn jpeg(picture: &Picture, quality: u8) -> Result<Vec<u8>> {
     let mut out = Vec::new();
     let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut out, quality);
     image::ImageEncoder::write_image(
-        encoder, &picture.rgb, picture.width as u32, picture.height as u32, image::ExtendedColorType::Rgb8,
+        encoder,
+        &picture.rgb,
+        picture.width as u32,
+        picture.height as u32,
+        image::ExtendedColorType::Rgb8,
     )?;
     Ok(out)
 }

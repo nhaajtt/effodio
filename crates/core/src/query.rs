@@ -31,7 +31,13 @@ pub struct Query {
 
 impl Query {
     pub fn has_filters(&self) -> bool {
-        !self.kinds.is_empty() || !self.colors.is_empty() || !self.sides.is_empty() || !self.people.is_empty() || !self.folders.is_empty() || !self.extensions.is_empty() || self.after.is_some()
+        !self.kinds.is_empty()
+            || !self.colors.is_empty()
+            || !self.sides.is_empty()
+            || !self.people.is_empty()
+            || !self.folders.is_empty()
+            || !self.extensions.is_empty()
+            || self.after.is_some()
             || self.before.is_some()
     }
 

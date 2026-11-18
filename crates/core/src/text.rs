@@ -102,7 +102,8 @@ pub fn passages(text: &str, limit: usize) -> Vec<(usize, String)> {
                 .or_else(|| (floor..end).rev().find(|&i| chars[i] == '\n'))
                 .or_else(|| {
                     (floor..end).rev().find(|&i| {
-                        matches!(chars[i], '.' | '!' | '?' | '。') && chars.get(i + 1).is_some_and(|c| c.is_whitespace())
+                        matches!(chars[i], '.' | '!' | '?' | '。')
+                            && chars.get(i + 1).is_some_and(|c| c.is_whitespace())
                     })
                 })
                 .or_else(|| (floor..end).rev().find(|&i| chars[i].is_whitespace()));
@@ -143,9 +144,9 @@ pub fn snippet(original: &str, terms: &[String], radius: usize) -> Option<String
         if word.is_empty() {
             continue;
         }
-        let hit = terms.iter().any(|term| {
-            word == term || (term.len() >= 3 && word.starts_with(term.as_str())) || stem_equal(word, term)
-        });
+        let hit = terms
+            .iter()
+            .any(|term| word == term || (term.len() >= 3 && word.starts_with(term.as_str())) || stem_equal(word, term));
         if hit {
             matches.push((offsets[start], offsets[start + word.len()]));
         }

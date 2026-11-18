@@ -112,7 +112,10 @@ pub fn ocr(picture: &Picture) -> Result<String> {
     writer.WriteBytes(&bgra)?;
     let buffer = writer.DetachBuffer()?;
     let bitmap = SoftwareBitmap::CreateCopyFromBuffer(
-        &buffer, BitmapPixelFormat::Bgra8, picture.width as i32, picture.height as i32,
+        &buffer,
+        BitmapPixelFormat::Bgra8,
+        picture.width as i32,
+        picture.height as i32,
     )?;
     ENGINE.with(|engine| {
         let engine = engine.as_ref().ok_or_else(|| anyhow!("Windows has no language installed to read text with"))?;

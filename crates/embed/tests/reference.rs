@@ -47,9 +47,13 @@ fn made(device: Device) -> Option<BTreeMap<String, Vec<f32>>> {
     for ((name, _), vector) in texts.iter().zip(embedder.embed_texts(&inputs).unwrap()) {
         out.insert(name.to_string(), vector);
     }
-    for (name, file, budget) in [("screen-280", "screen.png", 280), ("photo-140", "photo.jpg", 140), ("frame-70", "photo.jpg", 70)] {
+    for (name, file, budget) in
+        [("screen-280", "screen.png", 280), ("photo-140", "photo.jpg", 140), ("frame-70", "photo.jpg", 70)]
+    {
         let bytes = fs::read(folder().join(file)).unwrap();
-        let Decoded::Image { width, height, rgb } = embedder.decode(&bytes).unwrap() else { panic!("{file} is an image") };
+        let Decoded::Image { width, height, rgb } = embedder.decode(&bytes).unwrap() else {
+            panic!("{file} is an image")
+        };
         out.insert(name.to_string(), embedder.embed_image(&rgb, width, height, budget).unwrap());
     }
     let bytes = fs::read(folder().join("speech.wav")).unwrap();
@@ -62,8 +66,7 @@ fn made(device: Device) -> Option<BTreeMap<String, Vec<f32>>> {
 fn vectors_match_the_reference() {
     let device = if std::env::var("EFFODIO_TEST_DEVICE").as_deref() == Ok("gpu") { Device::Gpu } else { Device::Cpu };
     let Some(made) = made(device) else { return };
-    let stored: serde_json::Value =
-        serde_json::from_slice(&fs::read(folder().join("vectors.json")).unwrap()).unwrap();
+    let stored: serde_json::Value = serde_json::from_slice(&fs::read(folder().join("vectors.json")).unwrap()).unwrap();
     assert_eq!(stored["vector_version"], effodio_embed::VECTOR_VERSION);
     let reference = stored["vectors"].as_object().unwrap();
     assert_eq!(made.len(), reference.len(), "the same inputs as the reference");

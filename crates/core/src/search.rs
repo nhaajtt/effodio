@@ -74,7 +74,15 @@ pub struct Settings {
 
 impl Default for Settings {
     fn default() -> Settings {
-        Settings { limit: 30, gate: 2.0, word_weight: 2.0, prefix_last: false, negative_weight: 0.6, floor: 0.62, near: 0.025 }
+        Settings {
+            limit: 30,
+            gate: 2.0,
+            word_weight: 2.0,
+            prefix_last: false,
+            negative_weight: 0.6,
+            floor: 0.62,
+            near: 0.025,
+        }
     }
 }
 
@@ -110,26 +118,117 @@ const TIE_FLOOR: f32 = 0.15;
 const TIE_WEAK: f32 = 0.04;
 
 const STOPWORDS: &[&str] = &[
-    "a", "an", "the", "of", "in", "on", "at", "to", "for", "with", "and", "or", "my", "me", "that", "this", "these",
-    "those", "from", "about", "where", "what", "which", "who", "when", "is", "was", "are", "were", "be", "it", "its",
-    "some", "any", "find", "show", "file", "files", "photo", "photos", "picture", "pictures", "image", "images",
-    "screenshot", "screenshots", "video", "videos", "pdf", "document", "documents", "recording",
+    "a",
+    "an",
+    "the",
+    "of",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "with",
+    "and",
+    "or",
+    "my",
+    "me",
+    "that",
+    "this",
+    "these",
+    "those",
+    "from",
+    "about",
+    "where",
+    "what",
+    "which",
+    "who",
+    "when",
+    "is",
+    "was",
+    "are",
+    "were",
+    "be",
+    "it",
+    "its",
+    "some",
+    "any",
+    "find",
+    "show",
+    "file",
+    "files",
+    "photo",
+    "photos",
+    "picture",
+    "pictures",
+    "image",
+    "images",
+    "screenshot",
+    "screenshots",
+    "video",
+    "videos",
+    "pdf",
+    "document",
+    "documents",
+    "recording",
     // Vietnamese, folded
-    "cua", "va", "la", "cho", "trong", "tim", "cai", "nhung", "cac", "mot", "co", "tai", "ve", "toi", "nao", "day",
-    "kia", "voi", "anh", "hinh", "tep", "tai lieu",
+    "cua",
+    "va",
+    "la",
+    "cho",
+    "trong",
+    "tim",
+    "cai",
+    "nhung",
+    "cac",
+    "mot",
+    "co",
+    "tai",
+    "ve",
+    "toi",
+    "nao",
+    "day",
+    "kia",
+    "voi",
+    "anh",
+    "hinh",
+    "tep",
+    "tai lieu",
 ];
 
 /// Kind words in a query ("…in a video", "ảnh chụp màn hình…"): a soft boost, not a filter.
 const KIND_WORDS: &[(&str, FileKind)] = &[
-    ("screenshot", FileKind::Screenshot), ("screenshots", FileKind::Screenshot), ("photo", FileKind::Image),
-    ("photos", FileKind::Image), ("picture", FileKind::Image), ("pictures", FileKind::Image),
-    ("image", FileKind::Image), ("images", FileKind::Image), ("pdf", FileKind::Pdf), ("pdfs", FileKind::Pdf),
-    ("paper", FileKind::Pdf), ("papers", FileKind::Pdf), ("document", FileKind::Doc), ("documents", FileKind::Doc),
-    ("note", FileKind::Doc), ("notes", FileKind::Doc), ("spreadsheet", FileKind::Doc), ("slides", FileKind::Doc),
-    ("video", FileKind::Video), ("videos", FileKind::Video), ("clip", FileKind::Video), ("movie", FileKind::Video),
-    ("audio", FileKind::Audio), ("song", FileKind::Audio), ("podcast", FileKind::Audio), ("voice", FileKind::Audio),
-    ("sound", FileKind::Audio), ("recording", FileKind::Audio),
-    ("anh", FileKind::Image), ("hinh", FileKind::Image), ("phim", FileKind::Video), ("nhac", FileKind::Audio),
+    ("screenshot", FileKind::Screenshot),
+    ("screenshots", FileKind::Screenshot),
+    ("photo", FileKind::Image),
+    ("photos", FileKind::Image),
+    ("picture", FileKind::Image),
+    ("pictures", FileKind::Image),
+    ("image", FileKind::Image),
+    ("images", FileKind::Image),
+    ("pdf", FileKind::Pdf),
+    ("pdfs", FileKind::Pdf),
+    ("paper", FileKind::Pdf),
+    ("papers", FileKind::Pdf),
+    ("document", FileKind::Doc),
+    ("documents", FileKind::Doc),
+    ("note", FileKind::Doc),
+    ("notes", FileKind::Doc),
+    ("spreadsheet", FileKind::Doc),
+    ("slides", FileKind::Doc),
+    ("video", FileKind::Video),
+    ("videos", FileKind::Video),
+    ("clip", FileKind::Video),
+    ("movie", FileKind::Video),
+    ("audio", FileKind::Audio),
+    ("song", FileKind::Audio),
+    ("podcast", FileKind::Audio),
+    ("voice", FileKind::Audio),
+    ("sound", FileKind::Audio),
+    ("recording", FileKind::Audio),
+    ("anh", FileKind::Image),
+    ("hinh", FileKind::Image),
+    ("phim", FileKind::Video),
+    ("nhac", FileKind::Audio),
 ];
 
 /// The content words of a query, folded as the keyword index keeps its text. Kind words and stopwords are dropped:
@@ -261,18 +360,19 @@ impl Searcher {
         let mut rows = select.query([])?;
         while let Some(row) = rows.next()? {
             let path: String = row.get(2)?;
-            let extension = std::path::Path::new(&path)
-                .extension()
-                .map(|e| e.to_string_lossy().to_lowercase())
-                .unwrap_or_default();
-            self.files.insert(row.get(0)?, FileMeta {
-                kind: FileKind::parse(&row.get::<_, String>(1)?).unwrap_or(FileKind::Doc),
-                path: text::fold(&path),
-                extension,
-                modified: row.get(3)?,
-                tones: crate::insight::tones_in(row.get_ref(4)?.as_str().unwrap_or_default()),
-                focus: crate::insight::focus_in(row.get_ref(4)?.as_str().unwrap_or_default()),
-            });
+            let extension =
+                std::path::Path::new(&path).extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+            self.files.insert(
+                row.get(0)?,
+                FileMeta {
+                    kind: FileKind::parse(&row.get::<_, String>(1)?).unwrap_or(FileKind::Doc),
+                    path: text::fold(&path),
+                    extension,
+                    modified: row.get(3)?,
+                    tones: crate::insight::tones_in(row.get_ref(4)?.as_str().unwrap_or_default()),
+                    focus: crate::insight::focus_in(row.get_ref(4)?.as_str().unwrap_or_default()),
+                },
+            );
         }
         drop(rows);
         drop(select);
@@ -337,10 +437,7 @@ impl Searcher {
     }
 
     fn is_indexed(&self, pattern: &str) -> bool {
-        self.store
-            .db
-            .query_row("SELECT 1 FROM fts WHERE fts MATCH ? LIMIT 1", [pattern], |_| Ok(()))
-            .is_ok()
+        self.store.db.query_row("SELECT 1 FROM fts WHERE fts MATCH ? LIMIT 1", [pattern], |_| Ok(())).is_ok()
     }
 
     /// The stored vector of a segment, for "more like this".
@@ -357,9 +454,11 @@ impl Searcher {
     pub fn first_vector_segment(&self, file: i64) -> Option<i64> {
         self.store
             .db
-            .query_row("SELECT id FROM segments WHERE file = ? AND vec IS NOT NULL ORDER BY id LIMIT 1", [file], |row| {
-                row.get(0)
-            })
+            .query_row(
+                "SELECT id FROM segments WHERE file = ? AND vec IS NOT NULL ORDER BY id LIMIT 1",
+                [file],
+                |row| row.get(0),
+            )
             .ok()
     }
 
@@ -435,7 +534,9 @@ impl Searcher {
             let mut rows = select.query([patterns.join(" OR ")])?;
             while let Some(row) = rows.next()? {
                 let file: i64 = row.get(0)?;
-                if words.len() >= 200 || words.contains_key(&file) || Some(file) == exclude_file
+                if words.len() >= 200
+                    || words.contains_key(&file)
+                    || Some(file) == exclude_file
                     || !self.allowed(file, query)
                 {
                     continue;
@@ -507,7 +608,8 @@ impl Searcher {
         candidates.extend(coverage.iter().filter(|(_, &share)| share >= 0.5).map(|(&file, _)| file));
         if let Some(required) = &required {
             // An exact phrase is enough to qualify, and nothing without it does.
-            candidates.extend(required.iter().filter(|file| self.allowed(**file, query) && Some(**file) != exclude_file));
+            candidates
+                .extend(required.iter().filter(|file| self.allowed(**file, query) && Some(**file) != exclude_file));
             candidates.retain(|file| required.contains(file));
         }
         candidates.retain(|file| !banned.contains(file));
@@ -596,11 +698,9 @@ impl Searcher {
     fn any_segment(&self, file: i64) -> Option<i64> {
         self.store
             .db
-            .query_row(
-                "SELECT id FROM segments WHERE file = ? ORDER BY (kind = 'name'), id LIMIT 1",
-                [file],
-                |row| row.get(0),
-            )
+            .query_row("SELECT id FROM segments WHERE file = ? ORDER BY (kind = 'name'), id LIMIT 1", [file], |row| {
+                row.get(0)
+            })
             .ok()
     }
 
@@ -689,9 +789,10 @@ impl Searcher {
         let pictures: Vec<usize> = (0..self.row_file.len())
             .filter(|&row| {
                 self.row_modality[row] == Modality::Image
-                    && self.files.get(&self.row_file[row]).is_some_and(|m| {
-                        matches!(m.kind, FileKind::Image | FileKind::Screenshot)
-                    })
+                    && self
+                        .files
+                        .get(&self.row_file[row])
+                        .is_some_and(|m| matches!(m.kind, FileKind::Image | FileKind::Screenshot))
             })
             .take(20_000)
             .collect();
@@ -759,8 +860,7 @@ impl Searcher {
             .collect();
         // Each modality is centred on its own mean, or the map would only show text apart from pictures.
         for modality in Modality::ALL {
-            let members: Vec<usize> =
-                (0..rows.len()).filter(|&i| self.row_modality[rows[i]] == modality).collect();
+            let members: Vec<usize> = (0..rows.len()).filter(|&i| self.row_modality[rows[i]] == modality).collect();
             if members.is_empty() {
                 continue;
             }
@@ -777,7 +877,8 @@ impl Searcher {
             }
         }
         let component = |data: &[Vec<f32>], avoid: Option<&[f32]>| -> Vec<f32> {
-            let mut direction: Vec<f32> = (0..DIMENSION).map(|i| ((i * 7919 + 13) % 101) as f32 / 101.0 - 0.5).collect();
+            let mut direction: Vec<f32> =
+                (0..DIMENSION).map(|i| ((i * 7919 + 13) % 101) as f32 / 101.0 - 0.5).collect();
             for _ in 0..30 {
                 let projections: Vec<f32> = data.par_iter().map(|row| dot(row, &direction)).collect();
                 let mut next = vec![0f32; DIMENSION];
@@ -875,21 +976,53 @@ mod tests {
     }
 
     fn filler() -> Vec<(String, String)> {
-        let topics = ["garden tomatoes watering", "bicycle repair chain", "winter soup recipe", "tax return form",
-            "guitar chords practice", "mountain hiking trail", "birthday party invitation", "laptop battery warranty",
-            "ocean sailing knots", "bread baking flour", "chess opening theory", "camera lens aperture",
-            "train timetable europe", "yoga morning stretch", "coffee roasting beans", "paint colours bedroom",
-            "language grammar verbs", "budget spreadsheet rent", "football match tickets", "piano sonata sheet",
-            "dentist appointment reminder", "movie review thriller", "weather forecast storm", "car insurance renewal",
-            "wedding seating plan"];
-        topics.iter().enumerate().map(|(i, topic)| (format!("filler {i}.txt"), format!("Notes on {topic} and more {topic}."))).collect()
+        let topics = [
+            "garden tomatoes watering",
+            "bicycle repair chain",
+            "winter soup recipe",
+            "tax return form",
+            "guitar chords practice",
+            "mountain hiking trail",
+            "birthday party invitation",
+            "laptop battery warranty",
+            "ocean sailing knots",
+            "bread baking flour",
+            "chess opening theory",
+            "camera lens aperture",
+            "train timetable europe",
+            "yoga morning stretch",
+            "coffee roasting beans",
+            "paint colours bedroom",
+            "language grammar verbs",
+            "budget spreadsheet rent",
+            "football match tickets",
+            "piano sonata sheet",
+            "dentist appointment reminder",
+            "movie review thriller",
+            "weather forecast storm",
+            "car insurance renewal",
+            "wedding seating plan",
+        ];
+        topics
+            .iter()
+            .enumerate()
+            .map(|(i, topic)| (format!("filler {i}.txt"), format!("Notes on {topic} and more {topic}.")))
+            .collect()
     }
 
     fn search(searcher: &mut Searcher, text: &str) -> Vec<Hit> {
         let query = parse(text, 2_000_000.0);
         let vector = (!query.text.is_empty()).then(|| FakeEmbed::vector(&query.text));
         let negative = (!query.negative.is_empty()).then(|| FakeEmbed::vector(&query.negative.join(" ")));
-        searcher.search(&query, vector.as_deref(), negative.as_deref(), None, &Settings { floor: 0.0, ..Settings::default() }).unwrap()
+        searcher
+            .search(
+                &query,
+                vector.as_deref(),
+                negative.as_deref(),
+                None,
+                &Settings { floor: 0.0, ..Settings::default() },
+            )
+            .unwrap()
     }
 
     fn names(hits: &[Hit]) -> Vec<String> {
@@ -919,7 +1052,11 @@ mod tests {
         let filler = filler();
         let mut files: Vec<(&str, FileKind, &[&str])> = vec![
             ("tenancy.txt", FileKind::Doc, &["The lease clause about pets: dogs and cats are allowed with a deposit."]),
-            ("invoice.txt", FileKind::Doc, &["Invoice INV-20418 for the kitchen renovation, total due in thirty days."]),
+            (
+                "invoice.txt",
+                FileKind::Doc,
+                &["Invoice INV-20418 for the kitchen renovation, total due in thirty days."],
+            ),
             ("hoa-don.txt", FileKind::Doc, &["Hóa đơn tiền điện tháng mười, tổng cộng phải thanh toán trước ngày 15."]),
         ];
         let owned: Vec<[&str; 1]> = filler.iter().map(|(_, text)| [text.as_str()]).collect();
@@ -976,7 +1113,15 @@ mod tests {
         let folder = tempfile::tempdir().unwrap();
         let filler = filler();
         let mut files: Vec<(&str, FileKind, &[&str])> = vec![
-            ("talk.mp3", FileKind::Audio, &["Welcome and introductions.", "How sleep affects memory and learning.", "Questions from the audience."]),
+            (
+                "talk.mp3",
+                FileKind::Audio,
+                &[
+                    "Welcome and introductions.",
+                    "How sleep affects memory and learning.",
+                    "Questions from the audience.",
+                ],
+            ),
             ("sleep.txt", FileKind::Doc, &["Sleep, memory and learning: notes from the lecture."]),
         ];
         let owned: Vec<[&str; 1]> = filler.iter().map(|(_, text)| [text.as_str()]).collect();
@@ -994,7 +1139,15 @@ mod tests {
         // More like the lecture notes: the talk, and not the notes themselves.
         let notes = hits.iter().find(|hit| hit.path.ends_with("sleep.txt")).unwrap();
         let vector = searcher.vector_of(searcher.first_vector_segment(notes.file).unwrap()).unwrap().unwrap();
-        let similar = searcher.search(&Query::default(), Some(&vector), None, Some(notes.file), &Settings { floor: 0.0, ..Settings::default() }).unwrap();
+        let similar = searcher
+            .search(
+                &Query::default(),
+                Some(&vector),
+                None,
+                Some(notes.file),
+                &Settings { floor: 0.0, ..Settings::default() },
+            )
+            .unwrap();
         assert_eq!(names(&similar)[0], "talk.mp3");
         assert!(!names(&similar).contains(&"sleep.txt".to_string()));
     }

@@ -171,14 +171,14 @@ impl Session {
         }
     }
 
-    fn hits(&mut self, request: &Value, query: &Query, vector: Option<Vec<f32>>, exclude: Option<i64>) -> Result<Value> {
+    fn hits(
+        &mut self, request: &Value, query: &Query, vector: Option<Vec<f32>>, exclude: Option<i64>,
+    ) -> Result<Value> {
         let started = Instant::now();
-        let negative = if query.negative.is_empty() {
-            None
-        } else {
-            Some(self.embed_query(&query.negative.join(" "))?)
-        };
-        let hits = self.searcher.search(query, vector.as_deref(), negative.as_deref(), exclude, &Self::settings(request))?;
+        let negative =
+            if query.negative.is_empty() { None } else { Some(self.embed_query(&query.negative.join(" "))?) };
+        let hits =
+            self.searcher.search(query, vector.as_deref(), negative.as_deref(), exclude, &Self::settings(request))?;
         Ok(json!({
             "hits": hits,
             "ms": started.elapsed().as_secs_f64() * 1000.0,
@@ -348,7 +348,10 @@ impl Session {
             }
             "collection_seen" => {
                 let id = request["collection"].as_i64().ok_or_else(|| anyhow!("which collection?"))?;
-                self.searcher.store.db.execute("UPDATE collections SET mark = ? WHERE id = ?", (self.newest_file(), id))?;
+                self.searcher
+                    .store
+                    .db
+                    .execute("UPDATE collections SET mark = ? WHERE id = ?", (self.newest_file(), id))?;
                 Ok(json!({}))
             }
             // Suggestions for a tidier photo library. Nothing is moved or deleted here.

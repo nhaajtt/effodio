@@ -19,7 +19,7 @@ use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM
 use windows::Win32::System::Power::{GetSystemPowerStatus, SYSTEM_POWER_STATUS};
 use windows::Win32::UI::Shell::{
     AssocQueryStringW, IShellItemImageFactory, SHCreateItemFromParsingName, ShellExecuteW, ASSOCF_NONE,
-    ASSOCSTR_EXECUTABLE, DROPFILES, SIIGBF_BIGGERSIZEOK, SIIGBF_THUMBNAILONLY, SIIGBF_ICONONLY,
+    ASSOCSTR_EXECUTABLE, DROPFILES, SIIGBF_BIGGERSIZEOK, SIIGBF_ICONONLY, SIIGBF_THUMBNAILONLY,
 };
 use windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
 
@@ -36,8 +36,7 @@ fn wide(text: &str) -> Vec<u16> {
 fn shell_image(path: &Path, side: i32, icon: bool) -> Result<(u32, u32, Vec<u8>)> {
     COM.with(|_| ());
     unsafe {
-        let factory: IShellItemImageFactory =
-            SHCreateItemFromParsingName(&HSTRING::from(path.as_os_str()), None)?;
+        let factory: IShellItemImageFactory = SHCreateItemFromParsingName(&HSTRING::from(path.as_os_str()), None)?;
         let flags = if icon { SIIGBF_ICONONLY } else { SIIGBF_THUMBNAILONLY | SIIGBF_BIGGERSIZEOK };
         let bitmap: HBITMAP = factory.GetImage(SIZE { cx: side, cy: side }, flags)?;
         let result = bitmap_pixels(bitmap);
@@ -69,7 +68,8 @@ unsafe fn bitmap_pixels(bitmap: HBITMAP) -> Result<(u32, u32, Vec<u8>)> {
     };
     let mut pixels = vec![0u8; (width * height * 4) as usize];
     let screen = GetDC(HWND::default());
-    let lines = GetDIBits(screen, bitmap, 0, height as u32, Some(pixels.as_mut_ptr() as *mut _), &mut header, DIB_RGB_COLORS);
+    let lines =
+        GetDIBits(screen, bitmap, 0, height as u32, Some(pixels.as_mut_ptr() as *mut _), &mut header, DIB_RGB_COLORS);
     ReleaseDC(HWND::default(), screen);
     if lines == 0 {
         bail!("can't copy the thumbnail");
@@ -118,14 +118,28 @@ pub fn default_program(extension: &str) -> Option<PathBuf> {
     unsafe {
         let extension = wide(extension);
         let mut length = 0u32;
-        let _ = AssocQueryStringW(ASSOCF_NONE, ASSOCSTR_EXECUTABLE, PCWSTR(extension.as_ptr()), None, PWSTR::null(), &mut length);
+        let _ = AssocQueryStringW(
+            ASSOCF_NONE,
+            ASSOCSTR_EXECUTABLE,
+            PCWSTR(extension.as_ptr()),
+            None,
+            PWSTR::null(),
+            &mut length,
+        );
         if length == 0 {
             return None;
         }
         let mut buffer = vec![0u16; length as usize];
-        AssocQueryStringW(ASSOCF_NONE, ASSOCSTR_EXECUTABLE, PCWSTR(extension.as_ptr()), None, PWSTR(buffer.as_mut_ptr()), &mut length)
-            .ok()
-            .ok()?;
+        AssocQueryStringW(
+            ASSOCF_NONE,
+            ASSOCSTR_EXECUTABLE,
+            PCWSTR(extension.as_ptr()),
+            None,
+            PWSTR(buffer.as_mut_ptr()),
+            &mut length,
+        )
+        .ok()
+        .ok()?;
         let end = buffer.iter().position(|&unit| unit == 0).unwrap_or(buffer.len());
         Some(PathBuf::from(String::from_utf16_lossy(&buffer[..end])))
     }
@@ -133,7 +147,8 @@ pub fn default_program(extension: &str) -> Option<PathBuf> {
 
 /// Opens a page of Effodio's website in the browser. Only that site: `rest` is what follows its address.
 pub fn open_site(rest: &str) -> Result<()> {
-    let rest: String = rest.chars().filter(|c| c.is_ascii_alphanumeric() || "?#=&.-_/".contains(*c)).take(120).collect();
+    let rest: String =
+        rest.chars().filter(|c| c.is_ascii_alphanumeric() || "?#=&.-_/".contains(*c)).take(120).collect();
     shell_open(&format!("https://effodio.nhaajt.com/{}", rest.trim_start_matches('/')), None)
 }
 
@@ -179,11 +194,8 @@ pub fn open(path: &Path, page: Option<u32>, second: Option<f64>) -> Result<()> {
     }
     let extension = path.extension().map(|e| format!(".{}", e.to_string_lossy())).unwrap_or_default();
     let program = default_program(&extension);
-    let name = program
-        .as_ref()
-        .and_then(|p| p.file_name())
-        .map(|n| n.to_string_lossy().to_lowercase())
-        .unwrap_or_default();
+    let name =
+        program.as_ref().and_then(|p| p.file_name()).map(|n| n.to_string_lossy().to_lowercase()).unwrap_or_default();
     if let (Some(page), Some(program)) = (page.filter(|&page| page > 1), program.as_ref()) {
         let program_text = program.to_string_lossy();
         let arguments = match name.as_str() {

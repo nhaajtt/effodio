@@ -72,12 +72,33 @@ impl Default for Options {
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(tag = "event", rename_all = "snake_case")]
 pub enum Event {
-    Started { total: usize },
-    File { path: String, kind: FileKind, done: usize, total: usize, seconds: f64, segments: usize },
-    Failed { path: String, error: String, done: usize, total: usize },
+    Started {
+        total: usize,
+    },
+    File {
+        path: String,
+        kind: FileKind,
+        done: usize,
+        total: usize,
+        seconds: f64,
+        segments: usize,
+    },
+    Failed {
+        path: String,
+        error: String,
+        done: usize,
+        total: usize,
+    },
     /// The first pass is over; long files now get their later parts.
-    Deepening { total: usize },
-    Finished { indexed: usize, failed: usize, seconds: f64, stopped: bool },
+    Deepening {
+        total: usize,
+    },
+    Finished {
+        indexed: usize,
+        failed: usize,
+        seconds: f64,
+        stopped: bool,
+    },
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -110,8 +131,13 @@ fn file_title(path: &Path) -> String {
 
 /// What keyword search knows a file by: its name and the two folders above it.
 fn search_name(path: &Path) -> String {
-    let mut parts: Vec<String> =
-        path.ancestors().skip(1).take(2).filter_map(|p| p.file_name()).map(|n| n.to_string_lossy().into_owned()).collect();
+    let mut parts: Vec<String> = path
+        .ancestors()
+        .skip(1)
+        .take(2)
+        .filter_map(|p| p.file_name())
+        .map(|n| n.to_string_lossy().into_owned())
+        .collect();
     parts.reverse();
     let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
     // "IMG_2214.jpg" also as "IMG 2214 jpg", so that parts of a name match.
@@ -207,7 +233,14 @@ impl<'a, E: Embed> Indexer<'a, E> {
                 let mut info = file.info.clone();
                 info.extend(read.info);
                 self.store.save(
-                    file.id, &search_name(path), &read.segments, &info, state, progress, hash.as_deref(), !later,
+                    file.id,
+                    &search_name(path),
+                    &read.segments,
+                    &info,
+                    state,
+                    progress,
+                    hash.as_deref(),
+                    !later,
                 )?;
                 summary.indexed += 1;
                 on_event(Event::File {
@@ -223,8 +256,10 @@ impl<'a, E: Embed> Indexer<'a, E> {
                 let message = format!("{error:#}");
                 if later {
                     // The first part stays searchable; the rest is given up on.
-                    self.store.db.execute("UPDATE files SET state = 'done', error = ? WHERE id = ?",
-                                          rusqlite::params![message, file.id])?;
+                    self.store.db.execute(
+                        "UPDATE files SET state = 'done', error = ? WHERE id = ?",
+                        rusqlite::params![message, file.id],
+                    )?;
                 } else {
                     self.store.fail(file.id, &message)?;
                 }
@@ -576,7 +611,10 @@ impl Embed for FakeEmbed {
             .iter()
             .map(|text| {
                 // The prompt's own words are the same for every text.
-                let body = text.rsplit_once(" | text: ").or_else(|| text.rsplit_once(" | query: ")).map_or(text.as_str(), |p| p.1);
+                let body = text
+                    .rsplit_once(" | text: ")
+                    .or_else(|| text.rsplit_once(" | query: "))
+                    .map_or(text.as_str(), |p| p.1);
                 Self::vector(body)
             })
             .collect())
@@ -631,11 +669,15 @@ mod tests {
         let folder = tempfile::tempdir().unwrap();
         let files = folder.path().join("files");
         fs::create_dir_all(&files).unwrap();
-        fs::write(files.join("lease.txt"), "The lease allows pets with a deposit of two hundred dollars. ".repeat(4)).unwrap();
+        fs::write(files.join("lease.txt"), "The lease allows pets with a deposit of two hundred dollars. ".repeat(4))
+            .unwrap();
         fs::write(files.join("numbers.csv"), "1,2,3,4\n".repeat(200)).unwrap();
         fs::write(files.join("broken.docx"), "not a zip").unwrap();
-        image::RgbImage::from_fn(200, 200, |x, y| image::Rgb([(x * 7919 % 251) as u8, (y * 104729 % 241) as u8, ((x * y) % 239) as u8]))
-            .save(files.join("beach.png")).unwrap();
+        image::RgbImage::from_fn(200, 200, |x, y| {
+            image::Rgb([(x * 7919 % 251) as u8, (y * 104729 % 241) as u8, ((x * y) % 239) as u8])
+        })
+        .save(files.join("beach.png"))
+        .unwrap();
         let options = Options { ocr: false, ..Default::default() };
         let (store, summary, events) = indexed(folder.path(), options);
         assert_eq!(summary, Summary { indexed: 3, failed: 1, stopped: false });
@@ -645,12 +687,15 @@ mod tests {
         assert_eq!((counts.pending, counts.failed), (0, 1));
         // lease: name + 1 passage with a vector; numbers: name + passage without one; beach: name + image.
         assert_eq!(counts.vectors, 2);
-        let found: i64 = store.db.query_row("SELECT COUNT(*) FROM fts WHERE fts MATCH 'deposit'", [], |r| r.get(0)).unwrap();
+        let found: i64 =
+            store.db.query_row("SELECT COUNT(*) FROM fts WHERE fts MATCH 'deposit'", [], |r| r.get(0)).unwrap();
         assert_eq!(found, 1);
-        let by_name: i64 = store.db.query_row("SELECT COUNT(*) FROM fts WHERE fts MATCH 'name:beach'", [], |r| r.get(0)).unwrap();
+        let by_name: i64 =
+            store.db.query_row("SELECT COUNT(*) FROM fts WHERE fts MATCH 'name:beach'", [], |r| r.get(0)).unwrap();
         assert_eq!(by_name, 1);
         assert!(store.failures(5).unwrap()[0].0.ends_with("broken.docx"));
-        let hashed: i64 = store.db.query_row("SELECT COUNT(*) FROM files WHERE hash IS NOT NULL", [], |r| r.get(0)).unwrap();
+        let hashed: i64 =
+            store.db.query_row("SELECT COUNT(*) FROM files WHERE hash IS NOT NULL", [], |r| r.get(0)).unwrap();
         assert_eq!(hashed, 3);
     }
 
@@ -666,11 +711,18 @@ mod tests {
         // Once in the first pass and once more for the rest.
         assert_eq!(summary.indexed, 2);
         assert!(events.iter().any(|e| matches!(e, Event::Deepening { total: 1 })));
-        let (early, late): (i64, i64) = store.db.query_row(
-            "SELECT SUM(late = 0 AND kind = 'chunk'), SUM(late = 1) FROM segments", [], |r| Ok((r.get(0)?, r.get(1)?))).unwrap();
+        let (early, late): (i64, i64) = store
+            .db
+            .query_row("SELECT SUM(late = 0 AND kind = 'chunk'), SUM(late = 1) FROM segments", [], |r| {
+                Ok((r.get(0)?, r.get(1)?))
+            })
+            .unwrap();
         assert_eq!(early, 3);
         assert!(late >= 5);
-        let total: i64 = store.db.query_row("SELECT COUNT(DISTINCT loc) FROM segments WHERE kind = 'chunk'", [], |r| r.get(0)).unwrap();
+        let total: i64 = store
+            .db
+            .query_row("SELECT COUNT(DISTINCT loc) FROM segments WHERE kind = 'chunk'", [], |r| r.get(0))
+            .unwrap();
         assert_eq!(total, early + late);
         assert_eq!(store.counts().unwrap().partial, 0);
     }
@@ -681,19 +733,27 @@ mod tests {
         let files = folder.path().join("files");
         fs::create_dir_all(&files).unwrap();
         for index in 0..5 {
-            fs::write(files.join(format!("note {index}.txt")), "A note with enough words to be worth a vector, surely.").unwrap();
+            fs::write(
+                files.join(format!("note {index}.txt")),
+                "A note with enough words to be worth a vector, surely.",
+            )
+            .unwrap();
         }
         let mut store = Store::open(&folder.path().join("index.db")).unwrap();
-        let found = crawl(&[Root { path: files.clone(), exclude: vec![] }], &Custom::default(), &AtomicBool::new(false));
+        let found =
+            crawl(&[Root { path: files.clone(), exclude: vec![] }], &Custom::default(), &AtomicBool::new(false));
         store.reconcile(&[files], &found.files).unwrap();
         let (stop, pause) = (AtomicBool::new(false), AtomicBool::new(false));
         let mut embed = FakeEmbed;
-        let mut indexer = Indexer { store: &mut store, embed: &mut embed, options: Options::default(), stop: &stop, pause: &pause };
-        let summary = indexer.run(|event| {
-            if matches!(event, Event::File { done: 2, .. }) {
-                stop.store(true, Ordering::Relaxed);
-            }
-        }).unwrap();
+        let mut indexer =
+            Indexer { store: &mut store, embed: &mut embed, options: Options::default(), stop: &stop, pause: &pause };
+        let summary = indexer
+            .run(|event| {
+                if matches!(event, Event::File { done: 2, .. }) {
+                    stop.store(true, Ordering::Relaxed);
+                }
+            })
+            .unwrap();
         assert!(summary.stopped);
         assert_eq!(summary.indexed, 2);
         assert_eq!(store.counts().unwrap().pending, 3);

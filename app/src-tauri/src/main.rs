@@ -420,7 +420,28 @@ fn app_version() -> &'static str {
 
 #[tauri::command(async)]
 fn ask(app: AppHandle, request: Value) -> Result<Value, String> {
-    let slow = matches!(request["op"].as_str(), Some("example" | "duplicates" | "map" | "page" | "frame" | "tidy" | "albums" | "thread" | "collections" | "people" | "faces_enable" | "face_example" | "faces_of" | "face_name" | "ask_files" | "update_check" | "people_merge"));
+    let slow = matches!(
+        request["op"].as_str(),
+        Some(
+            "example"
+                | "duplicates"
+                | "map"
+                | "page"
+                | "frame"
+                | "tidy"
+                | "albums"
+                | "thread"
+                | "collections"
+                | "people"
+                | "faces_enable"
+                | "face_example"
+                | "faces_of"
+                | "face_name"
+                | "ask_files"
+                | "update_check"
+                | "people_merge"
+        )
+    );
     state(&app).serve.ask(request, Duration::from_secs(if slow { 180 } else { 60 })).map_err(text)
 }
 
@@ -451,8 +472,11 @@ fn set_config(app: AppHandle, settings: Config) -> Result<Config, String> {
         }
         shared.index_state.lock().unwrap().paused = settings.paused;
     }
-    if settings.roots != before.roots || settings.rules != before.rules || settings.ocr != before.ocr
-        || (before.paused && !settings.paused) || (settings.setup_done && !before.setup_done)
+    if settings.roots != before.roots
+        || settings.rules != before.rules
+        || settings.ocr != before.ocr
+        || (before.paused && !settings.paused)
+        || (settings.setup_done && !before.setup_done)
     {
         start_index(&app, None);
     }
@@ -549,7 +573,11 @@ fn pick_folders(app: AppHandle) -> Vec<String> {
     shared.pinned.store(true, Ordering::Relaxed);
     let picked = app.dialog().file().blocking_pick_folders().unwrap_or_default();
     shared.pinned.store(false, Ordering::Relaxed);
-    picked.into_iter().filter_map(|path| path.into_path().ok()).map(|path| path.to_string_lossy().into_owned()).collect()
+    picked
+        .into_iter()
+        .filter_map(|path| path.into_path().ok())
+        .map(|path| path.to_string_lossy().into_owned())
+        .collect()
 }
 
 /// A picture, a recording or a video to search by.
@@ -560,10 +588,13 @@ fn pick_example(app: AppHandle) -> Option<String> {
     let picked = app
         .dialog()
         .file()
-        .add_filter("Pictures, sound and video", &[
-            "jpg", "jpeg", "png", "webp", "gif", "bmp", "heic", "mp3", "wav", "m4a", "flac", "ogg", "mp4", "mov",
-            "mkv", "webm",
-        ])
+        .add_filter(
+            "Pictures, sound and video",
+            &[
+                "jpg", "jpeg", "png", "webp", "gif", "bmp", "heic", "mp3", "wav", "m4a", "flac", "ogg", "mp4", "mov",
+                "mkv", "webm",
+            ],
+        )
         .blocking_pick_file();
     shared.pinned.store(false, Ordering::Relaxed);
     picked.and_then(|path| path.into_path().ok()).map(|path| path.to_string_lossy().into_owned())
@@ -696,15 +727,18 @@ fn tray(app: &AppHandle) -> tauri::Result<()> {
     let pause = MenuItem::with_id(app, "pause", "Pause indexing", true, None::<&str>)?;
     let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit Effodio", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[
-        &search,
-        &window,
-        &PredefinedMenuItem::separator(app)?,
-        &pause,
-        &settings,
-        &PredefinedMenuItem::separator(app)?,
-        &quit,
-    ])?;
+    let menu = Menu::with_items(
+        app,
+        &[
+            &search,
+            &window,
+            &PredefinedMenuItem::separator(app)?,
+            &pause,
+            &settings,
+            &PredefinedMenuItem::separator(app)?,
+            &quit,
+        ],
+    )?;
     *state(app).pause_item.lock().unwrap() = Some(pause);
     let mut builder = TrayIconBuilder::with_id("main").menu(&menu).show_menu_on_left_click(false).tooltip("Effodio");
     if let Some(icon) = app.default_window_icon() {
@@ -765,7 +799,10 @@ fn main() {
                 .build(),
         )
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--hidden"])))
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--hidden"]),
+        ))
         .manage(App {
             serve: Serve::new(job.clone()),
             job,
@@ -783,9 +820,32 @@ fn main() {
             launch: Mutex::new(None),
         })
         .invoke_handler(tauri::generate_handler![
-            ask, open_site, app_version, get_config, set_config, status, index_state, index_now, index_retry, estimate, model_download,
-            speed_check, pick_folders, pick_example, suggested_folders, save_example, thumbnail, open_result, reveal,
-            copy_files, open_main, hide_panel, pin_panel, quit, ocr_languages, launch_target,
+            ask,
+            open_site,
+            app_version,
+            get_config,
+            set_config,
+            status,
+            index_state,
+            index_now,
+            index_retry,
+            estimate,
+            model_download,
+            speed_check,
+            pick_folders,
+            pick_example,
+            suggested_folders,
+            save_example,
+            thumbnail,
+            open_result,
+            reveal,
+            copy_files,
+            open_main,
+            hide_panel,
+            pin_panel,
+            quit,
+            ocr_languages,
+            launch_target,
         ])
         .setup(move |app| {
             let handle = app.handle().clone();

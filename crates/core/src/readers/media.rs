@@ -166,7 +166,14 @@ pub fn windows(path: &Path, from_second: f64) -> Result<Windows> {
         .stderr(Stdio::null())
         .spawn()
         .context("can't run ffmpeg")?;
-    Ok(Windows { stream: Stream { child }, buffer: Vec::new(), start: (from_second as usize), done: false, fresh: 0, emitted: false })
+    Ok(Windows {
+        stream: Stream { child },
+        buffer: Vec::new(),
+        start: (from_second as usize),
+        done: false,
+        fresh: 0,
+        emitted: false,
+    })
 }
 
 impl Iterator for Windows {
@@ -191,7 +198,11 @@ impl Iterator for Windows {
                 }
                 self.fresh += filled / 4;
                 self.buffer.extend(
-                    bytes[..filled - filled % 4].as_chunks::<4>().0.iter().map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]])),
+                    bytes[..filled - filled % 4]
+                        .as_chunks::<4>()
+                        .0
+                        .iter()
+                        .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]])),
                 );
             }
             // Less than two new seconds at the end add nothing the window before didn't hear.
@@ -326,13 +337,20 @@ pub fn signature(picture: &Picture) -> [u8; 256] {
     }
     for cell_y in 0..16 {
         for cell_x in 0..16 {
-            let (x0, x1) = (cell_x * picture.width / 16, ((cell_x + 1) * picture.width / 16).max(cell_x * picture.width / 16 + 1));
-            let (y0, y1) = (cell_y * picture.height / 16, ((cell_y + 1) * picture.height / 16).max(cell_y * picture.height / 16 + 1));
+            let (x0, x1) =
+                (cell_x * picture.width / 16, ((cell_x + 1) * picture.width / 16).max(cell_x * picture.width / 16 + 1));
+            let (y0, y1) = (
+                cell_y * picture.height / 16,
+                ((cell_y + 1) * picture.height / 16).max(cell_y * picture.height / 16 + 1),
+            );
             let (mut sum, mut count) = (0u64, 0u64);
             for y in (y0..y1.min(picture.height)).step_by(2) {
                 for x in (x0..x1.min(picture.width)).step_by(2) {
                     let p = (y * picture.width + x) * 3;
-                    sum += (picture.rgb[p] as u64 * 299 + picture.rgb[p + 1] as u64 * 587 + picture.rgb[p + 2] as u64 * 114) / 1000;
+                    sum += (picture.rgb[p] as u64 * 299
+                        + picture.rgb[p + 1] as u64 * 587
+                        + picture.rgb[p + 2] as u64 * 114)
+                        / 1000;
                     count += 1;
                 }
             }

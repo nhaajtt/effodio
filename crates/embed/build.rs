@@ -4,12 +4,11 @@ use std::{env, fs, path::PathBuf};
 /// built executables so `cargo run` and `cargo test` find them.
 fn main() {
     let manifest = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-    let llama = env::var("EFFODIO_LLAMA_DIR")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| manifest.join("../../vendor/llama-cpu"));
-    let llama = llama.canonicalize().unwrap_or_else(|_| {
-        panic!("llama.cpp isn't built at {}: run scripts\\build-llama.cmd", llama.display())
-    });
+    let llama =
+        env::var("EFFODIO_LLAMA_DIR").map(PathBuf::from).unwrap_or_else(|_| manifest.join("../../vendor/llama-cpu"));
+    let llama = llama
+        .canonicalize()
+        .unwrap_or_else(|_| panic!("llama.cpp isn't built at {}: run scripts\\build-llama.cmd", llama.display()));
     // cl.exe doesn't take the \\?\ form canonicalize gives on Windows.
     let llama = PathBuf::from(llama.to_string_lossy().trim_start_matches(r"\\?\"));
 

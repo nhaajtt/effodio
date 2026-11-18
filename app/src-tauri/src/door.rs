@@ -88,7 +88,8 @@ fn handle(app: &AppHandle, stream: &mut TcpStream, token: &str, port: u16) {
         let value = value.trim();
         match name.trim().to_ascii_lowercase().as_str() {
             "authorization" => {
-                authorized = value.strip_prefix("Bearer ").is_some_and(|given| same(given.as_bytes(), token.as_bytes()));
+                authorized =
+                    value.strip_prefix("Bearer ").is_some_and(|given| same(given.as_bytes(), token.as_bytes()));
             }
             // A web page that points another name at 127.0.0.1 sends that name here.
             "host" => host_ok = value == format!("127.0.0.1:{port}") || value == format!("localhost:{port}"),
@@ -108,7 +109,11 @@ fn handle(app: &AppHandle, stream: &mut TcpStream, token: &str, port: u16) {
     }
     let (path, query) = target.split_once('?').unwrap_or((target, ""));
     let parameter = |name: &str| -> Option<String> {
-        query.split('&').filter_map(|pair| pair.split_once('=')).find(|(key, _)| *key == name).map(|(_, v)| percent_decode(v))
+        query
+            .split('&')
+            .filter_map(|pair| pair.split_once('='))
+            .find(|(key, _)| *key == name)
+            .map(|(_, v)| percent_decode(v))
     };
     let shared = app.state::<App>();
     match path {

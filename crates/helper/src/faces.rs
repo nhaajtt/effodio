@@ -65,8 +65,10 @@ pub fn download(folder: &Path) -> Result<()> {
         if target.exists() {
             continue;
         }
-        let response =
-            ureq::get(&file.url()).set("User-Agent", "effodio").call().with_context(|| format!("can't download {}", file.name))?;
+        let response = ureq::get(&file.url())
+            .set("User-Agent", "effodio")
+            .call()
+            .with_context(|| format!("can't download {}", file.name))?;
         let mut bytes = Vec::with_capacity(file.bytes as usize);
         response.into_reader().take(file.bytes + 1).read_to_end(&mut bytes)?;
         let digest: String = Sha256::digest(&bytes).iter().map(|byte| format!("{byte:02x}")).collect();
@@ -175,7 +177,9 @@ pub fn scan(store: &mut Store, stop: &AtomicBool) -> Result<usize> {
         }
         change.commit()?;
         done += found.len();
-        emit(&json!({"event": "file", "done": done, "total": waiting.len(), "path": batch.last().map(|(_, path)| path)}));
+        emit(
+            &json!({"event": "file", "done": done, "total": waiting.len(), "path": batch.last().map(|(_, path)| path)}),
+        );
     }
     spread_names(&store.db)?;
     Ok(done)
@@ -203,7 +207,9 @@ fn crop(db: &Connection, face: i64) -> Result<std::path::PathBuf> {
     let down = (side as usize).clamp(1, picture.height - top);
     let mut rgb = Vec::with_capacity(across * down * 3);
     for row in top..top + down {
-        rgb.extend_from_slice(&picture.rgb[(row * picture.width + left) * 3..(row * picture.width + left + across) * 3]);
+        rgb.extend_from_slice(
+            &picture.rgb[(row * picture.width + left) * 3..(row * picture.width + left + across) * 3],
+        );
     }
     let cut = Picture { width: across, height: down, rgb }.fit(192);
     std::fs::create_dir_all(&folder)?;
@@ -229,8 +235,16 @@ pub fn handle(store: &Store, request: &Value) -> Option<Result<Value>> {
     let op = request["op"].as_str().unwrap_or_default();
     if !matches!(
         op,
-        "faces_status" | "faces_enable" | "faces_wipe" | "faces_of" | "face_name" | "people" | "person_rename" | "people_merge"
-            | "person_forget" | "face_example"
+        "faces_status"
+            | "faces_enable"
+            | "faces_wipe"
+            | "faces_of"
+            | "face_name"
+            | "people"
+            | "person_rename"
+            | "people_merge"
+            | "person_forget"
+            | "face_example"
     ) {
         return None;
     }
@@ -439,9 +453,16 @@ fn answer(store: &Store, op: &str, request: &Value) -> Result<Value> {
                     .query_row("SELECT id FROM segments WHERE file = ? ORDER BY id LIMIT 1", [file], |row| row.get(0))
                     .unwrap_or(0);
                 for (key, value) in [
-                    ("score", json!(closeness)), ("z", Value::Null), ("cosine", json!(closeness)), ("words", json!(0.0)),
-                    ("segment", json!(segment)), ("segment_kind", json!("image")), ("loc", Value::Null),
-                    ("loc_end", Value::Null), ("excerpt", Value::Null), ("strong", json!(closeness >= SAME)),
+                    ("score", json!(closeness)),
+                    ("z", Value::Null),
+                    ("cosine", json!(closeness)),
+                    ("words", json!(0.0)),
+                    ("segment", json!(segment)),
+                    ("segment_kind", json!("image")),
+                    ("loc", Value::Null),
+                    ("loc_end", Value::Null),
+                    ("excerpt", Value::Null),
+                    ("strong", json!(closeness >= SAME)),
                 ] {
                     hit[key] = value;
                 }
@@ -470,7 +491,10 @@ pub fn check(paths: &[String]) -> Result<()> {
             Path::new(path).file_name().unwrap_or_default().to_string_lossy(),
             found.len(),
             started.elapsed().as_secs_f64() * 1000.0,
-            found.first().map(|face| format!(", first {:.2} sure, {:.0}% wide", face.score, face.width * 100.0)).unwrap_or_default(),
+            found
+                .first()
+                .map(|face| format!(", first {:.2} sure, {:.0}% wide", face.score, face.width * 100.0))
+                .unwrap_or_default(),
         );
         firsts.push(found.into_iter().next());
     }

@@ -202,8 +202,15 @@ impl Speed {
     /// A guess for a computer that hasn't been measured: a mid-range processor.
     pub fn guess() -> Speed {
         Speed {
-            device: "cpu".into(), image: 1.5, screenshot: 3.0, passage: 0.4, sound: 3.0, gpu_name: None,
-            agreement: None, cpu_image: None, gpu_image: None,
+            device: "cpu".into(),
+            image: 1.5,
+            screenshot: 3.0,
+            passage: 0.4,
+            sound: 3.0,
+            gpu_name: None,
+            agreement: None,
+            cpu_image: None,
+            gpu_image: None,
         }
     }
 }

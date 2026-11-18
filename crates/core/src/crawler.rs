@@ -35,7 +35,8 @@ fn modified_seconds(metadata: &std::fs::Metadata) -> f64 {
 
 /// What one file is to the index, or None when the rules leave it out (the watcher asks about single files).
 pub fn see(path: &Path, roots: &[Root], custom: &Custom) -> Option<Seen> {
-    let root = roots.iter().filter(|root| path.starts_with(&root.path)).max_by_key(|root| root.path.as_os_str().len())?;
+    let root =
+        roots.iter().filter(|root| path.starts_with(&root.path)).max_by_key(|root| root.path.as_os_str().len())?;
     let relative = path.strip_prefix(&root.path).ok()?;
     if root.exclude.iter().any(|excluded| relative.starts_with(excluded)) {
         return None;
@@ -203,11 +204,14 @@ mod tests {
             .map(|f| (f.path.strip_prefix(base).unwrap().to_string_lossy().replace('\\', "/"), f.kind))
             .collect();
         names.sort_by(|a, b| a.0.cmp(&b.0));
-        assert_eq!(names, vec![
-            ("notes.txt".to_string(), FileKind::Doc),
-            ("project/docs/Screenshot 1.png".to_string(), FileKind::Screenshot),
-            ("trip/beach.jpg".to_string(), FileKind::Image),
-        ]);
+        assert_eq!(
+            names,
+            vec![
+                ("notes.txt".to_string(), FileKind::Doc),
+                ("project/docs/Screenshot 1.png".to_string(), FileKind::Screenshot),
+                ("trip/beach.jpg".to_string(), FileKind::Image),
+            ]
+        );
         // The watcher's single-file check agrees with the walk.
         assert!(see(&base.join("trip/beach.jpg"), &roots, &custom).is_some());
         assert!(see(&base.join("project/README.md"), &roots, &custom).is_none());

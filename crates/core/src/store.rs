@@ -187,15 +187,20 @@ impl Store {
             let mut known = std::collections::HashMap::new();
             let mut select = transaction.prepare("SELECT id, path, size, mtime, root FROM files")?;
             let rows = select.query_map([], |row| {
-                Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?, row.get::<_, i64>(2)?, row.get::<_, f64>(3)?,
-                    row.get::<_, String>(4)?))
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, i64>(2)?,
+                    row.get::<_, f64>(3)?,
+                    row.get::<_, String>(4)?,
+                ))
             })?;
             for row in rows {
                 let (id, path, size, mtime, root) = row?;
                 known.insert(path, (id, size, mtime, root));
             }
-            let mut insert = transaction
-                .prepare("INSERT INTO files(path, root, kind, size, mtime) VALUES(?, ?, ?, ?, ?)")?;
+            let mut insert =
+                transaction.prepare("INSERT INTO files(path, root, kind, size, mtime) VALUES(?, ?, ?, ?, ?)")?;
             let mut update = transaction.prepare(
                 "UPDATE files SET size = ?, mtime = ?, kind = ?, root = ?, state = 'pending', progress = 0,
                  error = NULL, hash = NULL WHERE id = ?",
@@ -273,8 +278,7 @@ impl Store {
         let prefix = format!("{}%", like_escape(&format!("{exact}{}", std::path::MAIN_SEPARATOR)));
         let transaction = self.db.transaction()?;
         let ids: Vec<i64> = {
-            let mut select =
-                transaction.prepare("SELECT id FROM files WHERE path = ? OR path LIKE ? ESCAPE '\\'")?;
+            let mut select = transaction.prepare("SELECT id FROM files WHERE path = ? OR path LIKE ? ESCAPE '\\'")?;
             let rows = select.query_map(params![exact, prefix], |row| row.get(0))?;
             rows.collect::<rusqlite::Result<_>>()?
         };
@@ -375,10 +379,8 @@ impl Store {
                 }
             }
         }
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_secs_f64())
-            .unwrap_or(0.0);
+        let now =
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs_f64()).unwrap_or(0.0);
         transaction.execute(
             "UPDATE files SET state = ?, progress = ?, info = ?, error = NULL, indexed_at = ?,
              hash = coalesce(?, hash) WHERE id = ?",
@@ -402,9 +404,8 @@ impl Store {
     pub fn counts(&self) -> Result<Counts> {
         let mut counts = Counts::default();
         let mut select = self.db.prepare("SELECT kind, state, COUNT(*) FROM files GROUP BY kind, state")?;
-        let rows = select.query_map([], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?, row.get::<_, i64>(2)?))
-        })?;
+        let rows = select
+            .query_map([], |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?, row.get::<_, i64>(2)?)))?;
         let mut by_kind = std::collections::BTreeMap::new();
         for row in rows {
             let (kind, state, count) = row?;
@@ -477,19 +478,34 @@ mod tests {
         let folder = tempfile::tempdir().unwrap();
         let mut store = Store::open(&folder.path().join("index.db")).unwrap();
         let roots = vec![PathBuf::from("C:\\root")];
-        assert_eq!(store.reconcile(&roots, &[seen("C:\\root\\a.txt", 10), seen("C:\\root\\b.txt", 20)]).unwrap(), (2, 0, 0));
+        assert_eq!(
+            store.reconcile(&roots, &[seen("C:\\root\\a.txt", 10), seen("C:\\root\\b.txt", 20)]).unwrap(),
+            (2, 0, 0)
+        );
         let a = store.file_by_path("C:\\root\\a.txt").unwrap().unwrap();
         let mut segment = Segment::new(SegmentKind::Chunk, Modality::Text);
         segment.text = Some("the lease allows pets".into());
         segment.vector = Some(vec![0.1; DIMENSION]);
-        store.save(a.id, "a.txt", &[Segment::new(SegmentKind::Name, Modality::None), segment], &Default::default(), "done", 0, None, true).unwrap();
+        store
+            .save(
+                a.id,
+                "a.txt",
+                &[Segment::new(SegmentKind::Name, Modality::None), segment],
+                &Default::default(),
+                "done",
+                0,
+                None,
+                true,
+            )
+            .unwrap();
         assert_eq!(store.counts().unwrap().vectors, 1);
         // b is gone and a changed: a's segments go, and it's pending again.
         let roots: Vec<PathBuf> = vec![];
         assert_eq!(store.reconcile(&roots, &[seen("C:\\root\\a.txt", 11)]).unwrap(), (0, 1, 1));
         let counts = store.counts().unwrap();
         assert_eq!((counts.files, counts.pending, counts.segments), (1, 1, 0));
-        let matches: i64 = store.db.query_row("SELECT COUNT(*) FROM fts WHERE fts MATCH 'lease'", [], |r| r.get(0)).unwrap();
+        let matches: i64 =
+            store.db.query_row("SELECT COUNT(*) FROM fts WHERE fts MATCH 'lease'", [], |r| r.get(0)).unwrap();
         assert_eq!(matches, 0);
     }
 
@@ -500,7 +516,18 @@ mod tests {
         assert!(!store.claim_vector_source("model-a").unwrap());
         store.reconcile(&[], &[seen("C:\\root\\a.txt", 10)]).unwrap();
         let a = store.file_by_path("C:\\root\\a.txt").unwrap().unwrap();
-        store.save(a.id, "a.txt", &[Segment::new(SegmentKind::Name, Modality::None)], &Default::default(), "done", 0, None, true).unwrap();
+        store
+            .save(
+                a.id,
+                "a.txt",
+                &[Segment::new(SegmentKind::Name, Modality::None)],
+                &Default::default(),
+                "done",
+                0,
+                None,
+                true,
+            )
+            .unwrap();
         assert!(!store.claim_vector_source("model-a").unwrap());
         assert!(store.claim_vector_source("model-b").unwrap());
         let counts = store.counts().unwrap();

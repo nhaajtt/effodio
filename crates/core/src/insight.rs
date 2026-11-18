@@ -91,8 +91,13 @@ pub fn sharpness(picture: &Picture) -> f64 {
     if width < 3 || height < 3 {
         return 0.0;
     }
-    let gray: Vec<f32> =
-        small.rgb.as_chunks::<3>().0.iter().map(|p| 0.299 * p[0] as f32 + 0.587 * p[1] as f32 + 0.114 * p[2] as f32).collect();
+    let gray: Vec<f32> = small
+        .rgb
+        .as_chunks::<3>()
+        .0
+        .iter()
+        .map(|p| 0.299 * p[0] as f32 + 0.587 * p[1] as f32 + 0.114 * p[2] as f32)
+        .collect();
     let (mut sum, mut squares, mut count) = (0f64, 0f64, 0f64);
     for y in 1..height - 1 {
         for x in 1..width - 1 {
@@ -218,7 +223,8 @@ pub fn backfill_tones(store: &mut Store, stop: &std::sync::atomic::AtomicBool) -
         let found: Vec<(i64, String)> = batch
             .par_iter()
             .map(|(id, path, info)| {
-                let mut value: serde_json::Map<String, serde_json::Value> = serde_json::from_str(info).unwrap_or_default();
+                let mut value: serde_json::Map<String, serde_json::Value> =
+                    serde_json::from_str(info).unwrap_or_default();
                 match crate::readers::images::load(std::path::Path::new(path)) {
                     Ok(picture) => look(&picture, &mut value),
                     // A picture that can't be opened isn't asked again.
@@ -326,8 +332,7 @@ impl Searcher {
     /// at least `near` close (by centred cosine), or starts one. Albums with fewer than `least` pictures are left out.
     /// Also returns the mean of all the pictures' vectors, to tell what sets an album apart.
     pub fn albums(&mut self, near: f32, least: usize, limit: usize) -> Result<(Vec<Album>, Vec<f32>)> {
-        let (rows, data) =
-            self.centred(12_000, |meta| matches!(meta.kind, FileKind::Image | FileKind::Video))?;
+        let (rows, data) = self.centred(12_000, |meta| matches!(meta.kind, FileKind::Image | FileKind::Video))?;
         if rows.len() < least {
             return Ok((Vec::new(), Vec::new()));
         }
@@ -452,7 +457,8 @@ impl Searcher {
         let mut last: Option<(Vec<f32>, f64)> = None;
         for (row, when) in rows {
             let vector = self.float_row(row);
-            let joins = last.as_ref().is_some_and(|(before, then)| when - then <= seconds && dot(before, &vector) >= near);
+            let joins =
+                last.as_ref().is_some_and(|(before, then)| when - then <= seconds && dot(before, &vector) >= near);
             if !joins {
                 if run.len() > 1 {
                     out.push(std::mem::take(&mut run));

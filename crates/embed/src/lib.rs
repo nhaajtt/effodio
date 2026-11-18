@@ -75,14 +75,14 @@ extern "C" {
     fn ge_init(dir: *const c_char, cpu_only: c_int) -> c_int;
     fn ge_backends(out: *mut c_char, len: c_int);
     fn ge_open(
-        text: *const c_char, media: *const c_char, max_tokens: c_int, threads: c_int, use_gpu: c_int,
-        err: *mut c_char, errlen: c_int,
+        text: *const c_char, media: *const c_char, max_tokens: c_int, threads: c_int, use_gpu: c_int, err: *mut c_char,
+        errlen: c_int,
     ) -> *mut Ctx;
     fn ge_close(ctx: *mut Ctx);
     fn ge_dim(ctx: *const Ctx) -> c_int;
     fn ge_embed_texts(
-        ctx: *mut Ctx, texts: *const *const c_char, lens: *const c_int, n: c_int, out: *mut f32,
-        err: *mut c_char, errlen: c_int,
+        ctx: *mut Ctx, texts: *const *const c_char, lens: *const c_int, n: c_int, out: *mut f32, err: *mut c_char,
+        errlen: c_int,
     ) -> c_int;
     fn ge_embed_image(
         ctx: *mut Ctx, rgb: *const u8, width: c_int, height: c_int, out: *mut f32, err: *mut c_char, errlen: c_int,
@@ -152,17 +152,18 @@ unsafe impl Send for Embedder {}
 impl Embedder {
     /// Every logical processor up to 8: more makes the slow cores of a hybrid processor hold the fast ones back.
     pub fn default_threads() -> usize {
-        std::env::var("EFFODIO_THREADS").ok().and_then(|v| v.parse().ok()).unwrap_or_else(|| {
-            std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).min(8)
-        })
+        std::env::var("EFFODIO_THREADS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or_else(|| std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).min(8))
     }
 
     /// Loads ggml's backends once for the process. Returns whether a GPU backend found a device.
     pub fn init_backends(folder: Option<&Path>, cpu_only: bool) -> bool {
         let folder = folder.map(Path::to_path_buf).or_else(|| {
-            std::env::var_os("EFFODIO_BACKENDS").map(PathBuf::from).or_else(|| {
-                std::env::current_exe().ok().and_then(|exe| exe.parent().map(Path::to_path_buf))
-            })
+            std::env::var_os("EFFODIO_BACKENDS")
+                .map(PathBuf::from)
+                .or_else(|| std::env::current_exe().ok().and_then(|exe| exe.parent().map(Path::to_path_buf)))
         });
         let dir = CString::new(folder.map(|f| f.to_string_lossy().into_owned()).unwrap_or_default()).unwrap();
         unsafe { ge_init(dir.as_ptr(), cpu_only as c_int) != 0 }
@@ -232,8 +233,13 @@ impl Embedder {
         let mut err = [0u8; 512];
         let status = unsafe {
             ge_embed_texts(
-                self.ctx, pointers.as_ptr(), lengths.as_ptr(), texts.len() as c_int, out.as_mut_ptr(),
-                err.as_mut_ptr() as *mut c_char, err.len() as c_int,
+                self.ctx,
+                pointers.as_ptr(),
+                lengths.as_ptr(),
+                texts.len() as c_int,
+                out.as_mut_ptr(),
+                err.as_mut_ptr() as *mut c_char,
+                err.len() as c_int,
             )
         };
         if status != 0 {
@@ -267,8 +273,13 @@ impl Embedder {
         let mut err = [0u8; 512];
         let status = unsafe {
             ge_embed_image(
-                self.ctx, pixels.as_ptr(), target_width as c_int, target_height as c_int, out.as_mut_ptr(),
-                err.as_mut_ptr() as *mut c_char, err.len() as c_int,
+                self.ctx,
+                pixels.as_ptr(),
+                target_width as c_int,
+                target_height as c_int,
+                out.as_mut_ptr(),
+                err.as_mut_ptr() as *mut c_char,
+                err.len() as c_int,
             )
         };
         if status != 0 {
@@ -286,7 +297,11 @@ impl Embedder {
         let mut err = [0u8; 512];
         let status = unsafe {
             ge_embed_audio(
-                self.ctx, samples.as_ptr(), samples.len(), out.as_mut_ptr(), err.as_mut_ptr() as *mut c_char,
+                self.ctx,
+                samples.as_ptr(),
+                samples.len(),
+                out.as_mut_ptr(),
+                err.as_mut_ptr() as *mut c_char,
                 err.len() as c_int,
             )
         };
@@ -301,7 +316,16 @@ impl Embedder {
         let (mut is_audio, mut width, mut height) = (0 as c_int, 0 as c_uint, 0 as c_uint);
         let (mut data, mut len) = (std::ptr::null::<u8>(), 0usize);
         let handle = unsafe {
-            ge_decode(self.ctx, bytes.as_ptr(), bytes.len(), &mut is_audio, &mut width, &mut height, &mut data, &mut len)
+            ge_decode(
+                self.ctx,
+                bytes.as_ptr(),
+                bytes.len(),
+                &mut is_audio,
+                &mut width,
+                &mut height,
+                &mut data,
+                &mut len,
+            )
         };
         if handle.is_null() {
             bail!("can't read the file as an image or as audio");

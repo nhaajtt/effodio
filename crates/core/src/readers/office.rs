@@ -51,10 +51,18 @@ pub fn decode(bytes: &[u8]) -> String {
         return String::from_utf8_lossy(rest).into_owned();
     }
     let utf16 = |rest: &[u8], little: bool| -> String {
-        let units: Vec<u16> = rest
-            .as_chunks::<2>().0.iter()
-            .map(|pair| if little { u16::from_le_bytes([pair[0], pair[1]]) } else { u16::from_be_bytes([pair[0], pair[1]]) })
-            .collect();
+        let units: Vec<u16> =
+            rest.as_chunks::<2>()
+                .0
+                .iter()
+                .map(|pair| {
+                    if little {
+                        u16::from_le_bytes([pair[0], pair[1]])
+                    } else {
+                        u16::from_be_bytes([pair[0], pair[1]])
+                    }
+                })
+                .collect();
         String::from_utf16_lossy(&units)
     };
     if let Some(rest) = bytes.strip_prefix(&[0xFF, 0xFE]) {
@@ -300,7 +308,12 @@ fn xlsx(path: &Path) -> Result<Vec<Part>> {
 fn open_document(path: &Path) -> Result<String> {
     let mut archive = open(path)?;
     let xml = entry(&mut archive, "content.xml")?;
-    Ok(xml_text(&xml, &[b"p", b"h", b"span", b"a"], &[b"p", b"h", b"table-row", b"line-break"], &[b"tab", b"table-cell"]))
+    Ok(xml_text(
+        &xml,
+        &[b"p", b"h", b"span", b"a"],
+        &[b"p", b"h", b"table-row", b"line-break"],
+        &[b"tab", b"table-cell"],
+    ))
 }
 
 fn epub(path: &Path) -> Result<String> {
@@ -350,9 +363,27 @@ pub fn html(source: &str) -> String {
                 _ => None,
             };
         }
-        if matches!(name.as_str(), "p" | "div" | "br" | "li" | "tr" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6"
-            | "section" | "article" | "blockquote" | "pre" | "title" | "table" | "ul" | "ol")
-        {
+        if matches!(
+            name.as_str(),
+            "p" | "div"
+                | "br"
+                | "li"
+                | "tr"
+                | "h1"
+                | "h2"
+                | "h3"
+                | "h4"
+                | "h5"
+                | "h6"
+                | "section"
+                | "article"
+                | "blockquote"
+                | "pre"
+                | "title"
+                | "table"
+                | "ul"
+                | "ol"
+        ) {
             out.push('\n');
         } else if matches!(name.as_str(), "td" | "th") {
             out.push('\t');
@@ -411,8 +442,24 @@ fn entities(text: &str) -> String {
 /// The text of an RTF file: control words dropped, \par as a line, \'hh and \uN as their characters. Font tables,
 /// pictures and the like (destinations) are skipped.
 pub fn rtf(source: &str) -> String {
-    const SKIPPED: &[&str] = &["fonttbl", "colortbl", "stylesheet", "info", "pict", "object", "header", "footer",
-        "themedata", "datastore", "latentstyles", "generator", "listtable", "listoverridetable", "rsidtbl", "xmlnstbl"];
+    const SKIPPED: &[&str] = &[
+        "fonttbl",
+        "colortbl",
+        "stylesheet",
+        "info",
+        "pict",
+        "object",
+        "header",
+        "footer",
+        "themedata",
+        "datastore",
+        "latentstyles",
+        "generator",
+        "listtable",
+        "listoverridetable",
+        "rsidtbl",
+        "xmlnstbl",
+    ];
     let bytes = source.as_bytes();
     let mut out = String::new();
     let mut depth = 0usize;
@@ -538,10 +585,16 @@ mod tests {
     fn word_documents() {
         let folder = tempfile::tempdir().unwrap();
         let path = folder.path().join("a.docx");
-        archive(&path, &[("word/document.xml", r#"<w:document xmlns:w="x"><w:body>
+        archive(
+            &path,
+            &[(
+                "word/document.xml",
+                r#"<w:document xmlns:w="x"><w:body>
             <w:p><w:r><w:t>Hợp đồng thuê nhà</w:t></w:r></w:p>
             <w:p><w:r><w:t>Pets are </w:t></w:r><w:r><w:t>allowed &amp; welcome.</w:t></w:r></w:p>
-            </w:body></w:document>"#)]);
+            </w:body></w:document>"#,
+            )],
+        );
         let parts = read(&path).unwrap();
         assert_eq!(parts.len(), 1);
         assert_eq!(parts[0].text, "Hợp đồng thuê nhà\nPets are allowed & welcome.");
@@ -551,13 +604,19 @@ mod tests {
     fn spreadsheets_by_sheet() {
         let folder = tempfile::tempdir().unwrap();
         let path = folder.path().join("a.xlsx");
-        archive(&path, &[
-            ("xl/sharedStrings.xml", "<sst><si><t>Item</t></si><si><r><t>Cof</t></r><r><t>fee</t></r></si></sst>"),
-            ("xl/workbook.xml", r#"<workbook><sheets><sheet name="Budget" sheetId="1"/></sheets></workbook>"#),
-            ("xl/worksheets/sheet1.xml", r#"<worksheet><sheetData>
+        archive(
+            &path,
+            &[
+                ("xl/sharedStrings.xml", "<sst><si><t>Item</t></si><si><r><t>Cof</t></r><r><t>fee</t></r></si></sst>"),
+                ("xl/workbook.xml", r#"<workbook><sheets><sheet name="Budget" sheetId="1"/></sheets></workbook>"#),
+                (
+                    "xl/worksheets/sheet1.xml",
+                    r#"<worksheet><sheetData>
                 <row><c t="s"><v>0</v></c><c><v>2026</v></c></row>
-                <row><c t="s"><v>1</v></c><c><v>4.5</v></c></row></sheetData></worksheet>"#),
-        ]);
+                <row><c t="s"><v>1</v></c><c><v>4.5</v></c></row></sheetData></worksheet>"#,
+                ),
+            ],
+        );
         let parts = read(&path).unwrap();
         assert_eq!(parts.len(), 1);
         assert_eq!(parts[0].label.as_deref(), Some("Sheet: Budget"));

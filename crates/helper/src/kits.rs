@@ -308,12 +308,18 @@ fn listen(kit: &Kit, path: &Path) -> Result<Vec<(f64, f64, String)>> {
     for line in value["transcription"].as_array().map(Vec::as_slice).unwrap_or_default() {
         let words = line["text"].as_str().unwrap_or_default().trim();
         // What it writes for silence and music.
-        if words.is_empty() || (words.starts_with('[') && words.ends_with(']')) || (words.starts_with('(') && words.ends_with(')')) {
+        if words.is_empty()
+            || (words.starts_with('[') && words.ends_with(']'))
+            || (words.starts_with('(') && words.ends_with(')'))
+        {
             continue;
         }
         // What it makes up over music and silence.
         let folded = text::fold(words);
-        if ["subscribe", "ghien mi go", "thanks for watching", "subtitles by", "amara.org"].iter().any(|made| folded.contains(made)) {
+        if ["subscribe", "ghien mi go", "thanks for watching", "subtitles by", "amara.org"]
+            .iter()
+            .any(|made| folded.contains(made))
+        {
             continue;
         }
         let from = line["offsets"]["from"].as_f64().unwrap_or(0.0) / 1000.0;
@@ -417,9 +423,17 @@ pub fn answer(searcher: &mut Searcher, question: &str, vector: Option<&[f32]>, v
          After each statement give the number of the source it comes from in square brackets, like [2]. \
          If the sources don't contain the answer, say that they don't. Be brief: a few sentences.",
     );
-    prompt.push_str(if vietnamese { " Answer in Vietnamese.\n\n" } else { " Answer in the language of the question.\n\n" });
+    prompt.push_str(if vietnamese {
+        " Answer in Vietnamese.\n\n"
+    } else {
+        " Answer in the language of the question.\n\n"
+    });
     for (index, (hit, words)) in sources.iter().enumerate() {
-        let name = Path::new(hit["path"].as_str().unwrap_or_default()).file_name().unwrap_or_default().to_string_lossy().to_string();
+        let name = Path::new(hit["path"].as_str().unwrap_or_default())
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
         prompt.push_str(&format!("[{}] {name}\n{words}\n\n", index + 1));
     }
     prompt.push_str(&format!("Question: {question}<end_of_turn>\n<start_of_turn>model\n"));
@@ -432,7 +446,19 @@ pub fn answer(searcher: &mut Searcher, question: &str, vector: Option<&[f32]>, v
         .arg(model(kit).unwrap_or_default())
         .arg("-f")
         .arg(&file)
-        .args(["-n", "400", "--temp", "0.2", "-c", "8192", "-t", &threads(), "-no-cnv", "--no-display-prompt", "--simple-io"])
+        .args([
+            "-n",
+            "400",
+            "--temp",
+            "0.2",
+            "-c",
+            "8192",
+            "-t",
+            &threads(),
+            "-no-cnv",
+            "--no-display-prompt",
+            "--simple-io",
+        ])
         .output();
     std::fs::remove_file(&file).ok();
     let output = output?;
@@ -486,8 +512,11 @@ pub fn handle(request: &Value) -> Option<Result<Value>> {
             let mut body = String::new();
             reply.into_reader().take(4096).read_to_string(&mut body)?;
             let latest = serde_json::from_str::<Value>(&body)?["version"].as_str().unwrap_or_default().to_string();
-            let parts = |version: &str| -> Vec<u64> { version.split('.').map(|part| part.parse().unwrap_or(0)).collect() };
-            Ok(json!({"current": current, "latest": latest, "newer": !latest.is_empty() && parts(&latest) > parts(current)}))
+            let parts =
+                |version: &str| -> Vec<u64> { version.split('.').map(|part| part.parse().unwrap_or(0)).collect() };
+            Ok(
+                json!({"current": current, "latest": latest, "newer": !latest.is_empty() && parts(&latest) > parts(current)}),
+            )
         })()),
         // Starts the download and returns at once: `kits` says how far it is.
         "kit_get" => Some((|| {
