@@ -192,6 +192,8 @@ export function thumbnail(path: string, side = 256): Promise<string> {
 
 export const fileUrl = (path: string) => convertFileSrc(path);
 
-export function on<T>(event: string, handler: (payload: T) => void): void {
-  void listen<T>(event, (message) => handler(message.payload));
+/** Calls `handler` on each `event` from the app, until the function it returns is called. */
+export function on<T>(event: string, handler: (payload: T) => void): () => void {
+  const listening = listen<T>(event, (message) => handler(message.payload));
+  return () => void listening.then((stop) => stop()).catch(() => {});
 }

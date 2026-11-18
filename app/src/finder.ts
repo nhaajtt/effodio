@@ -44,6 +44,8 @@ export class Finder {
   /** The arrows were used: Space now previews rather than types. */
   private moved = false;
   private chip: HTMLElement | null = null;
+  /** Ends what this finder listens to outside its own elements; see `dispose`. */
+  private stops: (() => void)[] = [];
 
   constructor(private parts: FinderParts) {
     this.lens = new Lens(parts.results);
@@ -61,8 +63,10 @@ export class Finder {
     parts.results.addEventListener("dblclick", (event) => {
       if ((event.target as HTMLElement).closest("[data-index]")) this.open();
     });
-    new ResizeObserver(() => this.lens.moveTo(this.elements[this.selected] ?? null, false)).observe(parts.results);
-    void getCurrentWebview().onDragDropEvent((event) => {
+    const resizes = new ResizeObserver(() => this.lens.moveTo(this.elements[this.selected] ?? null, false));
+    resizes.observe(parts.results);
+    this.stops.push(() => resizes.disconnect());
+    const drops = getCurrentWebview().onDragDropEvent((event) => {
       const payload = event.payload;
       document.body.classList.toggle("dropping", payload.type === "enter" || payload.type === "over");
       if (payload.type === "drop") {
@@ -71,7 +75,14 @@ export class Finder {
         else if (payload.paths.length) toast(t("search.empty.drop"));
       }
     });
+    this.stops.push(() => void drops.then((stop) => stop()).catch(() => {}));
     this.showIdle();
+  }
+
+  /** Stops listening for drops and size changes: the view it was made for is gone. */
+  dispose(): void {
+    for (const stop of this.stops.splice(0)) stop();
+    document.body.classList.remove("dropping");
   }
 
   get query(): string {

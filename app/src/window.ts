@@ -192,6 +192,7 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
     const insight = h("div.insight");
     const main = h("div.view", { style: { gridTemplateRows: "auto auto auto minmax(0, 1fr)" } }, h("div.toolbar", pills, h("span.grow"), meta, save), filters, insight, grid);
     content.replaceChildren(main, previewPane);
+    finder?.dispose();
     finder = new Finder({
       searchbox,
       input,
@@ -245,7 +246,10 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
     content.classList.remove("with-preview");
     for (const [name, item] of navItems) item.setAttribute("aria-current", String(name === view));
     navLens.moveTo(navItems.get(view) ?? null, false);
-    if (view !== "search") finder = null;
+    if (view !== "search") {
+      finder?.dispose();
+      finder = null;
+    }
     // Left in the search box, the focus would come back to it with the window and pull the view back to the search.
     if (view !== "search") input.blur();
     switch (view) {

@@ -52,6 +52,9 @@ function shortcutOf(event: KeyboardEvent): string | null {
   return key ? [...parts, key].join("+") : null;
 }
 
+/** What the settings page last listened to; a new visit ends it, so visits don't pile up listeners. */
+let listening: (() => void)[] = [];
+
 export async function mountSettings(container: HTMLElement): Promise<void> {
   let settings: Config = await api.getConfig();
   let current: Status | null = null;
@@ -254,20 +257,38 @@ export async function mountSettings(container: HTMLElement): Promise<void> {
 
   const hotkeyButton = () => {
     const button = h("button.button", h("kbd", settings.hotkey));
+    let recording = false;
     button.addEventListener("click", () => {
+      if (recording) return;
+      recording = true;
       button.replaceChildren(t("settings.hotkey.record"));
       const onKey = (event: KeyboardEvent) => {
+        // The page moved on, or Tab: recording ends and the key does what it always does, so the keyboard is never
+        // held here.
+        if (!button.isConnected || (event.key === "Tab" && !event.ctrlKey && !event.altKey && !event.metaKey)) {
+          return stop(true);
+        }
         event.preventDefault();
         event.stopPropagation();
         if (event.key === "Escape") return done(settings.hotkey);
         const shortcut = shortcutOf(event);
         if (shortcut) done(shortcut);
       };
-      const done = (shortcut: string) => {
+      const onPointer = (event: PointerEvent) => {
+        if (event.target !== button) stop(true);
+      };
+      const stop = (redraw: boolean) => {
+        recording = false;
         window.removeEventListener("keydown", onKey, true);
+        window.removeEventListener("pointerdown", onPointer, true);
+        if (redraw && button.isConnected) button.replaceChildren(h("kbd", settings.hotkey));
+      };
+      const done = (shortcut: string) => {
+        stop(false);
         void save((draft) => (draft.hotkey = shortcut), true);
       };
       window.addEventListener("keydown", onKey, true);
+      window.addEventListener("pointerdown", onPointer, true);
     });
     return button;
   };
@@ -298,9 +319,13 @@ export async function mountSettings(container: HTMLElement): Promise<void> {
       /* the helper isn't there yet */
     }
   };
-  api.on<{ event: string }>("speed", (event) => {
-    if (event.event === "finished" || event.event === "error") void refresh();
-  });
-  api.on("index-finished", () => void refresh());
+  // Ended here rather than at the start, so a visit that overtook this one while it loaded is ended too.
+  for (const stop of listening.splice(0)) stop();
+  listening.push(
+    api.on<{ event: string }>("speed", (event) => {
+      if (event.event === "finished" || event.event === "error") void refresh();
+    }),
+    api.on("index-finished", () => void refresh()),
+  );
   void refresh();
 }

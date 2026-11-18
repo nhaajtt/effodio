@@ -8,6 +8,9 @@ import { t } from "./i18n";
 import { report } from "./results";
 import { bytes, debounce, duration, followPointer, h, icon, number } from "./ui";
 
+/** What the setup page last listened to; a new visit ends it. */
+let listening: (() => void)[] = [];
+
 export async function mountSetup(container: HTMLElement, onDone: () => void): Promise<void> {
   let settings: Config = await api.getConfig();
   const suggestions = await api.suggestedFolders();
@@ -71,7 +74,9 @@ export async function mountSetup(container: HTMLElement, onDone: () => void): Pr
     });
   };
 
-  api.on<{ event: string; done?: number; total?: number; error?: string }>("model", (event) => {
+  // Ended here rather than at the start, so a visit that overtook this one while it loaded is ended too.
+  for (const stop of listening.splice(0)) stop();
+  listening.push(api.on<{ event: string; done?: number; total?: number; error?: string }>("model", (event) => {
     if (event.event === "progress" && event.done !== undefined && event.total !== undefined) {
       progress = { done: event.done, total: event.total };
       checking = false;
@@ -88,10 +93,10 @@ export async function mountSetup(container: HTMLElement, onDone: () => void): Pr
       modelError = event.error ?? t("error.generic");
     }
     if (step === 1) draw();
-  });
-  api.on<{ event: string }>("speed", (event) => {
+  }));
+  listening.push(api.on<{ event: string }>("speed", (event) => {
     if (event.event === "finished") estimate();
-  });
+  }));
 
   const draw = () => {
     estimateLine = null;
