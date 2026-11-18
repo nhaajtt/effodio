@@ -35,11 +35,35 @@ fn command(arguments: &[&str]) -> Result<Command> {
     Ok(command)
 }
 
-type Waiting = Arc<Mutex<HashMap<u64, mpsc::Sender<Value>>>>;
+/// Requests waiting for their answer, each with the helper (by its number) it was sent to.
+type Waiting = Arc<Mutex<HashMap<u64, (u64, mpsc::Sender<Value>)>>>;
 
 struct Running {
     child: Child,
     stdin: ChildStdin,
+    /// Which helper this is: each start gets the next number.
+    generation: u64,
+}
+
+/// Hands each answer from one helper to the request waiting for it. When that helper is gone, the requests sent to
+/// it get an answer at once rather than a timeout; requests already sent to the helper started after it don't.
+fn read_answers(output: impl BufRead, waiting: &Waiting, generation: u64) {
+    for line in output.lines() {
+        let Ok(line) = line else { break };
+        let Ok(value) = serde_json::from_str::<Value>(&line) else { continue };
+        if let Some(id) = value["id"].as_u64() {
+            if let Some((_, sender)) = waiting.lock().unwrap().remove(&id) {
+                let _ = sender.send(value);
+            }
+        }
+    }
+    waiting.lock().unwrap().retain(|_, (sent_to, sender)| {
+        if *sent_to != generation {
+            return true;
+        }
+        let _ = sender.send(json!({"ok": false, "error": "the search helper stopped"}));
+        false
+    });
 }
 
 /// The search helper. It quits by itself after ten idle minutes; the next request starts it again.
@@ -47,12 +71,19 @@ pub struct Serve {
     running: Mutex<Option<Running>>,
     waiting: Waiting,
     next: AtomicU64,
+    started: AtomicU64,
     job: Arc<Option<Job>>,
 }
 
 impl Serve {
     pub fn new(job: Arc<Option<Job>>) -> Serve {
-        Serve { running: Mutex::new(None), waiting: Arc::default(), next: AtomicU64::new(1), job }
+        Serve {
+            running: Mutex::new(None),
+            waiting: Arc::default(),
+            next: AtomicU64::new(1),
+            started: AtomicU64::new(0),
+            job,
+        }
     }
 
     fn start(&self) -> Result<Running> {
@@ -68,22 +99,9 @@ impl Serve {
         let stdin = child.stdin.take().ok_or_else(|| anyhow!("the helper has no input"))?;
         let stdout = child.stdout.take().ok_or_else(|| anyhow!("the helper has no output"))?;
         let waiting = self.waiting.clone();
-        std::thread::spawn(move || {
-            for line in BufReader::new(stdout).lines() {
-                let Ok(line) = line else { break };
-                let Ok(value) = serde_json::from_str::<Value>(&line) else { continue };
-                if let Some(id) = value["id"].as_u64() {
-                    if let Some(sender) = waiting.lock().unwrap().remove(&id) {
-                        let _ = sender.send(value);
-                    }
-                }
-            }
-            // The helper is gone: whoever still waits gets an answer now rather than a timeout.
-            for (_, sender) in waiting.lock().unwrap().drain() {
-                let _ = sender.send(json!({"ok": false, "error": "the search helper stopped"}));
-            }
-        });
-        Ok(Running { child, stdin })
+        let generation = self.started.fetch_add(1, Ordering::Relaxed) + 1;
+        std::thread::spawn(move || read_answers(BufReader::new(stdout), &waiting, generation));
+        Ok(Running { child, stdin, generation })
     }
 
     /// Sends one request and waits for its answer.
@@ -91,26 +109,11 @@ impl Serve {
         let id = self.next.fetch_add(1, Ordering::Relaxed);
         request["id"] = json!(id);
         let (sender, receiver) = mpsc::channel();
-        self.waiting.lock().unwrap().insert(id, sender);
-        {
-            let mut running = self.running.lock().unwrap();
-            let alive = match running.as_mut() {
-                Some(current) => matches!(current.child.try_wait(), Ok(None)),
-                None => false,
-            };
-            if !alive {
-                *running = Some(self.start()?);
-            }
-            let current = running.as_mut().unwrap();
-            let sent = writeln!(current.stdin, "{request}").and_then(|_| current.stdin.flush());
-            if sent.is_err() {
-                // It quit between the check and the write: once more with a new one.
-                *running = Some(self.start()?);
-                let current = running.as_mut().unwrap();
-                writeln!(current.stdin, "{request}")?;
-                current.stdin.flush()?;
-            }
+        let sent = self.send(id, &request, sender);
+        if sent.is_err() {
+            self.waiting.lock().unwrap().remove(&id);
         }
+        sent?;
         let answer = receiver.recv_timeout(timeout).map_err(|_| {
             self.waiting.lock().unwrap().remove(&id);
             anyhow!("the search took too long")
@@ -120,6 +123,27 @@ impl Serve {
         } else {
             bail!("{}", answer["error"].as_str().unwrap_or("the search failed"))
         }
+    }
+
+    /// Writes the request to a running helper (started if need be), noting first which one waits for its answer.
+    fn send(&self, id: u64, request: &Value, sender: mpsc::Sender<Value>) -> Result<()> {
+        let mut running = self.running.lock().unwrap();
+        let alive = running.as_mut().is_some_and(|current| matches!(current.child.try_wait(), Ok(None)));
+        if !alive {
+            *running = Some(self.start()?);
+        }
+        let current = running.as_mut().unwrap();
+        self.waiting.lock().unwrap().insert(id, (current.generation, sender.clone()));
+        if writeln!(current.stdin, "{request}").and_then(|_| current.stdin.flush()).is_ok() {
+            return Ok(());
+        }
+        // It quit between the check and the write: once more with a new one.
+        *running = Some(self.start()?);
+        let current = running.as_mut().unwrap();
+        self.waiting.lock().unwrap().insert(id, (current.generation, sender));
+        writeln!(current.stdin, "{request}")?;
+        current.stdin.flush()?;
+        Ok(())
     }
 
     pub fn stop(&self) {
@@ -196,4 +220,31 @@ pub fn once(arguments: &[&str]) -> Result<Value> {
         bail!("{}", value["error"].as_str().unwrap_or("the helper failed"));
     }
     Ok(value)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_helper_that_quits_fails_only_its_own_requests() {
+        let waiting: Waiting = Arc::default();
+        let (old_sender, old_receiver) = mpsc::channel();
+        let (new_sender, new_receiver) = mpsc::channel();
+        let (answered_sender, answered_receiver) = mpsc::channel();
+        waiting.lock().unwrap().insert(1, (1, old_sender));
+        waiting.lock().unwrap().insert(2, (1, answered_sender));
+        // Sent to the helper started after the first one quit, before the first one's output was read to its end.
+        waiting.lock().unwrap().insert(3, (2, new_sender));
+        read_answers(
+            &b"{\"id\": 2, \"ok\": true, \"result\": 7}
+"[..],
+            &waiting,
+            1,
+        );
+        assert_eq!(answered_receiver.try_recv().unwrap()["result"], 7);
+        assert_eq!(old_receiver.try_recv().unwrap()["error"], "the search helper stopped");
+        assert!(new_receiver.try_recv().is_err());
+        assert_eq!(waiting.lock().unwrap().len(), 1);
+    }
 }
