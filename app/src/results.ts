@@ -284,13 +284,21 @@ export function report(error: unknown): void {
 }
 
 /** A result shown large over everything, at its page or moment. Any key or a click closes it. */
+let closeLightbox: (() => void) | null = null;
+
 export function lightbox(hit: Hit, query: string): void {
-  document.querySelector(".lightbox")?.remove();
-  const overlay = h("div.lightbox", { tabIndex: -1 });
+  // The one open before is closed properly, its key listener with it.
+  closeLightbox?.();
+  const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const overlay = h("div.lightbox", { tabIndex: -1, role: "dialog", "aria-modal": "true", "aria-label": fileName(hit.path) });
   const close = () => {
     overlay.remove();
     window.removeEventListener("keydown", onKey, true);
+    if (closeLightbox === close) closeLightbox = null;
+    // Back to where the keyboard was, if that's still there.
+    if (opener?.isConnected) opener.focus({ preventScroll: true });
   };
+  closeLightbox = close;
   const onKey = (event: KeyboardEvent) => {
     if (event.key === "Escape" || event.key === " ") {
       event.preventDefault();
