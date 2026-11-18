@@ -212,7 +212,7 @@ pub fn open(path: &Path, page: Option<u32>, second: Option<f64>) -> Result<()> {
             return shell_open(&program_text, Some(&arguments));
         }
     }
-    if let (Some(second), Some(program)) = (second.filter(|&second| second >= 1.0), program.as_ref()) {
+    if let (Some(second), Some(program)) = (second.filter(|&second| (1.0..1e9).contains(&second)), program.as_ref()) {
         let program_text = program.to_string_lossy();
         let whole = second.floor() as u64;
         let arguments = match name.as_str() {

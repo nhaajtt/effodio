@@ -5,8 +5,10 @@
 mod door;
 mod helpers;
 mod native;
+mod paths;
 
 use effodio_core::config::{self, Config};
+use effodio_core::kinds::FileKind;
 use helpers::{Serve, Task};
 use native::Job;
 use serde::Serialize;
@@ -62,10 +64,20 @@ pub struct App {
     door: Mutex<Option<door::Door>>,
     /// Where the window should open (a view or a search), until its page picks it up.
     launch: Mutex<Option<Value>>,
+    /// Files the person handed over by the file dialog or a drop, which the page may then use.
+    given: paths::Given,
 }
 
 fn state(app: &AppHandle) -> tauri::State<'_, App> {
     app.state::<App>()
+}
+
+/// `path` from the page, if it's one the page may use: in a chosen folder, in the app's own folder, or handed over by
+/// the person (see `paths`).
+fn permitted(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
+    let mut folders: Vec<PathBuf> = Config::load().roots.into_iter().map(|root| root.path).collect();
+    folders.push(config::home());
+    paths::check(path, &folders, &state(app).given)
 }
 
 fn now() -> f64 {
@@ -442,6 +454,10 @@ fn ask(app: AppHandle, request: Value) -> Result<Value, String> {
                 | "people_merge"
         )
     );
+    // Searching by a picture, or showing a page or a frame, reads the file named: only one the page may use.
+    if let Some(path) = request["path"].as_str() {
+        permitted(&app, path)?;
+    }
     state(&app).serve.ask(request, Duration::from_secs(if slow { 180 } else { 60 })).map_err(text)
 }
 
@@ -597,7 +613,9 @@ fn pick_example(app: AppHandle) -> Option<String> {
         )
         .blocking_pick_file();
     shared.pinned.store(false, Ordering::Relaxed);
-    picked.and_then(|path| path.into_path().ok()).map(|path| path.to_string_lossy().into_owned())
+    let picked = picked.and_then(|path| path.into_path().ok())?;
+    shared.given.add(&picked);
+    Some(picked.to_string_lossy().into_owned())
 }
 
 /// The folders most people keep their files in, with whether each is chosen already.
@@ -621,8 +639,14 @@ fn suggested_folders() -> Vec<Value> {
 /// Saves a picture pasted or dropped into the search box, so it can be searched by. Returns its path.
 #[tauri::command(async)]
 fn save_example(bytes: Vec<u8>, extension: String) -> Result<String, String> {
-    let extension: String = extension.chars().filter(char::is_ascii_alphanumeric).take(5).collect();
-    if bytes.is_empty() || bytes.len() > 64 << 20 || extension.is_empty() {
+    let extension: String =
+        extension.chars().filter(char::is_ascii_alphanumeric).take(5).collect::<String>().to_lowercase();
+    // Only what can be searched by: a picture, a recording or a video, never a program.
+    let searchable = matches!(
+        effodio_core::kinds::kind_of(Path::new(&format!("example.{extension}"))),
+        Some(FileKind::Image | FileKind::Screenshot | FileKind::Audio | FileKind::Video)
+    );
+    if bytes.is_empty() || bytes.len() > 64 << 20 || !searchable {
         return Err("that can't be searched by".into());
     }
     let folder = config::cache_folder().join("examples");
@@ -645,15 +669,21 @@ fn ocr_languages() -> Vec<String> {
 }
 
 #[tauri::command(async)]
-fn thumbnail(path: String, side: Option<u32>) -> Result<String, String> {
-    native::thumbnail(Path::new(&path), side.unwrap_or(256).clamp(32, 1024), &config::cache_folder().join("thumbs"))
+fn thumbnail(app: AppHandle, path: String, side: Option<u32>) -> Result<String, String> {
+    let path = permitted(&app, &path)?;
+    native::thumbnail(&path, side.unwrap_or(256).clamp(32, 1024), &config::cache_folder().join("thumbs"))
         .map(|file| file.to_string_lossy().into_owned())
         .map_err(text)
 }
 
 #[tauri::command(async)]
 fn open_result(app: AppHandle, path: String, page: Option<u32>, second: Option<f64>) -> Result<(), String> {
-    native::open(Path::new(&path), page, second).map_err(text)?;
+    let path = permitted(&app, &path)?;
+    // Only the kinds of file Effodio reads are opened: never a program, a script or a shortcut.
+    if effodio_core::kinds::kind_of(&path).is_none() || path.is_dir() {
+        return Err("Effodio only opens the kinds of file it searches".into());
+    }
+    native::open(&path, page, second).map_err(text)?;
     if let Some(window) = panel(&app) {
         let _ = window.hide();
     }
@@ -662,7 +692,8 @@ fn open_result(app: AppHandle, path: String, page: Option<u32>, second: Option<f
 
 #[tauri::command(async)]
 fn reveal(app: AppHandle, path: String) -> Result<(), String> {
-    native::reveal(Path::new(&path)).map_err(text)?;
+    let path = permitted(&app, &path)?;
+    native::reveal(&path).map_err(text)?;
     if let Some(window) = panel(&app) {
         let _ = window.hide();
     }
@@ -670,8 +701,9 @@ fn reveal(app: AppHandle, path: String) -> Result<(), String> {
 }
 
 #[tauri::command(async)]
-fn copy_files(paths: Vec<String>) -> Result<(), String> {
-    native::copy_files(&paths.into_iter().map(PathBuf::from).collect::<Vec<_>>()).map_err(text)
+fn copy_files(app: AppHandle, paths: Vec<String>) -> Result<(), String> {
+    let paths = paths.iter().map(|path| permitted(&app, path)).collect::<Result<Vec<_>, _>>()?;
+    native::copy_files(&paths).map_err(text)
 }
 
 #[tauri::command(async)]
@@ -750,9 +782,11 @@ fn tray(app: &AppHandle) -> tauri::Result<()> {
             "window" => show_main(app, None, None),
             "settings" => show_main(app, Some("settings"), None),
             "pause" => {
-                let mut settings = Config::load();
-                settings.paused = !settings.paused;
-                let _ = set_config(app.clone(), settings);
+                // Only from settings that could be read: saving the defaults back would lose the chosen folders.
+                if let Ok(mut settings) = Config::read() {
+                    settings.paused = !settings.paused;
+                    let _ = set_config(app.clone(), settings);
+                }
             }
             "quit" => {
                 shutdown(app);
@@ -818,6 +852,7 @@ fn main() {
             hotkey: Mutex::new(String::new()),
             door: Mutex::new(None),
             launch: Mutex::new(None),
+            given: paths::Given::default(),
         })
         .invoke_handler(tauri::generate_handler![
             ask,
@@ -871,6 +906,13 @@ fn main() {
             WindowEvent::Focused(false) if window.label() == "panel" => {
                 if !state(window.app_handle()).pinned.load(Ordering::Relaxed) {
                     let _ = window.hide();
+                }
+            }
+            // Files dropped on a window are the person's to search by, wherever they are.
+            WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) => {
+                let shared = state(window.app_handle());
+                for path in paths {
+                    shared.given.add(path);
                 }
             }
             // Closing the window leaves Effodio in the tray.
