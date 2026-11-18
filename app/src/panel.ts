@@ -46,7 +46,7 @@ export async function mountPanel(root: HTMLElement): Promise<void> {
   const input = h("input", { type: "text", placeholder: t("search.placeholder"), spellcheck: false, autocomplete: "off", "aria-label": t("search.placeholder") });
   const searchbox = h("div.searchbox", h("span.spark", icon("spark", 22)), input);
   const filters = h("div.filters");
-  const results = h("div.results", { role: "listbox" });
+  const results = h("div.results", { role: "listbox", "aria-label": t("search.list") });
   const previewPane = h("div.preview");
   const body = h("div.body.single", results, previewPane);
   const status = h("div.status", h("span.dot"), h("span"));

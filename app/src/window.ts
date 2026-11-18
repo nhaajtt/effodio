@@ -179,7 +179,7 @@ export async function mountWindow(root: HTMLElement): Promise<void> {
       api.ask({ op: "collection_add", name: query, q: query }).then(() => loadCollections(), report);
     });
     const filters = h("div.filters", { style: { padding: "0 14px 8px" } });
-    const grid = h("div.grid", { role: "listbox" });
+    const grid = h("div.grid", { role: "listbox", "aria-label": t("search.list") });
     const previewPane = h("div.preview");
     const preview = new Preview(previewPane, {
       similar: (hit) => finder?.similarTo(hit),
