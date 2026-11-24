@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- New app icon: a periodic-table tile for element Ef, Effodio.
+
 **Safer**
 - The interface may only open, show, copy or read files in the chosen folders, the app's own folder, or files you
   picked or dropped; network paths and programs are refused, and only the kinds of file Effodio reads are opened.
