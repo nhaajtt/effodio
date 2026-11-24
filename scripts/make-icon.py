@@ -56,7 +56,8 @@ def render(size):
     img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
     img.paste(grad, (0, 0), mask)
 
-    d = ImageDraw.Draw(img)
+    ov = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    d = ImageDraw.Draw(ov)
     white = (255, 255, 255, 255)
     soft = (255, 255, 255, 200)
     cx = n / 2
@@ -81,6 +82,7 @@ def render(size):
         text_center(d, cx, m + w * 0.725, NAME, font(SEMI, w * 0.095), white)
         text_center(d, cx, m + w * 0.815, MASS, font(SEMI, w * 0.068), (255, 255, 255, 165))
 
+    img = Image.alpha_composite(img, ov)
     return img.resize((size, size), Image.LANCZOS)
 
 
