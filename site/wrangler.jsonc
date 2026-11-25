@@ -2,8 +2,10 @@
   "name": "effodio-site",
   "compatibility_date": "2026-11-01",
   "main": "./worker.js",
-  // The site is files; only /api/ goes through the worker (the feedback form).
-  "assets": { "directory": "./dist", "binding": "ASSETS", "not_found_handling": "404-page", "run_worker_first": ["/api/*"] },
+  // The site is files; only /api/ (the feedback form) and /models/ (the app's model files) go through the worker.
+  "assets": { "directory": "./dist", "binding": "ASSETS", "not_found_handling": "404-page", "run_worker_first": ["/api/*", "/models/*"] },
+  // The app's model and tool files (scripts\mirror-models.ps1 fills it); /models/<name> serves them.
+  "r2_buckets": [{ "binding": "MODELS", "bucket_name": "effodio-models" }],
   "kv_namespaces": [{ "binding": "FEEDBACK", "id": "b8e66614cfa049cabf654488104b6bf4" }],
   "routes": [{ "pattern": "effodio.nhaajt.com", "custom_domain": true }],
   "workers_dev": false,

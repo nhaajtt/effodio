@@ -51,7 +51,7 @@ const CROP: usize = 112;
 const TEMPLATE: [(f32, f32); 5] =
     [(38.2946, 51.6963), (73.5318, 51.5014), (56.0252, 71.7366), (41.5493, 92.3655), (70.7299, 92.2041)];
 
-type Model = SimplePlan<TypedFact, Box<dyn TypedOp>, Graph<TypedFact, Box<dyn TypedOp>>>;
+type Model = std::sync::Arc<TypedRunnableModel>;
 
 pub struct Faces {
     detector: Model,
@@ -129,7 +129,8 @@ impl Faces {
             (((width as f32 * scale) as usize).clamp(1, SIDE), ((height as f32 * scale) as usize).clamp(1, SIDE));
         let mut input = Tensor::zero::<f32>(&[1, 3, SIDE, SIDE])?;
         {
-            let data = input.as_slice_mut::<f32>()?;
+            let mut plain = input.try_as_plain_ram_mut()?;
+            let data = plain.as_slice_mut::<f32>()?;
             for y in 0..fit_height {
                 let from_y = ((y as f32 + 0.5) / scale) as usize;
                 for x in 0..fit_width {
@@ -150,7 +151,7 @@ impl Faces {
             let mut scores: Vec<&[f32]> = Vec::new();
             let (mut boxes, mut marks): (Option<&[f32]>, Option<&[f32]>) = (None, None);
             for output in outputs.iter() {
-                let values = output.as_slice::<f32>()?;
+                let values = output.try_as_plain_ram()?.as_slice::<f32>()?;
                 // By shape, [1, cells, values a cell]: a count alone can't tell one grid's boxes from another's scores.
                 let shape = output.shape();
                 if shape.len() != 3 || shape[1] != cells {
@@ -242,7 +243,8 @@ impl Faces {
         let size = (c * c + s * s).max(1e-9);
         let mut input = Tensor::zero::<f32>(&[1, 3, CROP, CROP])?;
         {
-            let data = input.as_slice_mut::<f32>()?;
+            let mut plain = input.try_as_plain_ram_mut()?;
+            let data = plain.as_slice_mut::<f32>()?;
             let at = |x: isize, y: isize, channel: usize| -> f32 {
                 let x = x.clamp(0, width as isize - 1) as usize;
                 let y = y.clamp(0, height as isize - 1) as usize;
@@ -267,7 +269,7 @@ impl Faces {
             }
         }
         let outputs = self.recognizer.run(tvec!(input.into()))?;
-        let mut vector: Vec<f32> = outputs[0].as_slice::<f32>()?.to_vec();
+        let mut vector: Vec<f32> = outputs[0].try_as_plain_ram()?.as_slice::<f32>()?.to_vec();
         let length = vector.iter().map(|value| value * value).sum::<f32>().sqrt().max(1e-12);
         for value in &mut vector {
             *value /= length;

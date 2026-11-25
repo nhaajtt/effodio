@@ -23,8 +23,6 @@ export function h<K extends keyof HTMLElementTagNameMap>(
       if (value === undefined || value === null || value === false) continue;
       if (name.startsWith("on") && typeof value === "function") {
         element.addEventListener(name.slice(2), value as EventListener);
-      } else if (name === "html") {
-        element.innerHTML = value as string;
       } else if (name === "style" && typeof value === "object") {
         Object.assign(element.style, value);
       } else if (name in element && name !== "list") {

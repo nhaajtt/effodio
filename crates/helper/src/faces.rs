@@ -3,16 +3,14 @@
 //! one takes the name too, in the pictures already read and in those read later.
 
 use crate::emit;
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, bail, Result};
 use effodio_core::config;
 use effodio_core::readers::{images, Picture};
 use effodio_core::rusqlite::Connection;
 use effodio_core::store::Store;
 use effodio_faces::{cosine, files, Faces, DIMENSION, SAME};
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::collections::HashMap;
-use std::io::Read;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -57,27 +55,12 @@ fn now() -> f64 {
     std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs_f64()).unwrap_or(0.0)
 }
 
-/// Downloads the two face models (39 MB), each checked against its SHA-256.
+/// Gets the two face models (39 MB), each checked against its SHA-256.
 pub fn download(folder: &Path) -> Result<()> {
-    std::fs::create_dir_all(folder)?;
     for file in files::ALL {
-        let target = folder.join(file.name);
-        if target.exists() {
-            continue;
-        }
-        let response = crate::web::get(&file.url())
-            .set("User-Agent", "effodio")
-            .call()
-            .with_context(|| format!("can't download {}", file.name))?;
-        let mut bytes = Vec::with_capacity(file.bytes as usize);
-        response.into_reader().take(file.bytes + 1).read_to_end(&mut bytes)?;
-        let digest: String = Sha256::digest(&bytes).iter().map(|byte| format!("{byte:02x}")).collect();
-        if bytes.len() as u64 != file.bytes || digest != file.sha256 {
-            bail!("{} didn't arrive whole: try again", file.name);
-        }
-        let part = folder.join(format!("{}.part", file.name));
-        std::fs::write(&part, &bytes)?;
-        std::fs::rename(&part, &target)?;
+        let origin = file.url();
+        let wanted = crate::fetch::Wanted { name: file.name, bytes: file.bytes, sha256: file.sha256, origin: &origin };
+        crate::fetch::obtain(&wanted, &folder.join(file.name), &mut |_| {})?;
     }
     Ok(())
 }

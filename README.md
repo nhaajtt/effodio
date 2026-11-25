@@ -100,8 +100,19 @@ The interface is in English and Vietnamese.
 powershell -c "irm https://effodio.nhaajt.com/install.ps1 | iex"
 ```
 
-That downloads the installer from [effodio.nhaajt.com](https://effodio.nhaajt.com), checks its SHA-256 and installs it for
-the current user. Run it again to update. The installer can also be downloaded from the site and run by hand.
+That one command downloads the installer and every model and tool Effodio can use (about 3.8 GB, less if FFmpeg is
+already installed), installs it for the current user and opens it ready. For each file it shows what it is, who made it
+and under what licence, where it comes from, and a bar with the size, speed and time left; each is checked against the
+SHA-256 written into the script before it's used. A download that's cut off goes on where it stopped next time, and
+files already here aren't downloaded again. Run it again to update.
+
+**Where the files come from.** Effodio's own copy at `effodio.nhaajt.com/models/` first, then the place its makers
+publish it (Hugging Face, GitHub). The app checks the size and SHA-256 of every file whatever its source, so neither has
+to be trusted, and either one going away doesn't stop an install. A company can point `EFFODIO_MIRROR` at its own copy.
+
+**Without the internet.** `Effodio_<version>_x64-full-setup.exe` carries the search model, the face models and FFmpeg.
+For everything, run `effodio-helper pack <folder> --all` on a connected computer and copy the folder to
+`%LOCALAPPDATA%\app.effodio.search\Models\Pack` (or set `EFFODIO_PACK` to it): the app takes its files from there.
 
 Press **Ctrl+Shift+Space** in any app for the search panel.
 
@@ -146,7 +157,7 @@ git clone --depth 1 --branch b11461 https://github.com/ggml-org/llama.cpp vendor
 python -m venv vendor\tools-venv && vendor\tools-venv\Scripts\pip install cmake ninja
 scripts\build-llama.cmd cpu
 cargo test --release
-pwsh scripts\package.ps1
+pwsh scripts\package.ps1          # -Full: with the search model, the face models and FFmpeg inside
 ```
 
 The installer lands in `target\release\bundle\nsis`. It installs for the current user, with no administrator
@@ -213,7 +224,7 @@ Effodio works on your computer and keeps what it learns there.
   computer or your index, the people in your photos are in it too: turn it on only where that's fine.
 - **Answers and spoken words run locally.** The language model and the speech model are downloads you ask for;
   after that, questions, answers and transcripts never leave the machine.
-- **When it does go online.** To download the models and tools you ask for (from Hugging Face and GitHub), and
+- **When it does go online.** To download the models and tools (from Effodio's own copy, or Hugging Face and GitHub), and
   once at start to ask effodio.nhaajt.com for the latest version number, which sends nothing about you and can be
   switched off in Settings. The local door for other tools is off by default, listens on this computer only and
   needs a token.

@@ -9,6 +9,7 @@
 //!   effodio-helper status           what's in the index
 
 mod faces;
+mod fetch;
 mod kits;
 mod model;
 mod serve;
@@ -373,9 +374,20 @@ fn main() {
             .and_then(|mut store| kits::listen_all(&mut store, &AtomicBool::new(false)))
             .map(|heard| emit(&json!({"event": "finished", "heard": heard}))),
         "ocr" => ocr(&rest),
+        // `files`: every model and tool file, as JSON (the website's install script carries it).
+        "files" => {
+            println!("{}", kits::manifest());
+            Ok(())
+        }
+        // `pack <folder> [--all]`: every model and tool file into a folder, checked: for the full installer, a mirror
+        // or a computer without the internet.
+        "pack" => match rest.bare.first() {
+            Some(folder) => kits::pack(std::path::Path::new(folder), rest.get("all").is_some()),
+            None => Err(anyhow::anyhow!("pack needs a folder")),
+        },
         _ => {
             println!(
-                "effodio-helper <index|touch|serve|search|speed|estimate|model|status> [--db file] [--config file]"
+                "effodio-helper <index|touch|serve|search|speed|estimate|model|status|pack> [--db file] [--config file]"
             );
             Ok(())
         }

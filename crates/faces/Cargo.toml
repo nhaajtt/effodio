@@ -7,4 +7,4 @@ description = "Finds the faces in a picture and turns each into a vector, on thi
 
 [dependencies]
 anyhow.workspace = true
-tract-onnx = "0.21"
+tract-onnx = "0.23"

@@ -3,15 +3,14 @@
 //! small language model). Neither is fetched until someone asks for it.
 
 use crate::emit;
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, bail, Result};
 use effodio_core::config;
 use effodio_core::query;
 use effodio_core::search::{Searcher, Settings};
 use effodio_core::store::Store;
 use effodio_core::text;
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -153,60 +152,71 @@ fn slot(kit: &Kit) -> usize {
     }
 }
 
-fn sha256(path: &Path) -> Result<String> {
-    let mut file = std::fs::File::open(path)?;
-    let mut hasher = Sha256::new();
-    let mut buffer = vec![0u8; 4 << 20];
-    loop {
-        let read = file.read(&mut buffer)?;
-        if read == 0 {
-            break;
-        }
-        hasher.update(&buffer[..read]);
-    }
-    Ok(hasher.finalize().iter().map(|byte| format!("{byte:02x}")).collect())
-}
-
-/// One part to `target`, by way of a `.part` file that a later try continues; checked against its SHA-256.
+/// One part to `target`, from wherever `fetch` finds it whole.
 fn fetch(part: &Part, target: &Path, before: u64, kit: &Kit) -> Result<()> {
-    let partial = target.with_extension("part");
-    let mut have = std::fs::metadata(&partial).map(|m| m.len()).unwrap_or(0);
-    if have > part.bytes {
-        have = 0;
-    }
-    if have < part.bytes {
-        let response = crate::web::get(part.url)
-            .set("User-Agent", "effodio")
-            .set("Range", &format!("bytes={have}-"))
-            .call()
-            .with_context(|| format!("can't download {}", part.name))?;
-        let resumed = response.status() == 206;
-        let mut output = std::fs::OpenOptions::new().create(true).truncate(false).write(true).open(&partial)?;
-        if resumed {
-            output.seek(SeekFrom::End(0))?;
-        } else {
-            output.set_len(0)?;
-            have = 0;
-        }
-        // Never more than the part is known to be: a server that keeps sending can't fill the disk.
-        let mut reader = response.into_reader().take(part.bytes - have);
-        let mut buffer = vec![0u8; 1 << 20];
-        loop {
-            let read = reader.read(&mut buffer)?;
-            if read == 0 {
-                break;
-            }
-            output.write_all(&buffer[..read])?;
-            have += read as u64;
+    let wanted = crate::fetch::Wanted { name: part.name, bytes: part.bytes, sha256: part.sha256, origin: part.url };
+    crate::fetch::obtain(&wanted, target, &mut |step| {
+        if let crate::fetch::Step::Have(have) = step {
             PROGRESS.lock().unwrap()[slot(kit)].done = before + have;
         }
-        output.flush()?;
+    })
+}
+
+/// Every file the app can need, for a pack: the search model, the face models and FFmpeg, and with `all` the speech and
+/// answers kits too. Each is (name, bytes, SHA-256, where its makers publish it).
+pub fn every_file(all: bool) -> Vec<(&'static str, u64, &'static str, String)> {
+    let mut list: Vec<_> = effodio_embed::files::ALL.iter().map(|f| (f.name, f.bytes, f.sha256, f.url())).collect();
+    list.extend(effodio_faces::files::ALL.iter().map(|f| (f.name, f.bytes, f.sha256, f.url())));
+    let kits: &[&Kit] = if all { &[&MEDIA, &SPEECH, &ANSWERS] } else { &[&MEDIA] };
+    for kit in kits {
+        list.extend(kit.parts.iter().map(|p| (p.name, p.bytes, p.sha256, p.url.to_string())));
     }
-    if have != part.bytes || sha256(&partial)? != part.sha256 {
-        std::fs::remove_file(&partial).ok();
-        bail!("{} didn't arrive whole: try again", part.name);
+    list
+}
+
+/// What a file is, who made it and under what licence, and what in Effodio needs it: said to the person installing.
+pub fn what(name: &str) -> &'static str {
+    match name {
+        "embeddinggemma-2-Q8_0.gguf" => "EmbeddingGemma 2, text (Google DeepMind, Gemma terms, ai.google.dev/gemma/terms): search by meaning",
+        "mmproj-embeddinggemma-2-Q8_0.gguf" => {
+            "EmbeddingGemma 2, pictures and sound (Google DeepMind, Gemma terms, ai.google.dev/gemma/terms): photos and audio by meaning"
+        }
+        "face_detection_yunet_2023mar.onnx" => "YuNet face finder (OpenCV, MIT): People",
+        "face_recognition_sface_2021dec.onnx" => "SFace face recognizer (OpenCV, Apache-2.0): People",
+        "ffmpeg-9.0.2-essentials_build.zip" => {
+            "FFmpeg 9.0.2 essentials (gyan.dev build, GPL-3.0): reads videos and recordings"
+        }
+        "whisper-bin-x64.zip" => "whisper.cpp b5454 (ggml.ai, MIT): the program that turns speech into text",
+        "ggml-small.bin" => "Whisper small (OpenAI, MIT): the speech-to-text model",
+        "llama-b12283-bin-win-cpu-x64.zip" => "llama.cpp b12283 for CPUs (ggml.ai, MIT): runs the answers model",
+        "gemma-3-4b-it-Q4_K_M.gguf" => {
+            "Gemma 3 4B instruct (Google DeepMind, Gemma terms, ai.google.dev/gemma/terms): answers questions about your files"
+        }
+        _ => "",
     }
-    std::fs::rename(&partial, target)?;
+}
+
+/// Every file, as JSON for the website's install script: what it is and every place to get it, the first first.
+pub fn manifest() -> Value {
+    Value::Array(
+        every_file(true)
+            .into_iter()
+            .map(|(name, bytes, sha256, origin)| {
+                let wanted = crate::fetch::Wanted { name, bytes, sha256, origin: &origin };
+                json!({"name": name, "bytes": bytes, "sha256": sha256, "what": what(name), "urls": crate::fetch::sources(&wanted)})
+            })
+            .collect(),
+    )
+}
+
+/// Fills `folder` with a pack: every file, checked. A pack beside the app (the full installer's `models` folder) or
+/// in `Models\Pack` is used instead of the web.
+pub fn pack(folder: &Path, all: bool) -> Result<()> {
+    for (name, bytes, sha256, origin) in every_file(all) {
+        let wanted = crate::fetch::Wanted { name, bytes, sha256, origin: &origin };
+        crate::fetch::obtain(&wanted, &folder.join(name), &mut |_| {})?;
+        emit(&json!({"event": "packed", "file": name, "bytes": bytes, "sha256": sha256}));
+    }
     Ok(())
 }
 
@@ -546,5 +556,16 @@ pub fn handle(request: &Value) -> Option<Result<Value>> {
             Ok(json!({}))
         })()),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod pack_tests {
+    /// Every file the install script fetches says what it is.
+    #[test]
+    fn every_file_is_described() {
+        for (name, ..) in super::every_file(true) {
+            assert!(!super::what(name).is_empty(), "{name} has no description");
+        }
     }
 }

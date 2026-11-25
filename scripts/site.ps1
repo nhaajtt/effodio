@@ -9,6 +9,12 @@ $version = (Get-Content "$root\app\src-tauri\tauri.conf.json" -Raw | ConvertFrom
 $installer = "$root\target\release\bundle\nsis\Effodio_${version}_x64-setup.exe"
 if (-not (Test-Path $installer)) { throw "There's no installer for $version yet: run scripts\package.ps1" }
 $sha256 = (Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+$setupBytes = (Get-Item $installer).Length
+# Every model and tool file, from the helper that will check them: the install script fetches them all.
+$helper = "$root\app\src-tauri\binaries\effodio-helper-x86_64-pc-windows-msvc.exe"
+$env:PATH = "$root\app\src-tauri\libraries;$env:PATH"
+$files = (& $helper files | Out-String).Trim()
+if ($LASTEXITCODE -ne 0 -or -not $files.StartsWith("[")) { throw "the helper didn't list its files" }
 
 $out = "$root\site\dist"
 Remove-Item $out -Recurse -Force -ErrorAction SilentlyContinue
@@ -18,7 +24,7 @@ Get-ChildItem $site -File -Recurse | Where-Object { $_.FullName -notlike "$out\*
   $target = Join-Path $out $_.FullName.Substring($site.Length + 1)
   New-Item -ItemType Directory -Force (Split-Path $target) | Out-Null
   if ($_.Extension -in ".html", ".ps1", ".js", ".json") {
-    $text = (Get-Content $_.FullName -Raw).Replace("__VERSION__", $version).Replace("__SHA256__", $sha256)
+    $text = (Get-Content $_.FullName -Raw).Replace("__VERSION__", $version).Replace("__SHA256__", $sha256).Replace("__SETUP_BYTES__", "$setupBytes").Replace("__FILES__", $files.Replace("'", "''"))
     [IO.File]::WriteAllText($target, $text, [Text.UTF8Encoding]::new($false))
   } else {
     Copy-Item $_.FullName $target

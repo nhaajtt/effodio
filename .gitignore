@@ -8,3 +8,4 @@ app/src-tauri/icons/source.png
 app/src-tauri/binaries/
 app/src-tauri/libraries/
 .wrangler/
+app/src-tauri/models/

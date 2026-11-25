@@ -120,25 +120,33 @@ fn open(path: &Path) -> Result<Archive> {
     Ok(Archive { zip: zip::ZipArchive::new(std::fs::File::open(path)?)?, left: MAX_ARCHIVE_BYTES })
 }
 
-fn local(name: &[u8]) -> &[u8] {
-    name.rsplit(|&b| b == b':').next().unwrap_or(name)
+fn local(name: &str) -> &str {
+    name.rsplit(':').next().unwrap_or(name)
+}
+
+/// The text of a character or entity reference (`&amp;`, `&#233;`), which the reader hands over on its own.
+fn reference(name: &quick_xml::events::BytesRef) -> Option<String> {
+    if name.is_char_ref() {
+        return name.resolve_char_ref().ok().flatten().map(String::from);
+    }
+    quick_xml::escape::unescape(&format!("&{};", &**name)).ok().map(|text| text.into_owned())
 }
 
 /// The text of an XML part: the content of `text_tags`, a line break after each of `break_tags`.
-fn xml_text(xml: &str, text_tags: &[&[u8]], break_tags: &[&[u8]], tab_tags: &[&[u8]]) -> String {
+fn xml_text(xml: &str, text_tags: &[&str], break_tags: &[&str], tab_tags: &[&str]) -> String {
     let mut reader = Reader::from_str(xml);
     let mut out = String::new();
     let mut inside = 0usize;
     loop {
         match reader.read_event() {
             Ok(Event::Start(tag)) => {
-                if text_tags.contains(&local(tag.name().as_ref())) {
+                if text_tags.contains(&local(tag.name().0)) {
                     inside += 1;
                 }
             }
             Ok(Event::Empty(tag)) => {
                 let name = tag.name();
-                let name = local(name.as_ref());
+                let name = local(name.0);
                 if tab_tags.contains(&name) {
                     out.push('\t');
                 } else if break_tags.contains(&name) {
@@ -147,7 +155,7 @@ fn xml_text(xml: &str, text_tags: &[&[u8]], break_tags: &[&[u8]], tab_tags: &[&[
             }
             Ok(Event::End(tag)) => {
                 let name = tag.name();
-                let name = local(name.as_ref());
+                let name = local(name.0);
                 if text_tags.contains(&name) {
                     inside = inside.saturating_sub(1);
                 }
@@ -155,11 +163,8 @@ fn xml_text(xml: &str, text_tags: &[&[u8]], break_tags: &[&[u8]], tab_tags: &[&[
                     out.push('\n');
                 }
             }
-            Ok(Event::Text(text)) if inside > 0 => {
-                if let Ok(text) = text.unescape() {
-                    out.push_str(&text);
-                }
-            }
+            Ok(Event::Text(text)) if inside > 0 => out.push_str(&text),
+            Ok(Event::GeneralRef(name)) if inside > 0 => out.extend(reference(&name)),
             Ok(Event::Eof) | Err(_) => break,
             _ => {}
         }
@@ -169,10 +174,10 @@ fn xml_text(xml: &str, text_tags: &[&[u8]], break_tags: &[&[u8]], tab_tags: &[&[
 
 fn docx(path: &Path) -> Result<String> {
     let mut archive = open(path)?;
-    let mut text = xml_text(&entry(&mut archive, "word/document.xml")?, &[b"t"], &[b"p", b"br", b"tr"], &[b"tab"]);
+    let mut text = xml_text(&entry(&mut archive, "word/document.xml")?, &["t"], &["p", "br", "tr"], &["tab"]);
     for extra in ["word/footnotes.xml", "word/endnotes.xml", "word/comments.xml"] {
         if let Ok(xml) = entry(&mut archive, extra) {
-            let more = xml_text(&xml, &[b"t"], &[b"p", b"br"], &[b"tab"]);
+            let more = xml_text(&xml, &["t"], &["p", "br"], &["tab"]);
             if !more.trim().is_empty() {
                 text.push_str("\n\n");
                 text.push_str(&more);
@@ -186,6 +191,7 @@ fn docx(path: &Path) -> Result<String> {
 fn numbered(archive: &zip::ZipArchive<std::fs::File>, prefix: &str) -> Vec<(u32, String)> {
     let mut names: Vec<(u32, String)> = archive
         .file_names()
+        .filter_map(|name| name.ok())
         .filter(|name| name.starts_with(prefix) && name.ends_with(".xml"))
         .filter_map(|name| {
             let number: String = name[prefix.len()..name.len() - 4].chars().filter(char::is_ascii_digit).collect();
@@ -201,9 +207,9 @@ fn pptx(path: &Path) -> Result<Vec<Part>> {
     let slides = numbered(&archive, "ppt/slides/slide");
     let mut parts = Vec::new();
     for (number, name) in slides {
-        let mut text = xml_text(&entry(&mut archive, &name)?, &[b"t"], &[b"p", b"br"], &[]);
+        let mut text = xml_text(&entry(&mut archive, &name)?, &["t"], &["p", "br"], &[]);
         if let Ok(notes) = entry(&mut archive, &format!("ppt/notesSlides/notesSlide{number}.xml")) {
-            let notes = xml_text(&notes, &[b"t"], &[b"p", b"br"], &[]);
+            let notes = xml_text(&notes, &["t"], &["p", "br"], &[]);
             // The notes page repeats the slide number as its own line.
             let notes: Vec<&str> =
                 notes.lines().filter(|line| !line.trim().is_empty() && line.trim() != number.to_string()).collect();
@@ -226,23 +232,20 @@ fn xlsx(path: &Path) -> Result<Vec<Part>> {
         let (mut current, mut in_text, mut in_phonetic) = (String::new(), false, false);
         loop {
             match reader.read_event() {
-                Ok(Event::Start(tag)) => match local(tag.name().as_ref()) {
-                    b"si" => current.clear(),
-                    b"rPh" => in_phonetic = true,
-                    b"t" => in_text = !in_phonetic,
+                Ok(Event::Start(tag)) => match local(tag.name().0) {
+                    "si" => current.clear(),
+                    "rPh" => in_phonetic = true,
+                    "t" => in_text = !in_phonetic,
                     _ => {}
                 },
-                Ok(Event::End(tag)) => match local(tag.name().as_ref()) {
-                    b"si" => shared.push(std::mem::take(&mut current)),
-                    b"rPh" => in_phonetic = false,
-                    b"t" => in_text = false,
+                Ok(Event::End(tag)) => match local(tag.name().0) {
+                    "si" => shared.push(std::mem::take(&mut current)),
+                    "rPh" => in_phonetic = false,
+                    "t" => in_text = false,
                     _ => {}
                 },
-                Ok(Event::Text(text)) if in_text => {
-                    if let Ok(text) = text.unescape() {
-                        current.push_str(&text);
-                    }
-                }
+                Ok(Event::Text(text)) if in_text => current.push_str(&text),
+                Ok(Event::GeneralRef(name)) if in_text => current.extend(reference(&name)),
                 Ok(Event::Eof) | Err(_) => break,
                 _ => {}
             }
@@ -254,10 +257,15 @@ fn xlsx(path: &Path) -> Result<Vec<Part>> {
         let mut reader = Reader::from_str(&xml);
         loop {
             match reader.read_event() {
-                Ok(Event::Empty(tag)) | Ok(Event::Start(tag)) if local(tag.name().as_ref()) == b"sheet" => {
+                Ok(Event::Empty(tag)) | Ok(Event::Start(tag)) if local(tag.name().0) == "sheet" => {
                     for attribute in tag.attributes().flatten() {
-                        if attribute.key.as_ref() == b"name" {
-                            names.push(attribute.unescape_value().map(|v| v.into_owned()).unwrap_or_default());
+                        if attribute.key.0 == "name" {
+                            names.push(
+                                attribute
+                                    .normalized_value(quick_xml::XmlVersion::Implicit1_0)
+                                    .map(|v| v.into_owned())
+                                    .unwrap_or_default(),
+                            );
                         }
                     }
                 }
@@ -272,45 +280,51 @@ fn xlsx(path: &Path) -> Result<Vec<Part>> {
         let mut reader = Reader::from_str(&xml);
         let mut text = String::new();
         let (mut cell_type, mut in_value, mut row_has_cells) = (String::new(), false, false);
+        let mut raw = String::new();
         loop {
             match reader.read_event() {
-                Ok(Event::Start(tag)) => match local(tag.name().as_ref()) {
-                    b"row" => row_has_cells = false,
-                    b"c" => {
+                Ok(Event::Start(tag)) => match local(tag.name().0) {
+                    "row" => row_has_cells = false,
+                    "c" => {
                         cell_type.clear();
                         for attribute in tag.attributes().flatten() {
-                            if attribute.key.as_ref() == b"t" {
-                                cell_type = String::from_utf8_lossy(&attribute.value).into_owned();
+                            if attribute.key.0 == "t" {
+                                cell_type = attribute.value.to_string();
                             }
                         }
                     }
-                    b"v" | b"t" => in_value = true,
+                    "v" | "t" => {
+                        in_value = true;
+                        raw.clear();
+                    }
                     _ => {}
                 },
-                Ok(Event::End(tag)) => match local(tag.name().as_ref()) {
-                    b"row" => {
+                Ok(Event::End(tag)) => match local(tag.name().0) {
+                    "row" => {
                         if row_has_cells {
                             text.push('\n');
                         }
                     }
-                    b"v" | b"t" => in_value = false,
+                    "v" | "t" => {
+                        in_value = false;
+                        // A cell's value can come in pieces (text, then `&amp;`, then text): it is used whole, here.
+                        let value = if cell_type == "s" {
+                            raw.trim().parse::<usize>().ok().and_then(|i| shared.get(i)).cloned().unwrap_or_default()
+                        } else {
+                            std::mem::take(&mut raw)
+                        };
+                        if !value.is_empty() {
+                            if row_has_cells {
+                                text.push('\t');
+                            }
+                            text.push_str(&value);
+                            row_has_cells = true;
+                        }
+                    }
                     _ => {}
                 },
-                Ok(Event::Text(value)) if in_value => {
-                    let Ok(value) = value.unescape() else { continue };
-                    let value = if cell_type == "s" {
-                        value.trim().parse::<usize>().ok().and_then(|i| shared.get(i)).cloned().unwrap_or_default()
-                    } else {
-                        value.into_owned()
-                    };
-                    if !value.is_empty() {
-                        if row_has_cells {
-                            text.push('\t');
-                        }
-                        text.push_str(&value);
-                        row_has_cells = true;
-                    }
-                }
+                Ok(Event::Text(value)) if in_value => raw.push_str(&value),
+                Ok(Event::GeneralRef(name)) if in_value => raw.extend(reference(&name)),
                 Ok(Event::Eof) | Err(_) => break,
                 _ => {}
             }
@@ -329,20 +343,16 @@ fn xlsx(path: &Path) -> Result<Vec<Part>> {
 fn open_document(path: &Path) -> Result<String> {
     let mut archive = open(path)?;
     let xml = entry(&mut archive, "content.xml")?;
-    Ok(xml_text(
-        &xml,
-        &[b"p", b"h", b"span", b"a"],
-        &[b"p", b"h", b"table-row", b"line-break"],
-        &[b"tab", b"table-cell"],
-    ))
+    Ok(xml_text(&xml, &["p", "h", "span", "a"], &["p", "h", "table-row", "line-break"], &["tab", "table-cell"]))
 }
 
 fn epub(path: &Path) -> Result<String> {
     let mut archive = open(path)?;
     let mut names: Vec<String> = archive
         .file_names()
+        .filter_map(|name| name.ok())
         .filter(|name| name.ends_with(".xhtml") || name.ends_with(".html") || name.ends_with(".htm"))
-        .map(str::to_string)
+        .map(|name| name.into_owned())
         .collect();
     names.sort();
     let mut out = String::new();
@@ -632,20 +642,27 @@ mod tests {
         archive(
             &path,
             &[
-                ("xl/sharedStrings.xml", "<sst><si><t>Item</t></si><si><r><t>Cof</t></r><r><t>fee</t></r></si></sst>"),
-                ("xl/workbook.xml", r#"<workbook><sheets><sheet name="Budget" sheetId="1"/></sheets></workbook>"#),
+                (
+                    "xl/sharedStrings.xml",
+                    "<sst><si><t>Item</t></si><si><r><t>Cof</t></r><r><t>fee</t></r></si><si><t>R&amp;D</t></si></sst>",
+                ),
+                (
+                    "xl/workbook.xml",
+                    r#"<workbook><sheets><sheet name="Budget &amp; plan" sheetId="1"/></sheets></workbook>"#,
+                ),
                 (
                     "xl/worksheets/sheet1.xml",
                     r#"<worksheet><sheetData>
                 <row><c t="s"><v>0</v></c><c><v>2026</v></c></row>
-                <row><c t="s"><v>1</v></c><c><v>4.5</v></c></row></sheetData></worksheet>"#,
+                <row><c t="s"><v>1</v></c><c><v>4.5</v></c></row>
+                <row><c t="s"><v>2</v></c><c t="inlineStr"><is><t>Tea &amp; cake</t></is></c></row></sheetData></worksheet>"#,
                 ),
             ],
         );
         let parts = read(&path).unwrap();
         assert_eq!(parts.len(), 1);
-        assert_eq!(parts[0].label.as_deref(), Some("Sheet: Budget"));
-        assert_eq!(parts[0].text, "Budget\nItem 2026\nCoffee 4.5");
+        assert_eq!(parts[0].label.as_deref(), Some("Sheet: Budget & plan"));
+        assert_eq!(parts[0].text, "Budget & plan\nItem 2026\nCoffee 4.5\nR&D Tea & cake");
     }
 
     #[test]
